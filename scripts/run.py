@@ -166,7 +166,7 @@ class AuroraAggregator:
         nodes = self.enrich_nodes(nodes)
 
         # Step 4: 节点测试
-        if not skip_test:
+        if not skip_test and not generate_only:
             logger.info("开始节点测试...")
             testing_config = self.config.get("testing", {})
             tester = NodeTester(testing_config)
@@ -229,14 +229,41 @@ class AuroraAggregator:
                 type=n.get("type", "vmess"),
                 server=n.get("server", ""),
                 port=n.get("port", 443),
+                uuid=n.get("uuid"),
+                password=n.get("password"),
+                cipher=n.get("cipher"),
+                network=n.get("network"),
+                security=n.get("security"),
+                sni=n.get("sni"),
+                skip_cert_verify=n.get("skip_cert_verify", False),
+                ws_path=n.get("ws_path"),
+                ws_headers=n.get("ws_headers"),
+                grpc_service_name=n.get("grpc_service_name"),
+                reality_public_key=n.get("reality_public_key"),
+                reality_short_id=n.get("reality_short_id"),
+                fingerprint=n.get("fingerprint"),
+                hysteria2_password=n.get("hysteria2_password"),
+                flow=n.get("flow"),
+                alterId=n.get("alterId", 0),
                 country=n.get("country"),
-                latency=n.get("latency", 0),
                 source=n.get("source"),
+                latency=n.get("latency", 0),
             )
-            node.is_valid = True
+            node.is_valid = n.get("is_valid", False)
             nodes.append(node)
 
-        return nodes
+        # 优先使用测试通过的节点，未测试的也保留
+        valid = [n for n in nodes if n.is_valid]
+        untested = [n for n in nodes if not n.is_valid]
+        if valid:
+            logger.info(f"加载 {len(valid)} 个有效节点, {len(untested)} 个未验证节点")
+            # 有效节点排前面，未验证的也包含
+            return valid + untested
+        else:
+            logger.info(f"无有效节点，加载全部 {len(nodes)} 个节点（未验证）")
+            for n in nodes:
+                n.is_valid = True
+            return nodes
 
     def _copy_to_docs(self, nodes: List[Node]):
         """复制输出到 docs 目录（安全混淆路径）"""

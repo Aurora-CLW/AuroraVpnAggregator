@@ -28,7 +28,7 @@ class Generator:
         self.config = config or {}
         self.naming_format = self.config.get("naming", "{country} {type} {latency}ms")
         self.sort_by = self.config.get("sort_by", "latency")
-        self.max_nodes = self.config.get("max_nodes", 500)
+        self.max_nodes = self.config.get("max_nodes", 0)
 
     def generate_all(self, nodes: List[Node], output_dir: str):
         """
@@ -238,7 +238,24 @@ class Generator:
                     "port": n.port,
                     "country": n.country,
                     "latency": n.latency,
+                    "is_valid": n.is_valid,
                     "source": n.source,
+                    "uuid": n.uuid,
+                    "password": n.password,
+                    "cipher": n.cipher,
+                    "network": n.network,
+                    "security": n.security,
+                    "sni": n.sni,
+                    "skip_cert_verify": n.skip_cert_verify,
+                    "ws_path": n.ws_path,
+                    "ws_headers": n.ws_headers,
+                    "grpc_service_name": n.grpc_service_name,
+                    "reality_public_key": n.reality_public_key,
+                    "reality_short_id": n.reality_short_id,
+                    "fingerprint": n.fingerprint,
+                    "hysteria2_password": n.hysteria2_password,
+                    "flow": n.flow,
+                    "alterId": n.alterId,
                 }
                 for n in nodes
             ],

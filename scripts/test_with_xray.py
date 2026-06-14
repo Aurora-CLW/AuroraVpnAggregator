@@ -10,7 +10,6 @@ import subprocess
 import tempfile
 import time
 import os
-import signal
 import sys
 from pathlib import Path
 from typing import List, Dict, Optional
@@ -29,6 +28,38 @@ def find_xray() -> str:
         except Exception:
             continue
     return ""
+
+
+def _validate_node(node: Node) -> Optional[str]:
+    """检查节点是否有足够的参数生成有效 xray 配置，返回错误或 None"""
+    if not node.server:
+        return "missing server"
+    if not node.port or node.port <= 0:
+        return "missing port"
+
+    if node.type == "vmess":
+        if not node.uuid:
+            return "vmess: missing uuid"
+    elif node.type == "vless":
+        if not node.uuid:
+            return "vless: missing uuid"
+        if node.security == "reality":
+            if not node.reality_public_key:
+                return "vless+reality: missing publicKey"
+            if not node.fingerprint:
+                return "vless+reality: missing fingerprint"
+    elif node.type == "trojan":
+        if not node.password:
+            return "trojan: missing password"
+    elif node.type == "ss":
+        if not node.cipher or not node.password:
+            return "ss: missing cipher/password"
+    elif node.type == "hysteria2":
+        return "hysteria2: not supported by xray"
+    else:
+        return f"unsupported type: {node.type}"
+
+    return None
 
 
 def build_xray_config(node: Node, socks_port: int) -> dict:
@@ -100,9 +131,6 @@ def _node_to_xray_outbound(node: Node) -> Optional[dict]:
             "password": node.password or "",
         }]
 
-    elif node.type == "hysteria2":
-        return None  # xray 不支持 hysteria2，跳过
-
     else:
         return None
 
@@ -124,6 +152,10 @@ def _node_to_xray_outbound(node: Node) -> Optional[dict]:
         tls = {"allowInsecure": node.skip_cert_verify}
         if node.sni:
             tls["serverName"] = node.sni
+        if node.fingerprint:
+            tls["fingerprint"] = node.fingerprint
+        else:
+            tls["fingerprint"] = "chrome"
         stream["security"] = "tls"
         stream["tlsSettings"] = tls
 
@@ -136,22 +168,21 @@ def _node_to_xray_outbound(node: Node) -> Optional[dict]:
             reality["shortId"] = node.reality_short_id
         if node.sni:
             reality["serverName"] = node.sni
-        if node.fingerprint:
-            reality["fingerprint"] = node.fingerprint
+        reality["fingerprint"] = node.fingerprint or "chrome"
         stream["realitySettings"] = reality
 
     outbound["streamSettings"] = stream
     return outbound
 
 
-DEBUG = True
-_debug_count = 0
-
 async def test_node_with_xray(
-    node: Node, xray_bin: str, socks_port: int, timeout: int = 10
+    node: Node, xray_bin: str, socks_port: int, timeout: int = 8
 ) -> bool:
     """用 xray 测试单个节点"""
-    global _debug_count
+    # 先验证节点参数
+    validation_err = _validate_node(node)
+    if validation_err:
+        return False
 
     config = build_xray_config(node, socks_port)
     if not config:
@@ -167,17 +198,13 @@ async def test_node_with_xray(
     try:
         process = subprocess.Popen(
             [xray_bin, "run", "-c", config_path],
-            stdout=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
 
-        await asyncio.sleep(2)
+        await asyncio.sleep(1.5)
 
         if process.poll() is not None:
-            if DEBUG and _debug_count < 3:
-                err = process.stderr.read().decode() if process.stderr else ""
-                print(f"  [DEBUG] xray crashed for {node.type}://{node.server}:{node.port} - {err[:200]}")
-                _debug_count += 1
             return False
 
         start = time.time()
@@ -190,25 +217,18 @@ async def test_node_with_xray(
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
-            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=timeout + 5)
+            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=timeout + 3)
             elapsed = int((time.time() - start) * 1000)
 
             status = stdout.decode().strip() if stdout else ""
-            curl_err = stderr.decode() if stderr else ""
-
-            if DEBUG and _debug_count < 3:
-                print(f"  [DEBUG] {node.type}://{node.server}:{node.port} curl={status} err={curl_err[:100]} elapsed={elapsed}ms")
-                _debug_count += 1
 
             if status in ("200", "204", "301", "302"):
                 node.latency = elapsed
                 node.is_valid = True
                 return True
 
-        except (asyncio.TimeoutError, Exception) as e:
-            if DEBUG and _debug_count < 3:
-                print(f"  [DEBUG] {node.type}://{node.server}:{node.port} exception={e}")
-                _debug_count += 1
+        except (asyncio.TimeoutError, Exception):
+            pass
 
         return False
 
@@ -220,7 +240,7 @@ async def test_node_with_xray(
             except subprocess.TimeoutExpired:
                 process.kill()
                 process.wait(timeout=2)
-        await asyncio.sleep(0.3)
+        await asyncio.sleep(0.2)
         try:
             os.unlink(config_path)
         except OSError:
@@ -228,23 +248,61 @@ async def test_node_with_xray(
 
 
 async def test_nodes_batch(
-    nodes: List[Node], xray_bin: str, concurrent: int = 5, timeout: int = 10
+    nodes: List[Node], xray_bin: str, concurrent: int = 5, timeout: int = 8
 ) -> List[Node]:
     """批量测试节点（串行执行避免端口冲突）"""
     valid_nodes = []
     tested = 0
+    skipped = 0
     port_counter = 20000
 
     for node in nodes:
+        # 跳过不支持的类型
+        validation_err = _validate_node(node)
+        if validation_err:
+            skipped += 1
+            continue
+
         port_counter += 1
         is_valid = await test_node_with_xray(node, xray_bin, port_counter, timeout)
         tested += 1
         if is_valid:
             valid_nodes.append(node)
         if tested % 20 == 0:
-            print(f"  已测试 {tested}/{len(nodes)}, 有效 {len(valid_nodes)}")
+            print(f"  已测试 {tested}/{len(nodes)} (跳过 {skipped}), 有效 {len(valid_nodes)}")
 
+    print(f"  测试完成: {tested} 个测试, {skipped} 个跳过, {len(valid_nodes)} 个有效")
     return valid_nodes
+
+
+def node_to_dict(n: Node) -> dict:
+    """将节点转换为完整字典（保留所有协议参数）"""
+    return {
+        "name": n.name,
+        "type": n.type,
+        "server": n.server,
+        "port": n.port,
+        "country": n.country,
+        "latency": n.latency,
+        "is_valid": n.is_valid,
+        "source": n.source,
+        "uuid": n.uuid,
+        "password": n.password,
+        "cipher": n.cipher,
+        "network": n.network,
+        "security": n.security,
+        "sni": n.sni,
+        "skip_cert_verify": n.skip_cert_verify,
+        "ws_path": n.ws_path,
+        "ws_headers": n.ws_headers,
+        "grpc_service_name": n.grpc_service_name,
+        "reality_public_key": n.reality_public_key,
+        "reality_short_id": n.reality_short_id,
+        "fingerprint": n.fingerprint,
+        "hysteria2_password": n.hysteria2_password,
+        "flow": n.flow,
+        "alterId": n.alterId,
+    }
 
 
 async def main():
@@ -293,55 +351,32 @@ async def main():
             source=n.get("source"),
             latency=n.get("latency", 0),
         )
+        node.is_valid = n.get("is_valid", False)
         nodes.append(node)
 
-    # 限制测试数量（调试用，后续去掉切片）
-    test_nodes = nodes[:50]
-    print(f"测试前 {len(test_nodes)}/{len(nodes)} 个节点")
+    # 按类型统计
+    from collections import Counter
+    type_counts = Counter(n.type for n in nodes)
+    print(f"类型分布: {dict(type_counts)}")
 
-    valid_nodes = await test_nodes_batch(test_nodes, xray_bin, concurrent=5, timeout=8)
+    # 测试所有节点
+    valid_nodes = await test_nodes_batch(nodes, xray_bin, concurrent=5, timeout=8)
 
     print(f"\n测试完成: {len(valid_nodes)}/{len(nodes)} 有效")
 
-    # 写回结果
+    # 写回结果：包含所有节点，更新测试状态
     result_data = {
         "version": "1.0.0",
         "updated_at": data.get("updated_at", ""),
-        "total": len(valid_nodes),
-        "nodes": [
-            {
-                "name": n.name,
-                "type": n.type,
-                "server": n.server,
-                "port": n.port,
-                "country": n.country,
-                "latency": n.latency,
-                "source": n.source,
-                "uuid": n.uuid,
-                "password": n.password,
-                "cipher": n.cipher,
-                "network": n.network,
-                "security": n.security,
-                "sni": n.sni,
-                "skip_cert_verify": n.skip_cert_verify,
-                "ws_path": n.ws_path,
-                "ws_headers": n.ws_headers,
-                "grpc_service_name": n.grpc_service_name,
-                "reality_public_key": n.reality_public_key,
-                "reality_short_id": n.reality_short_id,
-                "fingerprint": n.fingerprint,
-                "hysteria2_password": n.hysteria2_password,
-                "flow": n.flow,
-                "alterId": n.alterId,
-            }
-            for n in valid_nodes
-        ],
+        "total": len(nodes),
+        "valid_count": len(valid_nodes),
+        "nodes": [node_to_dict(n) for n in nodes],
     }
 
     with open(nodes_file, "w", encoding="utf-8") as f:
         json.dump(result_data, f, indent=2, ensure_ascii=False)
 
-    print(f"已更新 {nodes_file}")
+    print(f"已更新 {nodes_file} (全部 {len(nodes)} 个节点，含测试状态)")
 
 
 if __name__ == "__main__":

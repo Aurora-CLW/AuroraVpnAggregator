@@ -71,7 +71,7 @@ output:
   sort_by: latency
 
   # 最大节点数（0 为不限制）
-  max_nodes: 500
+  max_nodes: 0
 
 # 日志设置
 logging:
