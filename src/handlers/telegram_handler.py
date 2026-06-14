@@ -79,9 +79,10 @@ class TelegramHandler(BaseHandler):
         return all_nodes
 
     async def _fetch_channel(self, channel_config: dict) -> List[Node]:
-        """抓取单个频道 — RSS 优先, Web 降级"""
+        """抓取单个频道 — RSS 优先, 无结果则翻页, 再降级 Web"""
         username = channel_config.get("username", "")
         channel_name = channel_config.get("name", "unknown")
+        pinned_url = channel_config.get("pinned_url", "")
 
         if not username:
             logger.warning(f"[{self.name}] 需要 username: {channel_name}")
@@ -92,17 +93,30 @@ class TelegramHandler(BaseHandler):
         sub_urls = []
 
         async with aiohttp.ClientSession() as session:
-            # 1. 优先尝试 RSS API (CI 友好)
+            # 0. 如果配置了 pinned_url (置顶消息链接), 直接抓取该消息
+            if pinned_url:
+                logger.info(f"[{self.name}] {channel_name}: 抓取置顶消息 {pinned_url}")
+                html = await self._fetch_page(session, pinned_url)
+                if html:
+                    result = self._extract_from_html(html, channel_name)
+                    nodes.extend(result["nodes"])
+                    sub_urls.extend(result["sub_urls"])
+
+            # 1. 尝试 RSS API
             rss_url = f"{RSS_API_BASE}{username}"
             logger.info(f"[{self.name}] 尝试 RSS: {rss_url}")
             rss_result = await self._fetch_via_rss(session, username, channel_name)
             if rss_result["nodes"]:
                 logger.info(f"[{self.name}] {channel_name}: RSS 获取 {len(rss_result['nodes'])} 个节点")
-                nodes = rss_result["nodes"]
+                nodes.extend(rss_result["nodes"])
             if rss_result["sub_urls"]:
-                sub_urls = rss_result["sub_urls"]
+                sub_urls.extend(rss_result["sub_urls"])
 
-            # 2. RSS 失败, 尝试 Web 镜像
+            # 2. RSS 无节点且无订阅链接, 尝试翻页抓取更多历史消息
+            if not nodes and not sub_urls and not pinned_url:
+                sub_urls = await self._fetch_older_messages(session, username, channel_name)
+
+            # 3. 仍无结果, 尝试 Web 镜像 (首页 + 翻页)
             if not nodes and not sub_urls:
                 for mirror in WEB_MIRRORS:
                     url = f"{mirror}{username}"
@@ -112,16 +126,27 @@ class TelegramHandler(BaseHandler):
                         web_result = self._extract_from_html(html, channel_name)
                         if web_result["nodes"] or web_result["sub_urls"]:
                             logger.info(f"[{self.name}] {channel_name}: Web 获取 {len(web_result['nodes'])} 个节点, {len(web_result['sub_urls'])} 个订阅链接")
-                            nodes = web_result["nodes"]
-                            sub_urls = web_result["sub_urls"]
+                            nodes.extend(web_result["nodes"])
+                            sub_urls.extend(web_result["sub_urls"])
                             break
-                        else:
-                            logger.info(f"[{self.name}] {channel_name}: 页面成功但无节点, 尝试下一镜像")
+                        # Web 首页无结果, 尝试翻页
+                        older = await self._web_paginate(session, mirror, username, html, channel_name)
+                        if older:
+                            nodes.extend(older["nodes"])
+                            sub_urls.extend(older["sub_urls"])
+                            break
 
-            # 3. 递归 fetch 订阅链接
+            # 4. 递归 fetch 订阅链接
             if sub_urls:
-                logger.info(f"[{self.name}] {channel_name}: 发现 {len(sub_urls)} 个订阅链接, 开始递归解析")
-                sub_nodes = await self._fetch_sub_urls(session, sub_urls, channel_name)
+                # 去重
+                seen = set()
+                unique = []
+                for u in sub_urls:
+                    if u not in seen:
+                        seen.add(u)
+                        unique.append(u)
+                logger.info(f"[{self.name}] {channel_name}: 发现 {len(unique)} 个订阅链接, 开始递归解析")
+                sub_nodes = await self._fetch_sub_urls(session, unique, channel_name)
                 logger.info(f"[{self.name}] {channel_name}: 订阅链接解析获取 {len(sub_nodes)} 个节点")
                 nodes.extend(sub_nodes)
 
@@ -130,6 +155,56 @@ class TelegramHandler(BaseHandler):
 
         self.mark_source(nodes, f"tg:{channel_name}")
         return nodes
+
+    async def _fetch_older_messages(self, session, username: str, channel_name: str) -> List[str]:
+        """RSS 无结果时, 尝试 Web 预览页翻页获取更多历史消息"""
+        for mirror in WEB_MIRRORS:
+            try:
+                url = f"{mirror}{username}"
+                html = await self._fetch_page(session, url)
+                if not html:
+                    continue
+                result = await self._web_paginate(session, mirror, username, html, channel_name)
+                if result and (result["nodes"] or result["sub_urls"]):
+                    return result["sub_urls"]
+            except Exception:
+                continue
+        return []
+
+    async def _web_paginate(self, session, mirror: str, username: str, first_html: str, channel_name: str) -> Optional[dict]:
+        """Web 预览页翻页 — 通过 ?before= 消息 ID 加载更早的消息"""
+        all_nodes = []
+        all_sub_urls = []
+        html = first_html
+        max_pages = 5
+
+        for page in range(max_pages):
+            # 从页面提取消息 ID (data-post="channel/12345")
+            msg_ids = re.findall(r'data-post="[^/]+/(\d+)"', html)
+            if not msg_ids:
+                break
+
+            # 提取当前页内容
+            result = self._extract_from_html(html, channel_name)
+            all_nodes.extend(result["nodes"])
+            all_sub_urls.extend(result["sub_urls"])
+
+            # 如果已经找到节点或订阅链接, 停止翻页
+            if all_nodes or all_sub_urls:
+                break
+
+            # 用最早的消息 ID 翻页
+            oldest_id = min(int(mid) for mid in msg_ids)
+            next_url = f"{mirror}{username}?before={oldest_id}"
+            logger.info(f"[{self.name}] {channel_name}: Web 翻页 {page+1}, before={oldest_id}")
+            html = await self._fetch_page(session, next_url)
+            if not html:
+                break
+            await asyncio.sleep(1)
+
+        if not all_nodes and not all_sub_urls:
+            return None
+        return {"nodes": all_nodes, "sub_urls": all_sub_urls}
 
     async def _fetch_via_rss(self, session, username: str, channel_name: str) -> dict:
         """通过 RSS API 获取频道消息并提取节点和订阅链接"""

@@ -2,12 +2,13 @@
 # 无需任何认证！
 # 抓取方式 (自动尝试):
 #   1. RSS API (tg.i-c-a.su) — 无需认证, GitHub Actions 可用
-#   2. Web 预览页 (telegram.dog / t.me) — 降级方案
+#   2. Web 翻页 — RSS 无结果时自动翻页抓取历史消息
 #   3. Telethon — 需要 api_id/api_hash (可选)
 #
 # 支持两种消息格式:
 #   - 直接节点: 消息含 vmess://, vless:// 等协议链接
 #   - 订阅链接: 消息含 https:// 订阅 URL, 自动递归 fetch 并解析
+#   - 置顶消息: 配置 pinned_url 直接抓取指定消息
 
 type: telegram
 enabled: true
@@ -31,36 +32,36 @@ channels:
     username: "@proxyshareCN"
     enabled: true
 
-  # 以下频道 RSS 最近消息无有效节点/订阅链接, 暂时禁用
-  # CrackHubCN — 节点在旧消息置顶栏, RSS 不返回
-  # - name: "CrackHubCN"
-  #   username: "@crackhub_cn"
-  #   enabled: true
+  # CrackHubCN — 节点在置顶消息, 直接抓取置顶消息
+  - name: "CrackHubCN"
+    username: "@crackhub_cn"
+    pinned_url: "https://t.me/crackhub_cn/7679"
+    enabled: true
 
-  # FreeVPNjd — RSS 间歇性超时
-  # - name: "FreeVPNjd"
-  #   username: "@freeVPNjd"
-  #   enabled: true
+  # FreeVPNjd — RSS 间歇性限流, Web 翻页可获取
+  - name: "FreeVPNjd"
+    username: "@freeVPNjd"
+    enabled: true
 
-  # ZDYZ2Y — 最近消息全是广告
+  # hanbaoyun666 — RSS 可用但限流, Web 翻页备用
+  - name: "Hanbaoyun666"
+    username: "@hanbaoyun666"
+    enabled: true
+
+  # 以下频道 RSS 不可用, Web 翻页尝试
   # - name: "ZDYZ2Y"
   #   username: "@ZDYZ2Y"
   #   enabled: true
 
-  # 以下频道不在 RSS 数据库中
   # - name: "DingyueJiedian8"
   #   username: "@DingyueJiedian8"
-  #   enabled: true
-
-  # - name: "Hanbaoyun666"
-  #   username: "@hanbaoyun666"
   #   enabled: true
 
   # - name: "V2Queen"
   #   username: "@v2queen"
   #   enabled: true
 
-  # 可添加更多频道 (需要频道 username, 非频道 ID)
+  # 可添加更多频道
   # - name: "MyChannel"
   #   username: "@my_channel"
   #   enabled: true
