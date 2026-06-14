@@ -65,6 +65,7 @@ jobs:
           TELEGRAM_API_ID: ${{ secrets.TELEGRAM_API_ID }}
           TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
           AURORA_TOKEN: ${{ secrets.AURORA_TOKEN }}
+          AURORA_GH_TOKEN: ${{ secrets.AURORA_GH_TOKEN }}
         run: python scripts/run.py --no-test
 
       - name: Test nodes with xray
@@ -74,6 +75,7 @@ jobs:
       - name: Regenerate subscriptions from tested nodes
         env:
           AURORA_TOKEN: ${{ secrets.AURORA_TOKEN }}
+          AURORA_GH_TOKEN: ${{ secrets.AURORA_GH_TOKEN }}
         run: python scripts/run.py --generate-only
 
       - name: Verify output
