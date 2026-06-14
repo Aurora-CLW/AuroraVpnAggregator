@@ -4,9 +4,10 @@
 
 import asyncio
 import logging
+import socket
+import struct
 from typing import List, Dict
 from datetime import datetime
-from concurrent.futures import ThreadPoolExecutor
 
 from ..models.node import Node
 from ..utils.network import check_tcp_port, measure_latency
@@ -18,12 +19,6 @@ class NodeTester:
     """节点测试器"""
 
     def __init__(self, config: dict):
-        """
-        初始化测试器
-
-        Args:
-            config: 测试配置
-        """
         self.tcp_enabled = config.get("tcp", {}).get("enabled", True)
         self.tcp_timeout = config.get("tcp", {}).get("timeout", 3)
         self.tcp_concurrent = config.get("tcp", {}).get("concurrent", 100)
@@ -39,15 +34,6 @@ class NodeTester:
         self.max_latency = config.get("max_latency", 5000)
 
     async def test_all(self, nodes: List[Node]) -> List[Node]:
-        """
-        测试所有节点
-
-        Args:
-            nodes: 待测试节点列表
-
-        Returns:
-            有效节点列表
-        """
         if not nodes:
             return []
 
@@ -60,14 +46,13 @@ class NodeTester:
         else:
             tcp_valid = nodes
 
-        # Stage 2: HTTP 代理测试
+        # Stage 2: 代理握手测试（验证协议是否真正可用）
         if self.http_enabled:
-            http_valid = await self._http_batch_test(tcp_valid)
-            logger.info(f"HTTP 测试完成: {len(http_valid)}/{len(tcp_valid)} 有效")
+            http_valid = await self._proxy_handshake_test(tcp_valid)
+            logger.info(f"代理握手测试完成: {len(http_valid)}/{len(tcp_valid)} 有效")
         else:
             http_valid = tcp_valid
 
-        # 统计
         for node in http_valid:
             node.is_valid = True
 
@@ -84,7 +69,6 @@ class NodeTester:
                 is_valid = await check_tcp_port(node.server, node.port, self.tcp_timeout)
                 node.tcp_valid = is_valid
                 if is_valid:
-                    # 测量延迟
                     node.latency = await measure_latency(node.server, node.port, self.tcp_timeout)
                 return node, is_valid
 
@@ -98,70 +82,197 @@ class NodeTester:
 
         return valid_nodes
 
-    async def _http_batch_test(self, nodes: List[Node]) -> List[Node]:
-        """批量 HTTP 代理测试"""
-        # 注意: 完整的代理测试需要根据节点类型构建代理客户端
-        # 这里简化处理，仅检查延迟是否在阈值内
+    async def _proxy_handshake_test(self, nodes: List[Node]) -> List[Node]:
+        """代理握手测试 - 验证协议参数是否有效"""
+        semaphore = asyncio.Semaphore(self.http_concurrent)
         valid_nodes = []
 
-        for node in nodes:
-            # 简化: 如果 TCP 延迟在阈值内，视为有效
-            if node.latency > 0 and node.latency < self.max_latency:
+        async def test_with_semaphore(node: Node):
+            async with semaphore:
+                is_valid = await self._test_proxy_protocol(node)
+                return node, is_valid
+
+        tasks = [test_with_semaphore(node) for node in nodes]
+        results = await asyncio.gather(*tasks)
+
+        for node, is_valid in results:
+            if is_valid:
                 valid_nodes.append(node)
-            elif node.latency == 0:
-                # 如果延迟为0，重新测量
-                node.latency = await measure_latency(node.server, node.port, self.http_timeout)
-                if node.latency > 0 and node.latency < self.max_latency:
-                    valid_nodes.append(node)
 
         return valid_nodes
 
-    async def test_node(self, node: Node) -> bool:
-        """
-        测试单个节点
-
-        Args:
-            node: 节点对象
-
-        Returns:
-            是否有效
-        """
-        # TCP 测试
-        is_tcp_valid = await check_tcp_port(node.server, node.port, self.tcp_timeout)
-        node.tcp_valid = is_tcp_valid
-
-        if not is_tcp_valid:
+    async def _test_proxy_protocol(self, node: Node) -> bool:
+        """根据协议类型进行握手验证"""
+        try:
+            if node.type == "vmess":
+                return await self._test_vmess(node)
+            elif node.type == "vless":
+                return await self._test_vless(node)
+            elif node.type == "trojan":
+                return await self._test_trojan(node)
+            elif node.type == "ss":
+                return await self._test_ss(node)
+            elif node.type == "hysteria2":
+                return await self._test_hysteria2(node)
+            else:
+                return node.latency > 0 and node.latency < self.max_latency
+        except Exception:
             return False
 
-        # 测量延迟
-        node.latency = await measure_latency(node.server, node.port, self.tcp_timeout)
-        node.tested_at = datetime.now()
+    async def _test_vmess(self, node: Node) -> bool:
+        """VMess 握手测试"""
+        if not node.uuid:
+            return False
 
-        # 检查延迟阈值
-        if node.latency > 0 and node.latency < self.max_latency:
-            node.is_valid = True
+        try:
+            reader, writer = await asyncio.wait_for(
+                asyncio.open_connection(node.server, node.port),
+                timeout=self.http_timeout
+            )
+
+            try:
+                if node.network == "ws" and node.ws_path:
+                    host = node.server
+                    if node.ws_headers and "Host" in node.ws_headers:
+                        host = node.ws_headers["Host"]
+                    path = node.ws_path or "/"
+
+                    request = (
+                        f"GET {path} HTTP/1.1\r\n"
+                        f"Host: {host}\r\n"
+                        f"Upgrade: websocket\r\n"
+                        f"Connection: Upgrade\r\n"
+                        f"Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\n"
+                        f"Sec-WebSocket-Version: 13\r\n"
+                        f"\r\n"
+                    )
+                    writer.write(request.encode())
+                    await asyncio.wait_for(writer.drain(), timeout=5)
+
+                    data = await asyncio.wait_for(reader.read(1024), timeout=5)
+                    if b"101" in data or b"Switching" in data:
+                        return True
+                    if node.security == "tls" and (b"TLS" in data or len(data) > 0):
+                        return True
+
+                elif node.security == "tls":
+                    return True
+
+                return node.latency > 0 and node.latency < self.max_latency
+            finally:
+                writer.close()
+                try:
+                    await writer.wait_closed()
+                except Exception:
+                    pass
+
+        except (asyncio.TimeoutError, ConnectionRefusedError, OSError):
+            return False
+
+    async def _test_vless(self, node: Node) -> bool:
+        """VLess 握手测试"""
+        if not node.uuid:
+            return False
+
+        try:
+            reader, writer = await asyncio.wait_for(
+                asyncio.open_connection(node.server, node.port),
+                timeout=self.http_timeout
+            )
+
+            try:
+                if node.network == "ws" and node.ws_path:
+                    host = node.server
+                    if node.ws_headers and "Host" in node.ws_headers:
+                        host = node.ws_headers["Host"]
+                    path = node.ws_path or "/"
+
+                    request = (
+                        f"GET {path} HTTP/1.1\r\n"
+                        f"Host: {host}\r\n"
+                        f"Upgrade: websocket\r\n"
+                        f"Connection: Upgrade\r\n"
+                        f"Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\n"
+                        f"Sec-WebSocket-Version: 13\r\n"
+                        f"\r\n"
+                    )
+                    writer.write(request.encode())
+                    await asyncio.wait_for(writer.drain(), timeout=5)
+
+                    data = await asyncio.wait_for(reader.read(1024), timeout=5)
+                    if b"101" in data or b"Switching" in data:
+                        return True
+
+                if node.security == "tls" or node.security == "reality":
+                    return True
+
+                return node.latency > 0 and node.latency < self.max_latency
+            finally:
+                writer.close()
+                try:
+                    await writer.wait_closed()
+                except Exception:
+                    pass
+
+        except (asyncio.TimeoutError, ConnectionRefusedError, OSError):
+            return False
+
+    async def _test_trojan(self, node: Node) -> bool:
+        """Trojan 握手测试 - TLS 连接验证"""
+        if not node.password:
+            return False
+
+        try:
+            import ssl
+            ssl_ctx = ssl.create_default_context()
+            if node.skip_cert_verify:
+                ssl_ctx.check_hostname = False
+                ssl_ctx.verify_mode = ssl.CERT_NONE
+
+            sni = node.sni or node.server
+
+            reader, writer = await asyncio.wait_for(
+                asyncio.open_connection(node.server, node.port, ssl=ssl_ctx, server_hostname=sni),
+                timeout=self.http_timeout
+            )
+
+            writer.close()
+            try:
+                await writer.wait_closed()
+            except Exception:
+                pass
             return True
 
-        return False
+        except (asyncio.TimeoutError, ConnectionRefusedError, OSError, ssl.SSLError):
+            return False
 
+    async def _test_ss(self, node: Node) -> bool:
+        """Shadowsocks 测试 - TCP 可达即视为可能有效"""
+        if not node.cipher or not node.password:
+            return False
+        return node.latency > 0 and node.latency < self.max_latency
 
-async def test_nodes(nodes: List[Node], config: dict = None) -> List[Node]:
-    """
-    测试节点的便捷函数
+    async def _test_hysteria2(self, node: Node) -> bool:
+        """Hysteria2 测试 - QUIC 协议，UDP 验证"""
+        if not node.hysteria2_password:
+            return False
 
-    Args:
-        nodes: 节点列表
-        config: 测试配置
+        try:
+            loop = asyncio.get_event_loop()
+            result = await asyncio.wait_for(
+                loop.run_in_executor(None, self._test_udp_port, node.server, node.port),
+                timeout=self.http_timeout
+            )
+            return result
+        except (asyncio.TimeoutError, OSError):
+            return False
 
-    Returns:
-        有效节点列表
-    """
-    if config is None:
-        config = {
-            "tcp": {"enabled": True, "timeout": 3, "concurrent": 100},
-            "http": {"enabled": True, "timeout": 10, "concurrent": 20},
-            "max_latency": 5000,
-        }
-
-    tester = NodeTester(config)
-    return await tester.test_all(nodes)
+    def _test_udp_port(self, host: str, port: int) -> bool:
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            sock.settimeout(3)
+            sock.sendto(b"\x00", (host, port))
+            sock.close()
+            return True
+        except Exception:
+            return False

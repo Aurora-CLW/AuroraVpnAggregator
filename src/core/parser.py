@@ -73,9 +73,8 @@ class Parser:
     def _is_base64(self, content: str) -> bool:
         """检测是否为 Base64 编码"""
         try:
-            # 尝试解码
-            decoded = base64.b64decode(content).decode("utf-8")
-            # 检查解码后是否包含节点 URL
+            cleaned = content.strip().replace("\n", "").replace("\r", "").replace(" ", "")
+            decoded = base64.b64decode(cleaned, validate=False).decode("utf-8")
             if any(proto in decoded for proto in ["vmess://", "vless://", "trojan://", "ss://"]):
                 return True
         except:
@@ -191,9 +190,11 @@ class Parser:
         nodes = []
 
         try:
-            # 解码 Base64
-            decoded = base64.b64decode(content).decode("utf-8")
-            # 按行分割
+            cleaned = content.strip().replace("\n", "").replace("\r", "").replace(" ", "")
+            padding = 4 - len(cleaned) % 4
+            if padding != 4:
+                cleaned += "=" * padding
+            decoded = base64.b64decode(cleaned, validate=False).decode("utf-8")
             lines = decoded.strip().split("\n")
 
             for line in lines:

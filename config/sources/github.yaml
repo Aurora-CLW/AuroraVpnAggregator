@@ -34,3 +34,9 @@ sources:
     url: "https://raw.githubusercontent.com/barry-far/V2ray-Config/main/All_Configs_Sub.txt"
     format: urls
     enabled: true
+
+  # 6. 自定义订阅源
+  - name: "peige_dapei"
+    url: "https://peige.dpkj.qzz.io/dapei"
+    format: base64
+    enabled: true
