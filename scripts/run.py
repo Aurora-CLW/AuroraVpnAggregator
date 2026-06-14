@@ -93,7 +93,17 @@ class AuroraAggregator:
                 logger.info(f"订阅源已禁用: {source_file.name}")
                 continue
 
-            # 创建处理器
+            # Telegram 等复合类型: 整个配置作为一个处理器
+            if source_type in ("telegram",):
+                handler = get_handler(source_type, source_config)
+                try:
+                    nodes = await handler.fetch()
+                    all_nodes.extend(nodes)
+                except Exception as e:
+                    logger.error(f"处理订阅源失败 [{source_file.name}]: {e}")
+                continue
+
+            # GitHub 等类型: sources 子列表中每个源一个处理器
             sources = source_config.get("sources", [])
             for src in sources:
                 if not src.get("enabled", True):
