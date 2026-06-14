@@ -649,7 +649,7 @@ class TelegramHandler(BaseHandler):
     def _clean_sub_url(self, raw_url: str) -> Optional[dict]:
         """清理单个 URL 并返回 {"url": str, "format_hint": str} 或 None"""
         url = re.sub(r'[^\x21-\x7E]+.*$', '', raw_url)
-        url = re.sub(r'[,;。，；）》】]+$', '', url)
+        url = re.sub(r'[),;。，；）》】]+$', '', url)
         # 只接受绝对 https:// URL (排除相对路径, //cdn 等)
         if not url or not url.startswith("https://"):
             return None

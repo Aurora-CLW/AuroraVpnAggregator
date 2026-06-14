@@ -47,10 +47,10 @@ channels:
     username: "@freeVPNjd"
     enabled: true
 
-  # hanbaoyun666 — RSS 可用但限流, Web 翻页备用
+  # hanbaoyun666 — 全是机场注册广告, 无有效订阅, 已禁用
   - name: "Hanbaoyun666"
     username: "@hanbaoyun666"
-    enabled: true
+    enabled: false
 
   # go4sharing — 消息中含超链接指向订阅页面, 自动跟踪
   - name: "go4sharing"
