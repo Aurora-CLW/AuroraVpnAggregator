@@ -242,6 +242,7 @@ class AuroraAggregator:
         """复制输出到 docs 目录（安全混淆路径）"""
         import shutil
         import hashlib
+        import json
 
         docs_dir = Path("docs")
         docs_dir.mkdir(parents=True, exist_ok=True)
