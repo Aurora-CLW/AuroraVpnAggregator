@@ -1,53 +1,33 @@
 # Telegram 频道订阅源配置
-# 支持三种模式:
-#   bot:     通过 Bot API + Web 抓取 (推荐, 只需 Bot Token)
-#   web:     通过 t.me/s/ 预览页抓取 (无需任何配置, 但 GitHub Actions 中可能被屏蔽)
-#   telethon: 完整 Telegram 客户端 (需要 api_id/api_hash)
+# 无需任何认证！通过预览页抓取公开频道消息
+# 自动尝试多个镜像: telegram.dog (推荐) → t.me (备用)
 
 type: telegram
 enabled: true
-mode: bot  # bot (推荐) / web / telethon
+mode: web  # web (无需认证, 推荐) / telethon (需要 api_id/api_hash)
 
-# Bot 模式配置 — 在 @BotFather 创建 Bot 获取 Token (免费, 1分钟)
-# 1. Telegram 搜索 @BotFather
-# 2. 发送 /newbot
-# 3. 按提示设置名称
-# 4. 获得以数字结尾的 Bot Token
-# 5. 将 Bot 加入目标频道 (作为管理员)
-# 优先使用环境变量, 也可直接填写 (仓库 Public, 请用环境变量)
-bot_token: ${TELEGRAM_BOT_TOKEN}
-
-# Telethon 模式配置 (mode: telethon 时需要)
-# 获取: https://my.telegram.org/apps (经常 ERROR, 不推荐)
+# Telethon 模式配置 (可选, web 模式不需要)
 api_id: ${TELEGRAM_API_ID}
 api_hash: ${TELEGRAM_API_HASH}
 
 channels:
-  # 公开频道 — Bot 需要是频道成员才能读取消息
-  # 将 Bot 添加为频道管理员 (否则无法读取消息)
-
   - name: "V2RayTz"
     username: "@v2raytz"
-    max_messages: 50
     enabled: true
 
   - name: "FreeV2rays"
     username: "@freev2rays"
-    max_messages: 50
     enabled: true
 
   - name: "VPNGate"
     username: "@vpngatech"
-    max_messages: 50
     enabled: true
 
   - name: "V2RayNGn"
     username: "@v2rayngn"
-    max_messages: 50
     enabled: true
 
-  # 私有频道示例 (需要 Telethon 模式 + Bot 在频道中)
-  # - name: "PrivateChannel"
-  #   channel_id: -1001234567890
-  #   max_messages: 100
+  # 你自己的频道或其他频道, 随时添加
+  # - name: "MyChannel"
+  #   username: "@my_channel"
   #   enabled: true
