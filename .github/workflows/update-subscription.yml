@@ -11,6 +11,11 @@ on:
       - 'config/**'
       - 'data/sources/**'
 
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
 jobs:
   update:
     runs-on: ubuntu-latest
@@ -51,20 +56,24 @@ jobs:
             cat output/stats.json >> $GITHUB_STEP_SUMMARY
           fi
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs
-          publish_branch: gh-pages
-          force_orphan: true
+          path: ./docs
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
 
       - name: Create Release
         if: success()
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v${{ steps.date.outputs.date || 'latest' }}
-          name: Subscription Update ${{ github.event.head_commit.message || 'Auto Update' }}
+          tag_name: v${{ github.run_number }}
+          name: Subscription Update #${{ github.run_number }}
           files: |
             output/clash.yaml
             output/v2ray.txt
@@ -77,15 +86,8 @@ jobs:
 
             ### 订阅地址
 
-            - Clash: `https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/clash.yaml`
-            - V2Ray: `https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/v2ray.txt`
-            - Sing-box: `https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/singbox.json`
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Clean old releases
-        uses: dev-drprasad/delete-older-releases@v0.3.2
-        with:
-          keep_latest: 30
+            - Clash: `https://aurora-clw.github.io/AuroraVpnAggregator/clash.yaml`
+            - V2Ray: `https://aurora-clw.github.io/AuroraVpnAggregator/v2ray.txt`
+            - Sing-box: `https://aurora-clw.github.io/AuroraVpnAggregator/singbox.json`
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
