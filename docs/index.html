@@ -91,7 +91,8 @@
             display: flex; align-items: center; gap: 12px; border: 1px solid #eee;
         }
         .source-item.disabled { opacity: 0.5; }
-        .source-info { flex: 1; }
+        .source-item.editing { background: #fffdf0; border-color: #ffc107; }
+        .source-info { flex: 1; min-width: 0; }
         .source-name { font-weight: 600; color: #333; margin-bottom: 4px; }
         .source-url { font-size: 12px; color: #888; word-break: break-all; }
         .source-format {
@@ -104,18 +105,32 @@
         }
         .source-type-tag.github { background: #24292e; color: white; }
         .source-type-tag.telegram { background: #0088cc; color: white; }
-        .source-actions { display: flex; gap: 8px; }
+        .source-actions { display: flex; gap: 6px; flex-shrink: 0; }
         .source-toggle {
             padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer;
             font-size: 13px; transition: background 0.3s;
         }
         .source-toggle.on { background: #28a745; color: white; }
         .source-toggle.off { background: #dc3545; color: white; }
-        .source-delete {
-            padding: 6px 12px; background: #6c757d; color: white; border: none;
-            border-radius: 6px; cursor: pointer; font-size: 13px;
+        .source-btn {
+            padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer;
+            font-size: 13px; color: white; transition: background 0.3s;
         }
-        .source-delete:hover { background: #dc3545; }
+        .source-btn.edit { background: #ffc107; color: #333; }
+        .source-btn.edit:hover { background: #e0a800; }
+        .source-btn.delete { background: #6c757d; }
+        .source-btn.delete:hover { background: #dc3545; }
+        .source-btn.save { background: #28a745; }
+        .source-btn.cancel { background: #6c757d; }
+
+        /* 编辑模式输入框 */
+        .edit-row { display: flex; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; align-items: center; }
+        .edit-row label { font-size: 12px; color: #666; min-width: 50px; flex-shrink: 0; }
+        .edit-row input, .edit-row select {
+            flex: 1; padding: 6px 10px; border: 1px solid #ddd; border-radius: 6px;
+            font-size: 13px; outline: none; min-width: 0;
+        }
+        .edit-row input:focus, .edit-row select:focus { border-color: #667eea; }
 
         /* 添加源表单 */
         .add-source-form {
@@ -241,7 +256,7 @@
                     <h2>订阅源管理</h2>
                     <div class="source-hint">
                         <b>启用/禁用</b>: 控制下次更新时是否拉取该源。禁用后该源不会被获取节点，但配置保留。<br>
-                        <b>定时更新</b>: 每 6 小时自动运行（GitHub Actions cron），无需手动操作。<br>
+                        <b>定时更新</b>: 每 15 分钟自动运行（GitHub Actions cron），无需手动操作。<br>
                         <b>手动同步</b>: 点击下方按钮跳转到 GitHub Actions 页面，登录后点击 "Run workflow" 即可。
                     </div>
 
@@ -302,7 +317,7 @@
                             前往 GitHub 同步
                         </a>
                         <div class="sync-info">
-                            自动更新: 每 6 小时 (0:00, 6:00, 12:00, 18:00 UTC)<br>
+                            自动更新: 每 15 分钟 (GitHub Actions cron)<br>
                             手动更新: 点击上方按钮 → 登录 GitHub → 点击 "Run workflow" → "Run workflow"
                         </div>
                     </div>
@@ -321,7 +336,7 @@
         </div>
 
         <div class="footer">
-            <p>每 6 小时自动更新 | GitHub Actions 驱动</p>
+            <p>每 15 分钟自动更新 | GitHub Actions 驱动</p>
         </div>
     </div>
 
@@ -334,7 +349,9 @@
 
         let currentSources = [];
         let currentTgChannels = [];
-        let ghTokenReady = null; // Promise that resolves when token is available
+        let editingIndex = -1; // 当前正在编辑的源索引, -1 = 无
+        let editingType = '';  // 'github' | 'telegram'
+        let ghTokenReady = null;
 
         async function sha256(str) {
             const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
@@ -345,10 +362,7 @@
             const saved = sessionStorage.getItem(TOKEN_KEY);
             if (saved) {
                 const hash = await sha256(saved);
-                if (hash === AUTH_HASH) {
-                    showContent(saved);
-                    return;
-                }
+                if (hash === AUTH_HASH) { showContent(saved); return; }
             }
             showAuth();
         }
@@ -362,29 +376,22 @@
             return document.getElementById('github-token').value.trim() || sessionStorage.getItem(GH_TOKEN_KEY) || '';
         }
 
-        // 从私有仓库读取文件 (先尝试 raw, 失败则用 GitHub API)
+        // 从私有仓库读取文件
         async function fetchRepoFile(path) {
-            // 1. 先尝试 raw URL (公开仓库可用)
             try {
-                const resp = await fetch(`https://raw.githubusercontent.com/${REPO}/main/${path}`);
-                if (resp.ok) {
-                    return await resp.text();
-                }
-            } catch (e) { /* fall through */ }
-
-            // 2. 用 GitHub API (私有仓库, 需要 token)
+                const resp = await fetch(`https://raw.githubusercontent.com/${REPO}/main/${path}`, {cache: 'no-store'});
+                if (resp.ok) return await resp.text();
+            } catch (e) {}
             const token = getGhToken();
             if (!token) return null;
             try {
-                const resp = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, {
-                    headers: { 'Authorization': 'token ' + token }
+                const resp = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}?t=${Date.now()}`, {
+                    headers: { 'Authorization': 'token ' + token, 'If-None-Match': '' }
                 });
                 if (!resp.ok) return null;
                 const data = await resp.json();
                 return decodeURIComponent(escape(atob(data.content)));
-            } catch (e) {
-                return null;
-            }
+            } catch (e) { return null; }
         }
 
         async function showContent(token) {
@@ -398,7 +405,6 @@
             document.getElementById('v2ray-url').value = baseUrl + subPath + '/v2ray.txt';
             document.getElementById('singbox-url').value = baseUrl + subPath + '/singbox.json';
 
-            // 加载统计 & gh_token
             let tokenResolve;
             ghTokenReady = new Promise(r => { tokenResolve = r; });
 
@@ -424,15 +430,12 @@
                     tokenResolve();
                 });
 
-            // 等待 token 就绪后再加载源 (需要 token 访问私有仓库)
             await ghTokenReady;
             loadSources();
             loadTgChannels();
 
             const ghToken = sessionStorage.getItem(GH_TOKEN_KEY);
-            if (ghToken) {
-                document.getElementById('github-token').value = ghToken;
-            }
+            if (ghToken) document.getElementById('github-token').value = ghToken;
         }
 
         function renderStats(data) {
@@ -457,7 +460,6 @@
             document.getElementById('tab-' + name).classList.remove('hidden');
         };
 
-        // ── 通用: 显示操作反馈 ──
         function showFeedback(msg, isError) {
             const el = document.getElementById('sync-status');
             el.textContent = msg;
@@ -467,184 +469,226 @@
             el._timer = setTimeout(() => { el.style.display = 'none'; }, 5000);
         }
 
-        // ── GitHub 源管理 ──
+        function esc(str) {
+            const div = document.createElement('div');
+            div.textContent = str || '';
+            return div.innerHTML;
+        }
+
+        // ════════════════════════════════════════════
+        // GitHub 源管理
+        // ════════════════════════════════════════════
 
         async function loadSources() {
             const yaml = await fetchRepoFile('config/sources/github.yaml');
-            if (yaml) {
-                currentSources = parseYamlSources(yaml);
-            } else {
-                currentSources = [];
-            }
+            currentSources = yaml ? parseYamlSources(yaml) : [];
             renderSources();
         }
 
         function parseYamlSources(yaml) {
             const sources = [];
             const lines = yaml.split('\n');
-            let currentSource = null;
+            let cur = null;
             for (const line of lines) {
-                const trimmed = line.trim();
-                if (trimmed.startsWith('- name:')) {
-                    if (currentSource) sources.push(currentSource);
-                    currentSource = {
-                        name: trimmed.replace('- name:', '').trim().replace(/"/g, ''),
-                        url: '', format: 'auto', enabled: true
-                    };
-                } else if (currentSource) {
-                    if (trimmed.startsWith('url:')) {
-                        currentSource.url = trimmed.replace('url:', '').trim().replace(/"/g, '');
-                    } else if (trimmed.startsWith('format:')) {
-                        currentSource.format = trimmed.replace('format:', '').trim();
-                    } else if (trimmed.startsWith('enabled:')) {
-                        currentSource.enabled = trimmed.replace('enabled:', '').trim() === 'true';
-                    }
+                const t = line.trim();
+                if (t.startsWith('- name:')) {
+                    if (cur) sources.push(cur);
+                    cur = { name: t.replace('- name:', '').trim().replace(/"/g, ''), url: '', format: 'auto', enabled: true };
+                } else if (cur) {
+                    if (t.startsWith('url:')) cur.url = t.replace('url:', '').trim().replace(/"/g, '');
+                    else if (t.startsWith('format:')) cur.format = t.replace('format:', '').trim();
+                    else if (t.startsWith('enabled:')) cur.enabled = t.replace('enabled:', '').trim() === 'true';
                 }
             }
-            if (currentSource) sources.push(currentSource);
+            if (cur) sources.push(cur);
             return sources;
         }
 
         function renderSources() {
-            const container = document.getElementById('source-list');
-            if (!currentSources.length) {
-                container.innerHTML = '<p style="color:#999;">暂无 GitHub 订阅源</p>';
-                return;
-            }
-            container.innerHTML = currentSources.map((s, i) => `
+            const c = document.getElementById('source-list');
+            if (!currentSources.length) { c.innerHTML = '<p style="color:#999;">暂无 GitHub 订阅源</p>'; return; }
+            c.innerHTML = currentSources.map((s, i) => {
+                const isEditing = editingType === 'github' && editingIndex === i;
+                if (isEditing) return renderGhEditForm(s, i);
+                return `
                 <div class="source-item ${s.enabled ? '' : 'disabled'}">
                     <div class="source-info">
                         <div class="source-name"><span class="source-type-tag github">GH</span>${esc(s.name)} <span class="source-format">${esc(s.format)}</span></div>
                         <div class="source-url">${esc(s.url)}</div>
                     </div>
                     <div class="source-actions">
-                        <button class="source-toggle ${s.enabled ? 'on' : 'off'}"
-                                onclick="toggleSource(${i})">${s.enabled ? '启用' : '禁用'}</button>
-                        <button class="source-delete" onclick="deleteSource(${i})">删除</button>
+                        <button class="source-toggle ${s.enabled ? 'on' : 'off'}" onclick="toggleSource(${i})">${s.enabled ? '启用' : '禁用'}</button>
+                        <button class="source-btn edit" onclick="editSource(${i})">编辑</button>
+                        <button class="source-btn delete" onclick="deleteSource(${i})">删除</button>
                     </div>
-                </div>
-            `).join('');
+                </div>`;
+            }).join('');
         }
 
-        window.toggleSource = async function(index) {
-            const prev = currentSources[index].enabled;
-            currentSources[index].enabled = !prev;
+        function renderGhEditForm(s, i) {
+            return `
+            <div class="source-item editing">
+                <div class="source-info" style="width:100%">
+                    <div class="edit-row"><label>名称</label><input type="text" id="edit-gh-name" value="${esc(s.name)}"></div>
+                    <div class="edit-row"><label>URL</label><input type="text" id="edit-gh-url" value="${esc(s.url)}" style="font-size:12px;"></div>
+                    <div class="edit-row"><label>格式</label>
+                        <select id="edit-gh-format">
+                            <option value="base64" ${s.format==='base64'?'selected':''}>Base64</option>
+                            <option value="clash" ${s.format==='clash'?'selected':''}>Clash YAML</option>
+                            <option value="urls" ${s.format==='urls'?'selected':''}>URLs 列表</option>
+                            <option value="auto" ${s.format==='auto'?'selected':''}>自动检测</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="source-actions" style="flex-direction:column;">
+                    <button class="source-btn save" onclick="saveEditGh(${i})">保存</button>
+                    <button class="source-btn cancel" onclick="cancelEdit()">取消</button>
+                </div>
+            </div>`;
+        }
+
+        window.editSource = function(i) { editingIndex = i; editingType = 'github'; renderSources(); };
+        window.editTgChannel = function(i) { editingIndex = i; editingType = 'telegram'; renderTgChannels(); };
+        window.cancelEdit = function() { editingIndex = -1; editingType = ''; renderSources(); renderTgChannels(); };
+
+        window.saveEditGh = async function(i) {
+            const prev = {...currentSources[i]};
+            currentSources[i].name = document.getElementById('edit-gh-name').value.trim() || prev.name;
+            currentSources[i].url = document.getElementById('edit-gh-url').value.trim() || prev.url;
+            currentSources[i].format = document.getElementById('edit-gh-format').value;
+            editingIndex = -1; editingType = '';
             renderSources();
             const ok = await saveSourcesToGithub();
             if (!ok) {
-                currentSources[index].enabled = prev;
-                renderSources();
-                showFeedback('保存失败, 已恢复原状态', true);
+                Object.assign(currentSources[i], prev);
+                showFeedback('保存失败, 已恢复', true);
             } else {
-                showFeedback('配置已保存', false);
+                showFeedback('已更新: ' + currentSources[i].name, false);
             }
         };
 
-        window.deleteSource = async function(index) {
-            if (!confirm('确定删除源 ' + currentSources[index].name + '?')) return;
-            const removed = currentSources.splice(index, 1)[0];
+        window.saveEditTg = async function(i) {
+            const prev = {...currentTgChannels[i]};
+            currentTgChannels[i].name = document.getElementById('edit-tg-name').value.trim() || prev.name;
+            currentTgChannels[i].username = document.getElementById('edit-tg-username').value.trim() || prev.username;
+            editingIndex = -1; editingType = '';
+            renderTgChannels();
+            const ok = await saveTgChannelsToGithub();
+            if (!ok) {
+                Object.assign(currentTgChannels[i], prev);
+                showFeedback('保存失败, 已恢复', true);
+            } else {
+                showFeedback('已更新: ' + currentTgChannels[i].name, false);
+            }
+        };
+
+        window.toggleSource = async function(i) {
+            const prev = currentSources[i].enabled;
+            currentSources[i].enabled = !prev;
             renderSources();
             const ok = await saveSourcesToGithub();
-            if (!ok) {
-                currentSources.splice(index, 0, removed);
-                renderSources();
-                showFeedback('保存失败, 已恢复原状态', true);
-            } else {
-                showFeedback('已删除: ' + removed.name, false);
-            }
+            if (!ok) { currentSources[i].enabled = prev; renderSources(); showFeedback('保存失败', true); }
+            else showFeedback('配置已保存', false);
         };
 
-        // ── Telegram 频道管理 ──
+        window.deleteSource = async function(i) {
+            if (!confirm('确定删除源 ' + currentSources[i].name + '?')) return;
+            const removed = currentSources.splice(i, 1)[0];
+            editingIndex = -1; editingType = '';
+            renderSources();
+            const ok = await saveSourcesToGithub();
+            if (!ok) { currentSources.splice(i, 0, removed); renderSources(); showFeedback('删除失败, 已恢复', true); }
+            else showFeedback('已删除: ' + removed.name, false);
+        };
+
+        // ════════════════════════════════════════════
+        // Telegram 频道管理
+        // ════════════════════════════════════════════
 
         async function loadTgChannels() {
             const yaml = await fetchRepoFile('config/sources/telegram.yaml');
-            if (yaml) {
-                currentTgChannels = parseTgYaml(yaml);
-            } else {
-                currentTgChannels = [];
-            }
+            currentTgChannels = yaml ? parseTgYaml(yaml) : [];
             renderTgChannels();
         }
 
         function parseTgYaml(yaml) {
             const channels = [];
             const lines = yaml.split('\n');
-            let current = null;
-            let inChannels = false;
+            let cur = null, inCh = false;
             for (const line of lines) {
-                const trimmed = line.trim();
-                if (trimmed === 'channels:') { inChannels = true; continue; }
-                if (!inChannels) continue;
-                // 跳过空行和纯注释行
-                if (trimmed === '' || trimmed.startsWith('#')) continue;
-                if (trimmed.startsWith('- name:')) {
-                    if (current) channels.push(current);
-                    current = {
-                        name: trimmed.replace('- name:', '').trim().replace(/"/g, ''),
-                        username: '', enabled: true
-                    };
-                } else if (current) {
-                    if (trimmed.startsWith('username:')) {
-                        current.username = trimmed.replace('username:', '').trim().replace(/"/g, '');
-                    } else if (trimmed.startsWith('enabled:')) {
-                        current.enabled = trimmed.replace('enabled:', '').trim() === 'true';
-                    }
+                const t = line.trim();
+                if (t === 'channels:') { inCh = true; continue; }
+                if (!inCh) continue;
+                if (t === '' || t.startsWith('#')) continue;
+                if (t.startsWith('- name:')) {
+                    if (cur) channels.push(cur);
+                    cur = { name: t.replace('- name:', '').trim().replace(/"/g, ''), username: '', enabled: true };
+                } else if (cur) {
+                    if (t.startsWith('username:')) cur.username = t.replace('username:', '').trim().replace(/"/g, '');
+                    else if (t.startsWith('enabled:')) cur.enabled = t.replace('enabled:', '').trim() === 'true';
                 }
             }
-            if (current) channels.push(current);
+            if (cur) channels.push(cur);
             return channels;
         }
 
         function renderTgChannels() {
-            const container = document.getElementById('tg-channel-list');
-            if (!currentTgChannels.length) {
-                container.innerHTML = '<p style="color:#999;">暂无 Telegram 频道</p>';
-                return;
-            }
-            container.innerHTML = currentTgChannels.map((ch, i) => `
+            const c = document.getElementById('tg-channel-list');
+            if (!currentTgChannels.length) { c.innerHTML = '<p style="color:#999;">暂无 Telegram 频道</p>'; return; }
+            c.innerHTML = currentTgChannels.map((ch, i) => {
+                const isEditing = editingType === 'telegram' && editingIndex === i;
+                if (isEditing) return renderTgEditForm(ch, i);
+                return `
                 <div class="source-item ${ch.enabled ? '' : 'disabled'}">
                     <div class="source-info">
                         <div class="source-name"><span class="source-type-tag telegram">TG</span>${esc(ch.name)}</div>
                         <div class="source-url">${esc(ch.username)}</div>
                     </div>
                     <div class="source-actions">
-                        <button class="source-toggle ${ch.enabled ? 'on' : 'off'}"
-                                onclick="toggleTgChannel(${i})">${ch.enabled ? '启用' : '禁用'}</button>
-                        <button class="source-delete" onclick="deleteTgChannel(${i})">删除</button>
+                        <button class="source-toggle ${ch.enabled ? 'on' : 'off'}" onclick="toggleTgChannel(${i})">${ch.enabled ? '启用' : '禁用'}</button>
+                        <button class="source-btn edit" onclick="editTgChannel(${i})">编辑</button>
+                        <button class="source-btn delete" onclick="deleteTgChannel(${i})">删除</button>
                     </div>
-                </div>
-            `).join('');
+                </div>`;
+            }).join('');
         }
 
-        window.toggleTgChannel = async function(index) {
-            const prev = currentTgChannels[index].enabled;
-            currentTgChannels[index].enabled = !prev;
+        function renderTgEditForm(ch, i) {
+            return `
+            <div class="source-item editing">
+                <div class="source-info" style="width:100%">
+                    <div class="edit-row"><label>名称</label><input type="text" id="edit-tg-name" value="${esc(ch.name)}"></div>
+                    <div class="edit-row"><label>用户名</label><input type="text" id="edit-tg-username" value="${esc(ch.username)}" placeholder="@channel_name"></div>
+                </div>
+                <div class="source-actions" style="flex-direction:column;">
+                    <button class="source-btn save" onclick="saveEditTg(${i})">保存</button>
+                    <button class="source-btn cancel" onclick="cancelEdit()">取消</button>
+                </div>
+            </div>`;
+        }
+
+        window.toggleTgChannel = async function(i) {
+            const prev = currentTgChannels[i].enabled;
+            currentTgChannels[i].enabled = !prev;
             renderTgChannels();
             const ok = await saveTgChannelsToGithub();
-            if (!ok) {
-                currentTgChannels[index].enabled = prev;
-                renderTgChannels();
-                showFeedback('保存失败, 已恢复原状态', true);
-            } else {
-                showFeedback('配置已保存', false);
-            }
+            if (!ok) { currentTgChannels[i].enabled = prev; renderTgChannels(); showFeedback('保存失败', true); }
+            else showFeedback('配置已保存', false);
         };
 
-        window.deleteTgChannel = async function(index) {
-            if (!confirm('确定删除频道 ' + currentTgChannels[index].name + '?')) return;
-            const removed = currentTgChannels.splice(index, 1)[0];
+        window.deleteTgChannel = async function(i) {
+            if (!confirm('确定删除频道 ' + currentTgChannels[i].name + '?')) return;
+            const removed = currentTgChannels.splice(i, 1)[0];
+            editingIndex = -1; editingType = '';
             renderTgChannels();
             const ok = await saveTgChannelsToGithub();
-            if (!ok) {
-                currentTgChannels.splice(index, 0, removed);
-                renderTgChannels();
-                showFeedback('保存失败, 已恢复原状态', true);
-            } else {
-                showFeedback('已删除: ' + removed.name, false);
-            }
+            if (!ok) { currentTgChannels.splice(i, 0, removed); renderTgChannels(); showFeedback('删除失败, 已恢复', true); }
+            else showFeedback('已删除: ' + removed.name, false);
         };
 
-        // ── 添加源 ──
+        // ════════════════════════════════════════════
+        // 添加源
+        // ════════════════════════════════════════════
 
         window.onSourceTypeChange = function() {
             const type = document.getElementById('new-source-type').value;
@@ -662,12 +706,7 @@
                 if (!name || !url) { alert('请填写名称和URL'); return; }
                 currentSources.push({ name, url, format, enabled: true });
                 ok = await saveSourcesToGithub();
-                if (!ok) {
-                    currentSources.pop();
-                    renderSources();
-                    showFeedback('添加失败', true);
-                    return;
-                }
+                if (!ok) { currentSources.pop(); renderSources(); showFeedback('添加失败', true); return; }
                 renderSources();
                 document.getElementById('new-source-name').value = '';
                 document.getElementById('new-source-url').value = '';
@@ -677,12 +716,7 @@
                 if (!name || !username) { alert('请填写频道名称和 @username'); return; }
                 currentTgChannels.push({ name, username, enabled: true });
                 ok = await saveTgChannelsToGithub();
-                if (!ok) {
-                    currentTgChannels.pop();
-                    renderTgChannels();
-                    showFeedback('添加失败', true);
-                    return;
-                }
+                if (!ok) { currentTgChannels.pop(); renderTgChannels(); showFeedback('添加失败', true); return; }
                 renderTgChannels();
                 document.getElementById('new-tg-name').value = '';
                 document.getElementById('new-tg-username').value = '';
@@ -690,51 +724,43 @@
             showFeedback('已添加', false);
         };
 
-        // ── 保存到 GitHub (返回 true/false 表示成功/失败) ──
+        // ════════════════════════════════════════════
+        // 保存到 GitHub (带 SHA 重试)
+        // ════════════════════════════════════════════
 
         async function saveSourcesToGithub() {
             const ghToken = getGhToken();
-            if (!ghToken) {
-                showFeedback('请先输入 GitHub Token', true);
-                return false;
-            }
+            if (!ghToken) { showFeedback('请先输入 GitHub Token', true); return false; }
             sessionStorage.setItem(GH_TOKEN_KEY, ghToken);
-            const yaml = generateSourcesYaml();
-            return await saveFileToGithub('config/sources/github.yaml', yaml, 'chore: update GitHub sources via web UI');
+            return await saveFileToGithub('config/sources/github.yaml', generateSourcesYaml(), 'chore: update GitHub sources via web UI');
         }
 
         async function saveTgChannelsToGithub() {
             const ghToken = getGhToken();
-            if (!ghToken) {
-                showFeedback('请先输入 GitHub Token', true);
-                return false;
-            }
+            if (!ghToken) { showFeedback('请先输入 GitHub Token', true); return false; }
             sessionStorage.setItem(GH_TOKEN_KEY, ghToken);
-            const yaml = generateTgYaml();
-            return await saveFileToGithub('config/sources/telegram.yaml', yaml, 'chore: update Telegram channels via web UI');
+            return await saveFileToGithub('config/sources/telegram.yaml', generateTgYaml(), 'chore: update Telegram channels via web UI');
         }
 
-        async function saveFileToGithub(path, content, message) {
+        async function saveFileToGithub(path, content, message, retryCount) {
+            retryCount = retryCount || 0;
             const ghToken = getGhToken();
             try {
-                // 获取当前文件 SHA
-                const resp = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, {
-                    headers: { 'Authorization': 'token ' + ghToken }
+                // 获取最新 SHA (加 cache-busting)
+                const getResp = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}?t=${Date.now()}`, {
+                    headers: { 'Authorization': 'token ' + ghToken, 'If-None-Match': '' }
                 });
-                if (!resp.ok) {
-                    const err = await resp.json();
-                    throw new Error(err.message || '获取文件失败 (HTTP ' + resp.status + ')');
+                if (!getResp.ok) {
+                    const err = await getResp.json();
+                    throw new Error('读取失败: ' + (err.message || 'HTTP ' + getResp.status));
                 }
-                const data = await resp.json();
-                const sha = data.sha;
+                const fileData = await getResp.json();
+                const sha = fileData.sha;
 
-                // 更新文件
-                const updateResp = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, {
+                // PUT 更新文件
+                const putResp = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, {
                     method: 'PUT',
-                    headers: {
-                        'Authorization': 'token ' + ghToken,
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Authorization': 'token ' + ghToken, 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         message: message,
                         content: btoa(unescape(encodeURIComponent(content))),
@@ -742,9 +768,15 @@
                     })
                 });
 
-                if (updateResp.ok) return true;
-                const err = await updateResp.json();
-                throw new Error(err.message || '保存失败');
+                if (putResp.ok) return true;
+
+                // SHA 冲突: 重试一次 (用新 SHA)
+                if (putResp.status === 409 && retryCount < 1) {
+                    return await saveFileToGithub(path, content, message, retryCount + 1);
+                }
+
+                const err = await putResp.json();
+                throw new Error(err.message || 'HTTP ' + putResp.status);
             } catch (e) {
                 showFeedback('保存失败: ' + e.message, true);
                 return false;
@@ -752,61 +784,43 @@
         }
 
         function generateSourcesYaml() {
-            let yaml = '# GitHub 订阅源配置\n# 通过 Aurora VPN Web UI 管理\n\ntype: github\nenabled: true\n\nsources:\n';
+            let y = '# GitHub 订阅源配置\n# 通过 Aurora VPN Web UI 管理\n\ntype: github\nenabled: true\n\nsources:\n';
             for (const s of currentSources) {
-                yaml += `  - name: "${s.name}"\n`;
-                yaml += `    url: "${s.url}"\n`;
-                yaml += `    format: ${s.format}\n`;
-                yaml += `    enabled: ${s.enabled}\n\n`;
+                y += `  - name: "${s.name}"\n    url: "${s.url}"\n    format: ${s.format}\n    enabled: ${s.enabled}\n\n`;
             }
-            return yaml;
+            return y;
         }
 
         function generateTgYaml() {
-            let yaml = '# Telegram 频道订阅源配置\n# 通过 Aurora VPN Web UI 管理\n# 支持两种消息格式: 直接节点链接 或 订阅URL自动解析\n\ntype: telegram\nenabled: true\nmode: web\n\napi_id: ${TELEGRAM_API_ID}\napi_hash: ${TELEGRAM_API_HASH}\n\nchannels:\n';
+            let y = '# Telegram 频道订阅源配置\n# 通过 Aurora VPN Web UI 管理\n# 支持两种消息格式: 直接节点链接 或 订阅URL自动解析\n\ntype: telegram\nenabled: true\nmode: web\n\napi_id: ${TELEGRAM_API_ID}\napi_hash: ${TELEGRAM_API_HASH}\n\nchannels:\n';
             for (const ch of currentTgChannels) {
-                const username = ch.username.startsWith('@') ? ch.username : '@' + ch.username;
-                yaml += `  - name: "${ch.name}"\n`;
-                yaml += `    username: "${username}"\n`;
-                yaml += `    enabled: ${ch.enabled}\n\n`;
+                const u = ch.username.startsWith('@') ? ch.username : '@' + ch.username;
+                y += `  - name: "${ch.name}"\n    username: "${u}"\n    enabled: ${ch.enabled}\n\n`;
             }
-            return yaml;
+            return y;
         }
 
-        // HTML 转义
-        function esc(str) {
-            const div = document.createElement('div');
-            div.textContent = str;
-            return div.innerHTML;
-        }
+        // ════════════════════════════════════════════
+        // 认证 & 工具
+        // ════════════════════════════════════════════
 
         window.authenticate = async function() {
             const input = document.getElementById('token-input');
             const token = input.value.trim();
             if (!token) return;
-
             const hash = await sha256(token);
-            if (hash === AUTH_HASH) {
-                sessionStorage.setItem(TOKEN_KEY, token);
-                showContent(token);
-            } else {
-                document.getElementById('auth-error').style.display = 'block';
-                input.value = '';
-                setTimeout(() => { document.getElementById('auth-error').style.display = 'none'; }, 3000);
-            }
+            if (hash === AUTH_HASH) { sessionStorage.setItem(TOKEN_KEY, token); showContent(token); }
+            else { document.getElementById('auth-error').style.display = 'block'; input.value = ''; setTimeout(() => { document.getElementById('auth-error').style.display = 'none'; }, 3000); }
         };
 
-        document.getElementById('token-input').addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') window.authenticate();
-        });
+        document.getElementById('token-input').addEventListener('keydown', function(e) { if (e.key === 'Enter') window.authenticate(); });
 
         window.copyUrl = function(inputId) {
             const input = document.getElementById(inputId);
             navigator.clipboard.writeText(input.value).then(() => {
                 const btn = input.nextElementSibling;
                 const orig = btn.textContent;
-                btn.textContent = '已复制!';
-                btn.style.background = '#28a745';
+                btn.textContent = '已复制!'; btn.style.background = '#28a745';
                 setTimeout(() => { btn.textContent = orig; btn.style.background = '#667eea'; }, 2000);
             });
         };

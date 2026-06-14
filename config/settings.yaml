@@ -2,7 +2,7 @@
 
 # 更新设置
 update:
-  interval: 6  # 小时
+  interval: 15  # 分钟
   retry: 3     # 失败重试次数
   timeout: 30  # 请求超时（秒）
 
