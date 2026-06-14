@@ -1,69 +1,50 @@
 # Telegram 频道订阅源配置
-# 需要配置 API ID 和 API Hash
+# 支持两种模式:
+#   web: 无需认证，通过 t.me/s/ 预览页抓取 (默认)
+#   telethon: 需要 api_id/api_hash，完整功能
 
 type: telegram
-enabled: false  # 默认禁用，需要配置后启用
+enabled: true
+mode: web  # web (无需认证) 或 telethon
 
-# Telegram API 配置
-# 获取方式: https://my.telegram.org/apps
+# Telethon 模式配置 (mode: telethon 时需要)
+# 获取 api_id/api_hash: https://my.telegram.org/apps
 api_id: ${TELEGRAM_API_ID}
 api_hash: ${TELEGRAM_API_HASH}
 
-# 会话文件路径
-session_path: "data/cache/telegram_session"
-
 channels:
-  # 格式: channel_id 或 @username
-  # 使用 channel_id 更稳定
+  # ── Web 模式频道 (只需 username，无需认证) ──
 
-  - name: "ExampleV2Ray"
-    channel_id: -1001234567890  # 替换为实际频道 ID
-    max_messages: 100           # 抓取最近 N 条消息
-    keywords:                   # 关键词过滤（可选）
-      - "vmess://"
-      - "vless://"
-      - "trojan://"
-    enabled: true
-
-  - name: "FreeVPNNodes"
-    channel_id: -1009876543210
+  - name: "V2RayTz"
+    username: "@v2raytz"
     max_messages: 50
     enabled: true
 
-  # 用户名方式（不推荐，可能不稳定）
-  # - name: "ChannelByUsername"
-  #   username: "@channelname"
-  #   max_messages: 100
-
-# 消息解析设置
-parsing:
-  # 提取节点链接的正则模式
-  patterns:
-    - "vmess://[A-Za-z0-9+/=]+"
-    - "vless://[A-Za-z0-9\\-._~:/?#\\[\\]@!$&'()*+,;=%]+"
-    - "trojan://[A-Za-z0-9\\-._~:/?#\\[\\]@!$&'()*+,;=%]+"
-    - "ss://[A-Za-z0-9+/=\\-._~:/?#\\[\\]@!$&'()*+,;=%]+"
-    - "ssr://[A-Za-z0-9+/=]+"
-
-  # 消息缓存
-  cache:
+  - name: "FreeV2rays"
+    username: "@freev2rays"
+    max_messages: 50
     enabled: true
-    path: "data/cache/telegram_messages.json"
-    expire: 3600  # 缓存过期时间（秒）
 
-# 限流设置
-rate_limit:
-  # 请求间隔（秒）
-  delay: 1
-  # 每批消息数
-  batch_size: 20
+  - name: "VPNGate"
+    username: "@vpngatech"
+    max_messages: 50
+    enabled: true
 
-# 如何获取 Telegram API:
-# 1. 访问 https://my.telegram.org
-# 2. 登录 Telegram 账号
-# 3. 进入 "API development tools"
-# 4. 创建应用获取 api_id 和 api_hash
-#
-# 如何获取频道 ID:
-# 1. 将频道消息转发给 @userinfobot
-# 2. 或使用 @getmyid_bot
+  - name: "ProxyMTProto"
+    username: "@proxymtproto"
+    max_messages: 30
+    enabled: true
+
+  - name: "V2RayNGn"
+    username: "@v2rayngn"
+    max_messages: 50
+    enabled: true
+
+  # ── Telethon 模式频道示例 (需要 mode: telethon) ──
+  # - name: "PrivateChannel"
+  #   channel_id: -1001234567890
+  #   max_messages: 100
+  #   keywords:
+  #     - "vmess://"
+  #     - "vless://"
+  #   enabled: true
