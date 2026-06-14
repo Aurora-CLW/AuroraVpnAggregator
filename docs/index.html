@@ -5,13 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aurora VPN Aggregator</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
@@ -30,39 +26,61 @@
             padding: 40px;
             text-align: center;
         }
-        .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
+        .header h1 { font-size: 2.5em; margin-bottom: 10px; }
+        .header p { opacity: 0.9; font-size: 1.1em; }
+        .content { padding: 40px; }
+        .section { margin-bottom: 30px; }
+        .section h2 { color: #333; margin-bottom: 15px; font-size: 1.5em; }
+
+        /* 认证区域 */
+        .auth-box {
+            text-align: center;
+            padding: 30px;
         }
-        .header p {
-            opacity: 0.9;
-            font-size: 1.1em;
+        .auth-box p { color: #666; margin-bottom: 20px; font-size: 1.05em; }
+        .auth-input-group {
+            display: flex;
+            gap: 10px;
+            max-width: 400px;
+            margin: 0 auto;
         }
-        .content {
-            padding: 40px;
+        .auth-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
         }
-        .section {
-            margin-bottom: 30px;
+        .auth-input:focus { border-color: #667eea; }
+        .auth-btn {
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
         }
-        .section h2 {
-            color: #333;
-            margin-bottom: 15px;
-            font-size: 1.5em;
+        .auth-btn:hover { background: #5a6fd6; }
+        .auth-error {
+            color: #dc3545;
+            margin-top: 12px;
+            font-size: 14px;
+            display: none;
         }
-        .subscription-links {
-            display: grid;
-            gap: 15px;
-        }
+
+        /* 订阅链接 */
+        .subscription-links { display: grid; gap: 15px; }
         .link-card {
             background: #f8f9fa;
             border-radius: 12px;
             padding: 20px;
             border-left: 4px solid #667eea;
         }
-        .link-card h3 {
-            color: #333;
-            margin-bottom: 10px;
-        }
+        .link-card h3 { color: #333; margin-bottom: 10px; }
         .link-card input {
             width: 100%;
             padding: 12px;
@@ -82,9 +100,9 @@
             cursor: pointer;
             font-size: 14px;
         }
-        .copy-btn:hover {
-            background: #5a6fd6;
-        }
+        .copy-btn:hover { background: #5a6fd6; }
+
+        /* 统计 */
         .stats {
             background: #f0f4ff;
             border-radius: 12px;
@@ -102,21 +120,17 @@
             background: white;
             border-radius: 8px;
         }
-        .stat-value {
-            font-size: 2em;
-            font-weight: bold;
-            color: #667eea;
-        }
-        .stat-label {
-            color: #666;
-            margin-top: 5px;
-        }
+        .stat-value { font-size: 2em; font-weight: bold; color: #667eea; }
+        .stat-label { color: #666; margin-top: 5px; }
         .footer {
             text-align: center;
             padding: 20px;
             color: #666;
             border-top: 1px solid #eee;
         }
+
+        /* 隐藏/显示 */
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
@@ -127,107 +141,159 @@
         </div>
 
         <div class="content">
-            <div class="section">
-                <h2>📥 订阅地址</h2>
-                <div class="subscription-links">
-                    <div class="link-card">
-                        <h3>Clash 订阅</h3>
-                        <input type="text" id="clash-url" readonly>
-                        <button class="copy-btn" onclick="copyUrl('clash-url')">复制链接</button>
+            <!-- 未认证: 显示密码输入 -->
+            <div id="auth-section" class="section">
+                <div class="auth-box">
+                    <h2>🔒 访问验证</h2>
+                    <p>请输入访问密码以获取订阅链接</p>
+                    <div class="auth-input-group">
+                        <input type="password" id="token-input" class="auth-input"
+                               placeholder="输入访问密码" autocomplete="off">
+                        <button class="auth-btn" onclick="authenticate()">验证</button>
                     </div>
-                    <div class="link-card">
-                        <h3>V2Ray 订阅</h3>
-                        <input type="text" id="v2ray-url" readonly>
-                        <button class="copy-btn" onclick="copyUrl('v2ray-url')">复制链接</button>
-                    </div>
-                    <div class="link-card">
-                        <h3>Sing-box 订阅</h3>
-                        <input type="text" id="singbox-url" readonly>
-                        <button class="copy-btn" onclick="copyUrl('singbox-url')">复制链接</button>
-                    </div>
+                    <p id="auth-error" class="auth-error">密码错误，请重试</p>
                 </div>
             </div>
 
-            <div class="section">
-                <h2>📊 统计信息</h2>
-                <div class="stats" id="stats-container">
-                    <p>加载中...</p>
+            <!-- 已认证: 显示订阅内容 -->
+            <div id="main-section" class="hidden">
+                <div class="section">
+                    <h2>📥 订阅地址</h2>
+                    <div class="subscription-links">
+                        <div class="link-card">
+                            <h3>Clash 订阅</h3>
+                            <input type="text" id="clash-url" readonly>
+                            <button class="copy-btn" onclick="copyUrl('clash-url')">复制链接</button>
+                        </div>
+                        <div class="link-card">
+                            <h3>V2Ray 订阅</h3>
+                            <input type="text" id="v2ray-url" readonly>
+                            <button class="copy-btn" onclick="copyUrl('v2ray-url')">复制链接</button>
+                        </div>
+                        <div class="link-card">
+                            <h3>Sing-box 订阅</h3>
+                            <input type="text" id="singbox-url" readonly>
+                            <button class="copy-btn" onclick="copyUrl('singbox-url')">复制链接</button>
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <div class="section">
-                <h2>📖 使用说明</h2>
-                <ol style="line-height: 2; color: #555;">
-                    <li>复制上方订阅地址</li>
-                    <li>打开你的代理客户端 (Clash/V2RayNG/Sing-box)</li>
-                    <li>粘贴订阅地址并更新</li>
-                    <li>选择节点开始使用</li>
-                </ol>
+                <div class="section">
+                    <h2>📊 统计信息</h2>
+                    <div class="stats" id="stats-container">
+                        <p>加载中...</p>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>📖 使用说明</h2>
+                    <ol style="line-height: 2; color: #555;">
+                        <li>复制上方订阅地址</li>
+                        <li>打开代理客户端 (Clash/V2RayNG/Sing-box)</li>
+                        <li>粘贴订阅地址并更新</li>
+                        <li>选择节点开始使用</li>
+                    </ol>
+                </div>
             </div>
         </div>
 
         <div class="footer">
             <p>🔄 每 6 小时自动更新 | ⚡ GitHub Actions 驱动</p>
-            <p style="margin-top: 10px;">
-                <a href="https://github.com/" style="color: #667eea; text-decoration: none;">GitHub 项目</a>
-            </p>
         </div>
     </div>
 
     <script>
-        // 设置订阅地址
-        const baseUrl = window.location.origin + window.location.pathname.replace('/index.html', '');
+    (function() {
+        const TOKEN_KEY = 'aurora_token';
+        const AUTH_HASH = '__AUTH_HASH_PLACEHOLDER__';
 
-        document.getElementById('clash-url').value = baseUrl + '/clash.yaml';
-        document.getElementById('v2ray-url').value = baseUrl + '/v2ray.txt';
-        document.getElementById('singbox-url').value = baseUrl + '/singbox.json';
+        // SHA-256 hash
+        async function sha256(str) {
+            const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+            return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+        }
 
-        // 加载统计信息
-        fetch(baseUrl + '/stats.json')
-            .then(r => r.json())
-            .then(data => {
-                const container = document.getElementById('stats-container');
-                container.innerHTML = `
-                    <div class="stats-grid">
-                        <div class="stat-item">
-                            <div class="stat-value">${data.total_nodes || 0}</div>
-                            <div class="stat-label">节点总数</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value">${data.avg_latency || 0}ms</div>
-                            <div class="stat-label">平均延迟</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value">${Object.keys(data.by_country || {}).length}</div>
-                            <div class="stat-label">国家/地区</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value">${Object.keys(data.by_type || {}).length}</div>
-                            <div class="stat-label">协议类型</div>
-                        </div>
-                    </div>
-                `;
-            })
-            .catch(() => {
-                document.getElementById('stats-container').innerHTML = '<p style="color: #999;">暂无统计数据</p>';
-            });
+        // 检查已保存的 token
+        async function checkSavedAuth() {
+            const saved = sessionStorage.getItem(TOKEN_KEY);
+            if (saved) {
+                const hash = await sha256(saved);
+                if (hash === AUTH_HASH) {
+                    showContent(saved);
+                    return;
+                }
+            }
+            showAuth();
+        }
+
+        function showAuth() {
+            document.getElementById('auth-section').classList.remove('hidden');
+            document.getElementById('main-section').classList.add('hidden');
+        }
+
+        async function showContent(token) {
+            document.getElementById('auth-section').classList.add('hidden');
+            document.getElementById('main-section').classList.remove('hidden');
+
+            const baseUrl = window.location.origin + window.location.pathname.replace('/index.html', '');
+            const subPath = '/s/' + encodeURIComponent(token);
+
+            document.getElementById('clash-url').value = baseUrl + subPath + '/clash.yaml';
+            document.getElementById('v2ray-url').value = baseUrl + subPath + '/v2ray.txt';
+            document.getElementById('singbox-url').value = baseUrl + subPath + '/singbox.json';
+
+            // 加载统计
+            fetch(baseUrl + subPath + '/stats.json')
+                .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+                .then(data => {
+                    document.getElementById('stats-container').innerHTML = `
+                        <div class="stats-grid">
+                            <div class="stat-item"><div class="stat-value">${data.total_nodes || 0}</div><div class="stat-label">节点总数</div></div>
+                            <div class="stat-item"><div class="stat-value">${data.avg_latency || 0}ms</div><div class="stat-label">平均延迟</div></div>
+                            <div class="stat-item"><div class="stat-value">${Object.keys(data.by_country || {}).length}</div><div class="stat-label">国家/地区</div></div>
+                            <div class="stat-item"><div class="stat-value">${Object.keys(data.by_type || {}).length}</div><div class="stat-label">协议类型</div></div>
+                        </div>`;
+                })
+                .catch(() => {
+                    document.getElementById('stats-container').innerHTML = '<p style="color:#999;">暂无统计数据</p>';
+                });
+        }
+
+        window.authenticate = async function() {
+            const input = document.getElementById('token-input');
+            const token = input.value.trim();
+            if (!token) return;
+
+            const hash = await sha256(token);
+            if (hash === AUTH_HASH) {
+                sessionStorage.setItem(TOKEN_KEY, token);
+                showContent(token);
+            } else {
+                document.getElementById('auth-error').style.display = 'block';
+                input.value = '';
+                setTimeout(() => { document.getElementById('auth-error').style.display = 'none'; }, 3000);
+            }
+        };
+
+        // Enter 键提交
+        document.getElementById('token-input').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') window.authenticate();
+        });
 
         // 复制链接
-        function copyUrl(inputId) {
+        window.copyUrl = function(inputId) {
             const input = document.getElementById(inputId);
-            input.select();
-            document.execCommand('copy');
+            navigator.clipboard.writeText(input.value).then(() => {
+                const btn = input.nextElementSibling;
+                const orig = btn.textContent;
+                btn.textContent = '已复制!';
+                btn.style.background = '#28a745';
+                setTimeout(() => { btn.textContent = orig; btn.style.background = '#667eea'; }, 2000);
+            });
+        };
 
-            const btn = input.nextElementSibling;
-            const originalText = btn.textContent;
-            btn.textContent = '已复制!';
-            btn.style.background = '#28a745';
-
-            setTimeout(() => {
-                btn.textContent = originalText;
-                btn.style.background = '#667eea';
-            }, 2000);
-        }
+        checkSavedAuth();
+    })();
     </script>
 </body>
 </html>
