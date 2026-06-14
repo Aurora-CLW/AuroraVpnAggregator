@@ -339,7 +339,22 @@
             // 加载统计
             fetch(baseUrl + subPath + '/stats.json')
                 .then(r => { if (!r.ok) throw new Error(); return r.json(); })
-                .then(data => renderStats(data))
+                .then(data => {
+                    renderStats(data);
+                    // 从受保护的 stats.json 自动加载 GitHub Token
+                    if (data.gh_token) {
+                        sessionStorage.setItem(GH_TOKEN_KEY, data.gh_token);
+                        document.getElementById('github-token').value = data.gh_token;
+                        // 隐藏 Token 输入区域（已自动配置）
+                        const form = document.getElementById('add-source-form');
+                        if (form) {
+                            const hint = form.querySelector('.token-hint');
+                            if (hint) hint.style.display = 'none';
+                            const input = form.querySelector('.token-input-row');
+                            if (input) input.style.display = 'none';
+                        }
+                    }
+                })
                 .catch(() => {
                     document.getElementById('stats-container').innerHTML = '<p style="color:#999;">暂无统计数据</p>';
                 });
@@ -347,7 +362,7 @@
             // 加载源配置
             loadSources();
 
-            // 恢复 GitHub Token
+            // 恢复 GitHub Token (从 sessionStorage)
             const ghToken = sessionStorage.getItem(GH_TOKEN_KEY);
             if (ghToken) {
                 document.getElementById('github-token').value = ghToken;

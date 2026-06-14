@@ -97,9 +97,13 @@ github:
 
 # 安全设置
 security:
-  # 访问 token（优先使用环境变量 AURORA_TOKEN）
-  # 订阅文件将放在 docs/s/{token}/ 下，前端需输入此 token 才能获取订阅链接
+  # 访问 token — 前端需输入此 token 才能获取订阅链接
+  # 订阅文件放在 docs/s/{token}/ 下
   token: "Aurora@2026VPN"
+
+  # GitHub Token (repo 权限) — 用于 Web UI 管理源和触发同步
+  # 仓库已 Private，放在这里安全；也可用环境变量 AURORA_GH_TOKEN 覆盖
+  github_token: ""
 
 # 通知设置（可选）
 notification:

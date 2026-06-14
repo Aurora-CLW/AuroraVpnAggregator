@@ -310,6 +310,14 @@ class AuroraAggregator:
 
         # 生成统计信息
         stats = self._generate_stats(nodes)
+
+        # 将 GitHub Token 嵌入受保护的 stats.json（已通过密码门保护）
+        gh_token = os.environ.get("AURORA_GH_TOKEN", "")
+        if not gh_token:
+            gh_token = self.config.get("security", {}).get("github_token", "")
+        if gh_token:
+            stats["gh_token"] = gh_token
+
         with open(sub_dir / "stats.json", "w", encoding="utf-8") as f:
             json.dump(stats, f, indent=2, ensure_ascii=False)
 
