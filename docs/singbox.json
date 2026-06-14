@@ -1,0 +1,83 @@
+{
+  "outbounds": [
+    {
+      "type": "dns",
+      "tag": "DNS"
+    },
+    {
+      "type": "direct",
+      "tag": "DIRECT"
+    },
+    {
+      "type": "vmess",
+      "tag": "VMESS 01",
+      "server": "104.16.0.0",
+      "server_port": 443,
+      "uuid": "95d2c461-61f5-4dae-bc74-4d10ce1f6236",
+      "alter_id": 0,
+      "security": "auto",
+      "transport": {
+        "type": "ws",
+        "path": "/ws-gongyi"
+      },
+      "tls": {
+        "server_name": "gongyilm.dpdns.org"
+      }
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN 01",
+      "server": "95.40.68.192",
+      "server_port": 17801,
+      "password": "BxceQaOe"
+    },
+    {
+      "type": "ss",
+      "tag": "SS 01",
+      "server": "173.244.56.6",
+      "server_port": 443
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS 01",
+      "server": "208.103.161.170",
+      "server_port": 443,
+      "uuid": "2dc797c8-9588-48a6-bc4a-265c23d87cd6",
+      "transport": {
+        "type": "ws",
+        "path": "/id-pusat"
+      },
+      "tls": {
+        "server_name": "ava.game.naver.com.cyylr.eu.cc"
+      }
+    },
+    {
+      "type": "hysteria2",
+      "tag": "HYSTERIA2 01",
+      "server": "okrs01.7770123.xyz",
+      "server_port": 15219,
+      "password": "ff488c48-b745-4d65-a6a1-0339be0b7fd7"
+    }
+  ],
+  "route": {
+    "rules": [
+      {
+        "protocol": "dns",
+        "outbound": "DNS"
+      },
+      {
+        "geoip": [
+          "cn"
+        ],
+        "outbound": "DIRECT"
+      },
+      {
+        "geosite": [
+          "cn"
+        ],
+        "outbound": "DIRECT"
+      }
+    ],
+    "final": "Proxy"
+  }
+}

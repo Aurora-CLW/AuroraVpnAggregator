@@ -1,0 +1,56 @@
+# GitHub 订阅源配置
+# 支持格式: clash, base64, surge, singbox
+
+type: github
+enabled: true
+
+sources:
+  # 高优先级订阅源
+  - name: "ermaozi_clash"
+    url: "https://raw.githubusercontent.com/ermaozi/get_subscribe/main/subscribe/clash.yml"
+    format: clash
+    priority: 1
+    enabled: true
+
+  - name: "mheidari98_base64"
+    url: "https://raw.githubusercontent.com/mheidari98/.proxy/main/all"
+    format: base64
+    priority: 2
+    enabled: true
+
+  - name: "shadowsocks_aggregator"
+    url: "https://raw.githubusercontent.com/mahdibland/ShadowsocksAggregator/master/sub/sub_merge.txt"
+    format: base64
+    priority: 2
+    enabled: true
+
+  - name: "v2ray_aggregator"
+    url: "https://raw.githubusercontent.com/mahdibland/V2RayAggregator/master/sub/sub_merge.txt"
+    format: base64
+    priority: 2
+    enabled: true
+
+  - name: "chromego_merge"
+    url: "https://raw.githubusercontent.com/vveg26/chromego_merge/main/sub/merged_proxies.yaml"
+    format: clash
+    priority: 3
+    enabled: true
+
+  # 备用订阅源
+  - name: "leon406_subcrawler"
+    url: "https://raw.githubusercontent.com/Leon406/SubCrawler/main/sub/share/all3"
+    format: base64
+    priority: 4
+    enabled: true
+
+  - name: "barry_far_v2ray"
+    url: "https://raw.githubusercontent.com/barry-far/V2ray-Configs/main/All_Configs_Sub.txt"
+    format: base64
+    priority: 4
+    enabled: true
+
+  - name: "mermeroo_clash"
+    url: "https://raw.githubusercontent.com/mermeroo/Clash-V2ray/main/v2ray"
+    format: base64
+    priority: 5
+    enabled: true

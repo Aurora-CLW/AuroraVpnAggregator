@@ -1,0 +1,49 @@
+# 测试节点数据 (Clash 格式)
+
+proxies:
+  - name: "🇺🇸 US-NewYork-01"
+    type: vmess
+    server: 104.16.0.0
+    port: 443
+    uuid: 95d2c461-61f5-4dae-bc74-4d10ce1f6236
+    alterId: 0
+    cipher: auto
+    network: ws
+    ws-opts:
+      path: /ws-gongyi
+    tls: true
+    servername: gongyilm.dpdns.org
+
+  - name: "🇭🇰 HK-HongKong-01"
+    type: trojan
+    server: 95.40.68.192
+    port: 17801
+    password: BxceQaOe
+    sni: t.me/ripaojiedian
+    skip-cert-verify: true
+    udp: true
+
+  - name: "🇯🇵 JP-Tokyo-01"
+    type: ss
+    server: 173.244.56.6
+    port: 443
+    cipher: aes-128-gcm
+    password: shadowsocks
+
+  - name: "🇸🇬 SG-Singapore-01"
+    type: vless
+    server: 208.103.161.170
+    port: 443
+    uuid: 2dc797c8-9588-48a6-bc4a-265c23d87cd6
+    network: ws
+    tls: true
+    servername: ava.game.naver.com.cyylr.eu.cc
+    ws-opts:
+      path: /id-pusat
+
+  - name: "🇰🇷 KR-Seoul-01"
+    type: hysteria2
+    server: okrs01.7770123.xyz
+    port: 15219
+    password: ff488c48-b745-4d65-a6a1-0339be0b7fd7
+    sni: okrs01.7770123.xyz

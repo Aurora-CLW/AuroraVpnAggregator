@@ -1,0 +1,27 @@
+# 本地文件订阅源配置
+# 支持手动添加节点
+
+type: local
+enabled: true
+
+sources:
+  # YAML 格式节点文件
+  - name: "custom_yaml_nodes"
+    path: "data/sources/custom_nodes.yaml"
+    format: clash
+    watch: true
+    enabled: true
+
+  # TXT 格式节点文件
+  - name: "custom_txt_nodes"
+    path: "data/sources/custom_nodes.txt"
+    format: auto
+    watch: true
+    enabled: true
+
+  # Base64 编码节点文件
+  - name: "custom_base64_nodes"
+    path: "data/sources/custom_nodes_base64.txt"
+    format: base64
+    watch: true
+    enabled: true

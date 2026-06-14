@@ -1,0 +1,18 @@
+# Aurora VPN Aggregator 依赖
+
+# 核心依赖
+aiohttp>=3.9.0
+pyyaml>=6.0
+colorlog>=6.8.0
+
+# Telegram 支持
+telethon>=1.34.0
+
+# GeoIP 支持
+geoip2>=4.7.0
+
+# 开发依赖
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
+black>=24.0.0
+mypy>=1.8.0

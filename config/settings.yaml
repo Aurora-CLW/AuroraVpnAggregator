@@ -1,0 +1,108 @@
+# Aurora VPN Aggregator 全局配置
+
+# 更新设置
+update:
+  interval: 6  # 小时
+  retry: 3     # 失败重试次数
+  timeout: 30  # 请求超时（秒）
+
+# 节点测试设置
+testing:
+  # TCP 测试
+  tcp:
+    enabled: true
+    timeout: 3
+    concurrent: 100
+
+  # HTTP 代理测试
+  http:
+    enabled: true
+    timeout: 10
+    concurrent: 20
+    test_url: "http://www.gstatic.com/generate_204"
+
+  # 速度测试
+  speed:
+    enabled: false
+    test_file: "https://speed.cloudflare.com/__down?bytes=10000000"
+    max_time: 30
+
+# 节点过滤
+filter:
+  # 最低延迟阈值（毫秒）
+  max_latency: 5000
+
+  # 最低速度阈值（MB/s）
+  min_speed: 0.5
+
+  # 排除的国家/地区
+  exclude_countries: []
+
+  # 只包含的国家/地区（空为不限制）
+  include_countries: []
+
+  # 排除的关键词
+  exclude_keywords:
+    - "过期"
+    - "失效"
+    - "到期"
+
+# 去重设置
+dedup:
+  # 去重方式: fingerprint (指纹) / server_port (服务器+端口)
+  method: fingerprint
+
+  # 相同服务器最大节点数
+  max_per_server: 10
+
+# 输出设置
+output:
+  # 输出格式
+  formats:
+    - clash
+    - v2ray
+    - singbox
+
+  # 节点命名格式
+  # {country} 国家, {ip} IP, {type} 类型, {latency} 延迟
+  naming: "{country} {type} {latency}ms"
+
+  # 节点排序: latency (延迟) / speed (速度) / country (国家)
+  sort_by: latency
+
+  # 最大节点数（0 为不限制）
+  max_nodes: 500
+
+# 日志设置
+logging:
+  level: INFO
+  file: logs/aurora.log
+  rotation: "1 day"
+  retention: "7 days"
+
+# Telegram 设置（可选）
+telegram:
+  enabled: false
+  api_id: ${TELEGRAM_API_ID}
+  api_hash: ${TELEGRAM_API_HASH}
+  session_path: data/cache/telegram_session
+
+# GitHub 设置
+github:
+  # 自动发布 Release
+  release: true
+
+  # 保留历史版本数
+  keep_releases: 30
+
+# 通知设置（可选）
+notification:
+  enabled: false
+  # Telegram Bot
+  telegram_bot:
+    token: ${TG_BOT_TOKEN}
+    chat_id: ${TG_CHAT_ID}
+
+  # 企业微信
+  wecom:
+    webhook: ${WECOM_WEBHOOK}

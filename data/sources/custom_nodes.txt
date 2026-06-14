@@ -1,0 +1,7 @@
+# 手动添加的节点 (TXT 格式)
+# 每行一个节点 URL
+
+# 示例:
+# vmess://eyJhZGQiOiIxMC4xMC4xNC40IiwicG9ydCI6MjUzNDUsImlkIjoiMTUzZGVh...
+# trojan://password@example.com:443?sni=example.com#我的Trojan节点
+# ss://YWVzLTEyOC1nY206cGFzc3dvcmQ=@server.com:443#我的SS节点

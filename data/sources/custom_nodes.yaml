@@ -1,0 +1,20 @@
+# 手动添加的节点 (YAML 格式)
+# 示例:
+
+proxies: []
+  # - name: "我的节点 1"
+  #   type: vmess
+  #   server: example.com
+  #   port: 443
+  #   uuid: xxxx-xxxx-xxxx-xxxx
+  #   network: ws
+  #   tls: true
+  #   ws-opts:
+  #     path: /path
+
+  # - name: "我的节点 2"
+  #   type: trojan
+  #   server: example.com
+  #   port: 443
+  #   password: my-password
+  #   sni: example.com
