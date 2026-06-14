@@ -239,27 +239,74 @@ class AuroraAggregator:
         return nodes
 
     def _copy_to_docs(self, nodes: List[Node]):
-        """复制输出到 docs 目录"""
+        """复制输出到 docs 目录（安全混淆路径）"""
         import shutil
-        import json
+        import hashlib
 
         docs_dir = Path("docs")
         docs_dir.mkdir(parents=True, exist_ok=True)
 
         output_dir = Path("output")
 
-        # 复制订阅文件
+        # 获取访问 token（从环境变量或配置）
+        access_token = os.environ.get("AURORA_TOKEN", "")
+        if not access_token:
+            access_token = self.config.get("security", {}).get("token", "aurora2026")
+
+        # 混淆路径: docs/s/{token}/
+        sub_dir = docs_dir / "s" / access_token
+        sub_dir.mkdir(parents=True, exist_ok=True)
+
+        # 清理旧的混淆目录（保留当前 token）
+        s_dir = docs_dir / "s"
+        if s_dir.exists():
+            for d in s_dir.iterdir():
+                if d.is_dir() and d.name != access_token:
+                    shutil.rmtree(d, ignore_errors=True)
+
+        # 复制订阅文件到混淆路径
         for filename in ["clash.yaml", "v2ray.txt", "singbox.json", "nodes.json"]:
             src = output_dir / filename
             if src.exists():
-                shutil.copy(src, docs_dir / filename)
+                shutil.copy(src, sub_dir / filename)
 
         # 生成统计信息
         stats = self._generate_stats(nodes)
-        with open(docs_dir / "stats.json", "w", encoding="utf-8") as f:
+        with open(sub_dir / "stats.json", "w", encoding="utf-8") as f:
             json.dump(stats, f, indent=2, ensure_ascii=False)
 
-        logger.info(f"输出已复制到 {docs_dir}")
+        # 同时在根目录放一份不含节点详情的公开统计（仅显示数量）
+        public_stats = {
+            "total_nodes": stats.get("total_nodes", 0),
+            "updated_at": stats.get("updated_at", ""),
+        }
+        with open(docs_dir / "stats.json", "w", encoding="utf-8") as f:
+            json.dump(public_stats, f, indent=2, ensure_ascii=False)
+
+        # 生成带 token hash 的 index.html
+        self._build_secured_index(docs_dir, access_token)
+
+        logger.info(f"输出已复制到 {sub_dir}")
+
+    def _build_secured_index(self, docs_dir: Path, token: str):
+        """生成带密码验证的 index.html"""
+        import hashlib
+
+        # 计算 token 的 SHA-256 hash
+        token_hash = hashlib.sha256(token.encode()).hexdigest()
+
+        template_path = docs_dir / "index.html"
+        if not template_path.exists():
+            logger.warning("index.html 模板不存在，跳过安全注入")
+            return
+
+        content = template_path.read_text(encoding="utf-8")
+
+        # 替换 hash 占位符
+        content = content.replace("__AUTH_HASH_PLACEHOLDER__", token_hash)
+
+        template_path.write_text(content, encoding="utf-8")
+        logger.info(f"已注入安全验证 (hash: {token_hash[:16]}...)")
 
     def _generate_stats(self, nodes: List[Node]) -> dict:
         """生成统计信息"""
