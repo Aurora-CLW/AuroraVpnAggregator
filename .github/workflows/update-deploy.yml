@@ -10,6 +10,8 @@ on:
     paths:
       - 'config/**'
       - 'data/sources/**'
+      - 'scripts/**'
+      - 'src/**'
 
 permissions:
   contents: read
