@@ -11,14 +11,14 @@ testing:
   # TCP 测试
   tcp:
     enabled: true
-    timeout: 3
-    concurrent: 100
+    timeout: 5
+    concurrent: 200
 
   # HTTP 代理测试
   http:
     enabled: true
-    timeout: 10
-    concurrent: 20
+    timeout: 15
+    concurrent: 50
     test_url: "http://www.gstatic.com/generate_204"
 
   # 速度测试
@@ -30,10 +30,10 @@ testing:
 # 节点过滤
 filter:
   # 最低延迟阈值（毫秒）
-  max_latency: 5000
+  max_latency: 10000
 
   # 最低速度阈值（MB/s）
-  min_speed: 0.5
+  min_speed: 0.1
 
   # 排除的国家/地区
   exclude_countries: []

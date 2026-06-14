@@ -46,11 +46,13 @@ htmlcov/
 .dmypy.json
 dmypy.json
 
+# Logs
+logs/
+*.log
+
 # Project specific
 data/cache/*.mmdb
 data/cache/telegram_session*
-logs/
-*.log
 
 # Environment
 .env
@@ -65,3 +67,7 @@ output/*.txt
 # OS
 .DS_Store
 Thumbs.db
+
+# No longer needed (GitHub Actions deployment)
+docs/.nojekyll
+.nojekyll
