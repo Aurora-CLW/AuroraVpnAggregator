@@ -95,6 +95,12 @@ github:
   # 保留历史版本数
   keep_releases: 30
 
+# 安全设置
+security:
+  # 访问 token（优先使用环境变量 AURORA_TOKEN）
+  # 订阅文件将放在 docs/s/{token}/ 下，前端需输入此 token 才能获取订阅链接
+  token: "Aurora@2026VPN"
+
 # 通知设置（可选）
 notification:
   enabled: false
