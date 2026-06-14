@@ -144,15 +144,19 @@ def _node_to_xray_outbound(node: Node) -> Optional[dict]:
     return outbound
 
 
+DEBUG = True
+_debug_count = 0
+
 async def test_node_with_xray(
     node: Node, xray_bin: str, socks_port: int, timeout: int = 10
 ) -> bool:
     """用 xray 测试单个节点"""
+    global _debug_count
+
     config = build_xray_config(node, socks_port)
     if not config:
         return False
 
-    # 写临时配置
     with tempfile.NamedTemporaryFile(
         mode="w", suffix=".json", delete=False
     ) as f:
@@ -167,19 +171,15 @@ async def test_node_with_xray(
             stderr=subprocess.PIPE,
         )
 
-        # 等待 xray 启动并检查是否崩溃
-        for _ in range(10):
-            await asyncio.sleep(0.3)
-            if process.poll() is not None:
-                stderr = process.stderr.read().decode() if process.stderr else ""
-                if "error" in stderr.lower() or "fail" in stderr.lower():
-                    return False
-                break
+        await asyncio.sleep(2)
 
         if process.poll() is not None:
+            if DEBUG and _debug_count < 3:
+                err = process.stderr.read().decode() if process.stderr else ""
+                print(f"  [DEBUG] xray crashed for {node.type}://{node.server}:{node.port} - {err[:200]}")
+                _debug_count += 1
             return False
 
-        # 通过 SOCKS5 代理发请求
         start = time.time()
         try:
             proc = await asyncio.create_subprocess_exec(
@@ -188,19 +188,27 @@ async def test_node_with_xray(
                 "--socks5-hostname", f"127.0.0.1:{socks_port}",
                 "http://www.gstatic.com/generate_204",
                 stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.DEVNULL,
+                stderr=asyncio.subprocess.PIPE,
             )
-            stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=timeout + 5)
+            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=timeout + 5)
             elapsed = int((time.time() - start) * 1000)
 
             status = stdout.decode().strip() if stdout else ""
+            curl_err = stderr.decode() if stderr else ""
+
+            if DEBUG and _debug_count < 3:
+                print(f"  [DEBUG] {node.type}://{node.server}:{node.port} curl={status} err={curl_err[:100]} elapsed={elapsed}ms")
+                _debug_count += 1
+
             if status in ("200", "204", "301", "302"):
                 node.latency = elapsed
                 node.is_valid = True
                 return True
 
-        except (asyncio.TimeoutError, Exception):
-            pass
+        except (asyncio.TimeoutError, Exception) as e:
+            if DEBUG and _debug_count < 3:
+                print(f"  [DEBUG] {node.type}://{node.server}:{node.port} exception={e}")
+                _debug_count += 1
 
         return False
 
@@ -212,8 +220,7 @@ async def test_node_with_xray(
             except subprocess.TimeoutExpired:
                 process.kill()
                 process.wait(timeout=2)
-        # 确保端口释放
-        await asyncio.sleep(0.2)
+        await asyncio.sleep(0.3)
         try:
             os.unlink(config_path)
         except OSError:
@@ -288,7 +295,11 @@ async def main():
         )
         nodes.append(node)
 
-    valid_nodes = await test_nodes_batch(nodes, xray_bin, concurrent=5, timeout=8)
+    # 限制测试数量（调试用，后续去掉切片）
+    test_nodes = nodes[:50]
+    print(f"测试前 {len(test_nodes)}/{len(nodes)} 个节点")
+
+    valid_nodes = await test_nodes_batch(test_nodes, xray_bin, concurrent=5, timeout=8)
 
     print(f"\n测试完成: {len(valid_nodes)}/{len(nodes)} 有效")
 
