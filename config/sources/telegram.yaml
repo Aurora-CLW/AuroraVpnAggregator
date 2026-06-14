@@ -1,12 +1,19 @@
 # Telegram 频道订阅源配置
-# 无需任何认证！通过预览页抓取公开频道消息
-# 自动尝试多个镜像: telegram.dog (推荐) → t.me (备用)
+# 无需任何认证！
+# 抓取方式 (自动尝试):
+#   1. RSS API (tg.i-c-a.su) — 无需认证, GitHub Actions 可用
+#   2. Web 预览页 (telegram.dog / t.me) — 降级方案
+#   3. Telethon — 需要 api_id/api_hash (可选)
+#
+# 支持两种消息格式:
+#   - 直接节点: 消息含 vmess://, vless:// 等协议链接
+#   - 订阅链接: 消息含 https:// 订阅 URL, 自动递归 fetch 并解析
 
 type: telegram
 enabled: true
-mode: web  # web (无需认证, 推荐) / telethon (需要 api_id/api_hash)
+mode: web
 
-# Telethon 模式配置 (可选, web 模式不需要)
+# Telethon 模式配置 (可选, RSS 和 Web 模式不需要)
 api_id: ${TELEGRAM_API_ID}
 api_hash: ${TELEGRAM_API_HASH}
 
@@ -19,15 +26,41 @@ channels:
     username: "@freev2rays"
     enabled: true
 
-  - name: "VPNGate"
-    username: "@vpngatech"
+  # ProxyShareCN — 每条消息含订阅 URL, 自动递归解析
+  - name: "ProxyShareCN"
+    username: "@proxyshareCN"
     enabled: true
 
-  - name: "V2RayNGn"
-    username: "@v2rayngn"
-    enabled: true
+  # 以下频道 RSS 最近消息无有效节点/订阅链接, 暂时禁用
+  # CrackHubCN — 节点在旧消息置顶栏, RSS 不返回
+  # - name: "CrackHubCN"
+  #   username: "@crackhub_cn"
+  #   enabled: true
 
-  # 你自己的频道或其他频道, 随时添加
+  # FreeVPNjd — RSS 间歇性超时
+  # - name: "FreeVPNjd"
+  #   username: "@freeVPNjd"
+  #   enabled: true
+
+  # ZDYZ2Y — 最近消息全是广告
+  # - name: "ZDYZ2Y"
+  #   username: "@ZDYZ2Y"
+  #   enabled: true
+
+  # 以下频道不在 RSS 数据库中
+  # - name: "DingyueJiedian8"
+  #   username: "@DingyueJiedian8"
+  #   enabled: true
+
+  # - name: "Hanbaoyun666"
+  #   username: "@hanbaoyun666"
+  #   enabled: true
+
+  # - name: "V2Queen"
+  #   username: "@v2queen"
+  #   enabled: true
+
+  # 可添加更多频道 (需要频道 username, 非频道 ID)
   # - name: "MyChannel"
   #   username: "@my_channel"
   #   enabled: true
