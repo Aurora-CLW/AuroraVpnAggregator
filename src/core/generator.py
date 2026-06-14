@@ -197,30 +197,55 @@ class Generator:
         else:
             return nodes
 
+    # 节点名称中的广告/冗余关键词 (需清理)
+    _NAME_NOISE_KEYWORDS = [
+        "免费机场", "免费节点", "免费VPN", "机场订阅", "订阅",
+        "TG:", "tg:", "telegram", "Telegram", "@",
+        "保持最新", "以防失联", "更新于", "广告", "推广",
+        "点击", "传送", "入群", "关注", "频道",
+    ]
+
     def _format_node_names(self, nodes: List[Node]) -> List[Node]:
-        """格式化节点名称"""
+        """格式化节点名称 — 统一格式: 🇺🇸 US | Trojan | 01"""
         from ..utils.geoip import get_country_flag
 
+        # 按 (country, type) 分组计数, 用于生成序号
+        counters: dict = {}
+
         for node in nodes:
-            # 构建名称
+            # 清理原始名称中的广告和冗余内容
+            clean_name = node.name or ""
+            for kw in self._NAME_NOISE_KEYWORDS:
+                if kw in clean_name:
+                    clean_name = clean_name.split(kw)[0].rstrip("|-— ")
+            clean_name = clean_name.strip("|-— :： ")
+
+            # 如果清理后名称仍包含重复的协议名 (如 "TROJAN蔓TROJAN")
+            name_upper = clean_name.upper()
+            for proto in ["VMESS", "VLESS", "TROJAN", "SS", "SSR"]:
+                if name_upper.count(proto) > 1:
+                    idx = name_upper.rfind(proto)
+                    clean_name = clean_name[:idx] + clean_name[idx + len(proto):]
+                    clean_name = clean_name.strip("|-— :： ")
+
+            # 构建统一格式: 🇺🇸 US | Trojan
             parts = []
-
-            # 国旗
             if node.country:
-                parts.append(get_country_flag(node.country))
-
-            # 类型
+                parts.append(f"{get_country_flag(node.country)} {node.country}")
             parts.append(node.type.upper())
+            # 清理后的原始名称 (如果有且不与类型重复)
+            if clean_name and clean_name.upper() not in ("", node.type.upper(), "UNKNOWN"):
+                if node.type.upper() not in clean_name.upper():
+                    parts.append(clean_name)
 
-            # 延迟
-            if node.latency:
-                parts.append(f"{node.latency}ms")
-
-            # 原始名称
-            if node.name:
-                parts.append(node.name.split("-")[-1] if "-" in node.name else node.name)
-
-            node.name = " ".join(parts) if parts else "Unknown"
+            base_name = " | ".join(parts) if parts else "Unknown"
+            # 同名节点加序号
+            key = base_name
+            counters[key] = counters.get(key, 0) + 1
+            if counters[key] > 1:
+                node.name = f"{base_name} | {counters[key]:03d}"
+            else:
+                node.name = base_name
 
         return nodes
 

@@ -164,6 +164,8 @@ class AuroraAggregator:
             logger.info("跳过订阅加载，直接生成订阅文件")
             # 从现有节点数据加载
             nodes = self._load_existing_nodes()
+            # 恢复之前保存的频道抓取结果
+            self._restore_channel_results()
         else:
             nodes = await self.load_sources()
 
@@ -211,6 +213,13 @@ class AuroraAggregator:
         # Step 7: 生成订阅
         output_dir = "output"
         self.generator.generate_all(nodes, output_dir)
+
+        # 保存频道抓取结果到 output (供 generate_only 模式恢复)
+        if self.channel_results:
+            import json
+            cr_path = Path(output_dir) / "channel_results.json"
+            with open(cr_path, "w", encoding="utf-8") as f:
+                json.dump(self.channel_results, f, indent=2, ensure_ascii=False)
 
         # Step 8: 复制到 docs 目录（用于 GitHub Pages）
         self._copy_to_docs(nodes)
@@ -279,6 +288,15 @@ class AuroraAggregator:
                 n.is_valid = True
             return nodes
 
+    def _restore_channel_results(self):
+        """从 output/channel_results.json 恢复频道抓取结果 (generate_only 模式使用)"""
+        import json
+        cr_path = Path("output/channel_results.json")
+        if cr_path.exists() and not self.channel_results:
+            with open(cr_path, "r", encoding="utf-8") as f:
+                self.channel_results = json.load(f)
+            logger.info(f"恢复频道抓取结果: {len(self.channel_results)} 个频道")
+
     def _copy_to_docs(self, nodes: List[Node]):
         """复制输出到 docs 目录（安全混淆路径）"""
         import shutil
@@ -329,6 +347,9 @@ class AuroraAggregator:
         if self.channel_results:
             with open(sub_dir / "channel_results.json", "w", encoding="utf-8") as f:
                 json.dump(self.channel_results, f, indent=2, ensure_ascii=False)
+        elif not (sub_dir / "channel_results.json").exists():
+            # generate_only 模式下 channel_results 为空, 保留之前的结果
+            pass
 
         # 同时在根目录放一份不含节点详情的公开统计（仅显示数量）
         public_stats = {

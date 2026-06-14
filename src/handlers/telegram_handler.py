@@ -34,6 +34,10 @@ RSS_API_BASE = "https://tg.i-c-a.su/rss/"
 # t.me 预览页镜像 (CI 可能被屏蔽, 作为降级)
 WEB_MIRRORS = ["https://telegram.dog/s/", "https://t.me/s/"]
 
+# HF Space TG Parser API — 可访问频道的完整消息历史 (CI/本地均可用)
+HF_TG_PARSER_BASE = "https://aurora0722-tg-parser-api.hf.space/tg/history"
+HF_TG_PARSER_KEY = "v1d30p4r5er"
+
 # 订阅 URL 匹配 — 匹配 https:// 链接, 但排除尾部黏附的中文/标点
 SUB_URL_PATTERN = re.compile(r'https?://[^\s<>"\']+')
 
@@ -169,6 +173,15 @@ class TelegramHandler(BaseHandler):
                             sub_urls.extend(older["sub_urls"])
                             break
 
+            # 3.5. 仍无结果, 尝试 HF Space TG Parser API (替代被屏蔽的 Web 镜像)
+            if not nodes and not sub_urls:
+                hf_result = await self._fetch_via_hf_api(session, username, channel_name)
+                if hf_result["nodes"] or hf_result["sub_urls"]:
+                    nodes.extend(hf_result["nodes"])
+                    sub_urls.extend(hf_result["sub_urls"])
+                    pending_msg_links.extend(hf_result.get("msg_links", []))
+                    logger.info(f"[{self.name}] {channel_name}: HF API 获取 {len(hf_result['nodes'])} 个节点, {len(hf_result['sub_urls'])} 个订阅链接")
+
             # 4. 抓取发现的消息链接 (如"点我传送"指向的置顶消息)
             seen_msg_ids = set()
             # 已通过 pinned_url 抓过的消息不再重复
@@ -296,6 +309,56 @@ class TelegramHandler(BaseHandler):
                 return self._extract_from_rss(xml_content, channel_name)
         except Exception as e:
             logger.debug(f"RSS 抓取 {rss_url} 失败: {e}")
+            return {"nodes": [], "sub_urls": [], "msg_links": []}
+
+    async def _fetch_via_hf_api(self, session, username: str, channel_name: str) -> dict:
+        """通过 HF Space TG Parser API 获取频道消息 (替代被屏蔽的 Web 镜像)"""
+        api_url = f"{HF_TG_PARSER_BASE}?channel={username}&limit=20&key={HF_TG_PARSER_KEY}"
+        logger.info(f"[{self.name}] 尝试 HF TG API: {api_url}")
+        try:
+            async with session.get(api_url, proxy=self.proxy, timeout=aiohttp.ClientTimeout(total=30)) as resp:
+                if resp.status != 200:
+                    logger.debug(f"HF TG API HTTP {resp.status} for {username}")
+                    return {"nodes": [], "sub_urls": [], "msg_links": []}
+                data = await resp.json()
+                # API 返回 {"code":0, "messages":[{...}]} 或直接列表
+                if isinstance(data, dict):
+                    messages = data.get("messages", [])
+                elif isinstance(data, list):
+                    messages = data
+                else:
+                    logger.debug(f"HF TG API 非预期响应 for {username}")
+                    return {"nodes": [], "sub_urls": [], "msg_links": []}
+                if not messages:
+                    return {"nodes": [], "sub_urls": [], "msg_links": []}
+                # 解析消息列表
+                all_nodes = []
+                all_sub_urls: List[dict] = []
+                all_msg_links: List[str] = []
+                for msg in messages:
+                    text = msg.get("text", "") if isinstance(msg, dict) else str(msg)
+                    if not text:
+                        continue
+                    all_nodes.extend(self._extract_nodes_from_text(text))
+                    all_sub_urls.extend(self._extract_sub_urls(text))
+                    all_msg_links.extend(self._extract_msg_links(text))
+                # 去重
+                seen = set()
+                unique_subs: List[dict] = []
+                for u in all_sub_urls:
+                    if u["url"] not in seen:
+                        seen.add(u["url"])
+                        unique_subs.append(u)
+                seen_links = set()
+                unique_msgs = []
+                for l in all_msg_links:
+                    if l not in seen_links:
+                        seen_links.add(l)
+                        unique_msgs.append(l)
+                logger.info(f"[{self.name}] HF TG API {channel_name}: {len(messages)} 条消息, {len(all_nodes)} 节点, {len(unique_subs)} 订阅链接")
+                return {"nodes": all_nodes, "sub_urls": unique_subs, "msg_links": unique_msgs}
+        except Exception as e:
+            logger.debug(f"HF TG API 失败 {username}: {e}")
             return {"nodes": [], "sub_urls": [], "msg_links": []}
 
     # Telegram 频道消息链接匹配 (t.me/频道名/消息ID)
