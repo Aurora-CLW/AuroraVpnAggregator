@@ -38,6 +38,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Install xray-core
+        run: |
+          curl -L -o /tmp/xray.zip "https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-64.zip"
+          unzip -o /tmp/xray.zip -d /tmp/xray
+          chmod +x /tmp/xray/xray
+          sudo mv /tmp/xray/xray /usr/local/bin/
+          xray version
+
       - name: Download GeoIP database
         run: |
           mkdir -p data/cache
@@ -45,11 +53,34 @@ jobs:
             "https://git.io/GeoLite2-City.mmdb" || true
         continue-on-error: true
 
-      - name: Run aggregator
+      - name: Clean public docs
+        run: |
+          rm -f docs/clash.yaml docs/v2ray.txt docs/singbox.json docs/nodes.json docs/stats.json
+          rm -rf docs/s
+
+      - name: Run aggregator (skip fake tests)
         env:
           TELEGRAM_API_ID: ${{ secrets.TELEGRAM_API_ID }}
           TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
-        run: python scripts/run.py
+          AURORA_TOKEN: ${{ secrets.AURORA_TOKEN }}
+        run: python scripts/run.py --no-test
+
+      - name: Test nodes with xray
+        run: python scripts/test_with_xray.py
+
+      - name: Regenerate subscriptions from tested nodes
+        env:
+          AURORA_TOKEN: ${{ secrets.AURORA_TOKEN }}
+        run: python scripts/run.py --generate-only
+
+      - name: Verify output
+        run: |
+          echo "=== docs 目录结构 ==="
+          find docs -type f | head -20
+          echo "=== 安全检查: 确认根目录无敏感文件 ==="
+          test ! -f docs/clash.yaml && echo "✓ 根目录无 clash.yaml"
+          test ! -f docs/nodes.json && echo "✓ 根目录无 nodes.json"
+          test -f docs/index.html && echo "✓ index.html 存在"
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
