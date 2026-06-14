@@ -167,8 +167,14 @@ async def test_node_with_xray(
             stderr=subprocess.PIPE,
         )
 
-        # 等待 xray 启动
-        await asyncio.sleep(1)
+        # 等待 xray 启动并检查是否崩溃
+        for _ in range(10):
+            await asyncio.sleep(0.3)
+            if process.poll() is not None:
+                stderr = process.stderr.read().decode() if process.stderr else ""
+                if "error" in stderr.lower() or "fail" in stderr.lower():
+                    return False
+                break
 
         if process.poll() is not None:
             return False
@@ -184,7 +190,7 @@ async def test_node_with_xray(
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.DEVNULL,
             )
-            stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=timeout + 2)
+            stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=timeout + 5)
             elapsed = int((time.time() - start) * 1000)
 
             status = stdout.decode().strip() if stdout else ""
@@ -205,37 +211,31 @@ async def test_node_with_xray(
                 process.wait(timeout=3)
             except subprocess.TimeoutExpired:
                 process.kill()
-        os.unlink(config_path)
+                process.wait(timeout=2)
+        # 确保端口释放
+        await asyncio.sleep(0.2)
+        try:
+            os.unlink(config_path)
+        except OSError:
+            pass
 
 
 async def test_nodes_batch(
-    nodes: List[Node], xray_bin: str, concurrent: int = 10, timeout: int = 10
+    nodes: List[Node], xray_bin: str, concurrent: int = 5, timeout: int = 10
 ) -> List[Node]:
-    """批量测试节点"""
-    semaphore = asyncio.Semaphore(concurrent)
-    base_port = 20000
+    """批量测试节点（串行执行避免端口冲突）"""
     valid_nodes = []
     tested = 0
+    port_counter = 20000
 
-    async def test_with_limit(index: int, node: Node):
-        nonlocal tested
-        async with semaphore:
-            port = base_port + (index % concurrent)
-            is_valid = await test_node_with_xray(node, xray_bin, port, timeout)
-            tested += 1
-            if tested % 20 == 0:
-                print(f"  已测试 {tested}/{len(nodes)}, 有效 {len(valid_nodes)}")
-            return node, is_valid
-
-    tasks = [test_with_limit(i, n) for i, n in enumerate(nodes)]
-    results = await asyncio.gather(*tasks, return_exceptions=True)
-
-    for result in results:
-        if isinstance(result, Exception):
-            continue
-        node, is_valid = result
+    for node in nodes:
+        port_counter += 1
+        is_valid = await test_node_with_xray(node, xray_bin, port_counter, timeout)
+        tested += 1
         if is_valid:
             valid_nodes.append(node)
+        if tested % 20 == 0:
+            print(f"  已测试 {tested}/{len(nodes)}, 有效 {len(valid_nodes)}")
 
     return valid_nodes
 
@@ -288,8 +288,7 @@ async def main():
         )
         nodes.append(node)
 
-    concurrent = min(20, len(nodes))
-    valid_nodes = await test_nodes_batch(nodes, xray_bin, concurrent=concurrent, timeout=8)
+    valid_nodes = await test_nodes_batch(nodes, xray_bin, concurrent=5, timeout=8)
 
     print(f"\n测试完成: {len(valid_nodes)}/{len(nodes)} 有效")
 
