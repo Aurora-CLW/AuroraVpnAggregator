@@ -5,37 +5,7 @@ type: github
 enabled: true
 
 sources:
-  # 1. Pawdroid/Free-servers - 17.8k stars, 每6小时更新
-  - name: "pawdroid_free"
-    url: "https://raw.githubusercontent.com/Pawdroid/Free-servers/main/sub"
-    format: base64
-    enabled: true
-
-  # 2. ermaozi/get_subscribe - 每日更新
-  - name: "ermaozi_clash"
-    url: "https://raw.githubusercontent.com/ermaozi/get_subscribe/main/subscribe/clash.yml"
-    format: clash
-    enabled: true
-
-  # 3. mahdibland/V2RayAggregator - 按速度筛选
-  - name: "mahdibland_clash"
-    url: "https://raw.githubusercontent.com/mahdibland/V2RayAggregator/master/EternityAir.yml"
-    format: clash
-    enabled: true
-
-  # 4. peasoft/NoMoreWalls - 自动聚合公开节点
-  - name: "peasoft_clash"
-    url: "https://raw.githubusercontent.com/peasoft/NoMoreWalls/master/list.yml"
-    format: clash
-    enabled: true
-
-  # 5. barry-far/V2ray-Config - 每15分钟更新, 节点量大
-  - name: "barryfar_v2ray"
-    url: "https://raw.githubusercontent.com/barry-far/V2ray-Config/main/All_Configs_Sub.txt"
-    format: urls
-    enabled: true
-
-  # 6. 自定义订阅源
+  # 自定义订阅源
   - name: "peige_dapei"
     url: "https://peige.dpkj.qzz.io/dapei"
     format: base64

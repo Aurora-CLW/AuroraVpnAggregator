@@ -587,7 +587,7 @@
             currentSources[i].enabled = !prev;
             renderSources();
             const ok = await saveSourcesToGithub();
-            if (!ok) { currentSources[i].enabled = prev; renderSources(); showFeedback('保存失败', true); }
+            if (!ok) { currentSources[i].enabled = prev; renderSources(); showFeedback('保存失败, 已恢复', true); }
             else showFeedback('配置已保存', false);
         };
 
@@ -597,8 +597,12 @@
             editingIndex = -1; editingType = '';
             renderSources();
             const ok = await saveSourcesToGithub();
-            if (!ok) { currentSources.splice(i, 0, removed); renderSources(); showFeedback('删除失败, 已恢复', true); }
-            else showFeedback('已删除: ' + removed.name, false);
+            if (ok) {
+                showFeedback('已删除: ' + removed.name, false);
+            } else {
+                // 保存失败但 UI 上已删除, 提示用户下次 push 会生效
+                showFeedback('已删除 (本地生效)。同步 GitHub 失败, 下次 push 会自动同步。', false);
+            }
         };
 
         // ════════════════════════════════════════════
@@ -682,8 +686,11 @@
             editingIndex = -1; editingType = '';
             renderTgChannels();
             const ok = await saveTgChannelsToGithub();
-            if (!ok) { currentTgChannels.splice(i, 0, removed); renderTgChannels(); showFeedback('删除失败, 已恢复', true); }
-            else showFeedback('已删除: ' + removed.name, false);
+            if (ok) {
+                showFeedback('已删除: ' + removed.name, false);
+            } else {
+                showFeedback('已删除 (本地生效)。同步 GitHub 失败, 下次 push 会自动同步。', false);
+            }
         };
 
         // ════════════════════════════════════════════
