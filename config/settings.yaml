@@ -2,7 +2,7 @@
 
 # 更新设置
 update:
-  interval: 15  # 分钟
+  interval: 60  # 分钟 (GitHub Actions cron 每小时触发)
   retry: 3     # 失败重试次数
   timeout: 30  # 请求超时（秒）
 

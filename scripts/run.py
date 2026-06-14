@@ -48,6 +48,7 @@ class AuroraAggregator:
         )
         self.generator = Generator(self.config.get("output", {}))
         self.geoip = None
+        self.channel_results = {}  # {channel_name: {nodes, sub_urls, status, updated_at}}
 
     def _load_config(self, path: str) -> dict:
         """加载配置文件"""
@@ -99,6 +100,9 @@ class AuroraAggregator:
                 try:
                     nodes = await handler.fetch()
                     all_nodes.extend(nodes)
+                    # 保存频道抓取结果
+                    if hasattr(handler, 'channel_results'):
+                        self.channel_results.update(handler.channel_results)
                 except Exception as e:
                     logger.error(f"处理订阅源失败 [{source_file.name}]: {e}")
                 continue
@@ -321,6 +325,11 @@ class AuroraAggregator:
         with open(sub_dir / "stats.json", "w", encoding="utf-8") as f:
             json.dump(stats, f, indent=2, ensure_ascii=False)
 
+        # 生成频道抓取详情 (供 Web UI "查看最新" 使用)
+        if self.channel_results:
+            with open(sub_dir / "channel_results.json", "w", encoding="utf-8") as f:
+                json.dump(self.channel_results, f, indent=2, ensure_ascii=False)
+
         # 同时在根目录放一份不含节点详情的公开统计（仅显示数量）
         public_stats = {
             "total_nodes": stats.get("total_nodes", 0),
@@ -383,6 +392,7 @@ class AuroraAggregator:
             "by_type": dict(by_type),
             "by_country": dict(by_country.most_common(20)),
             "by_source": dict(by_source),
+            "channel_results": self.channel_results,
             "updated_at": datetime.now().isoformat(),
         }
 

@@ -8,7 +8,16 @@
 # 支持两种消息格式:
 #   - 直接节点: 消息含 vmess://, vless:// 等协议链接
 #   - 订阅链接: 消息含 https:// 订阅 URL, 自动递归 fetch 并解析
-#   - 置顶消息: 配置 pinned_url 直接抓取指定消息
+#   - 置顶消息: 配置 pinned_url 直接抓取指定消息 (也可从 RSS 消息中的链接自动发现)
+#   - 消息链接: RSS 中的"点我传送"等超链接自动跟踪抓取
+#
+# format 字段 (可选):
+#   auto (默认) — 自动检测
+#   base64 — Base64 编码
+#   clash — Clash YAML
+#   singbox — Sing-box JSON
+#   urls — 原始 URL 列表
+#   用于指定频道消息中订阅链接/文件的解析格式
 
 type: telegram
 enabled: true
@@ -32,10 +41,9 @@ channels:
     username: "@proxyshareCN"
     enabled: true
 
-  # CrackHubCN — 节点在置顶消息, 直接抓取置顶消息
+  # CrackHubCN — "点我传送"链接指向置顶消息, 自动从 RSS 发现并抓取
   - name: "CrackHubCN"
     username: "@crackhub_cn"
-    pinned_url: "https://t.me/crackhub_cn/7679"
     enabled: true
 
   # FreeVPNjd — RSS 间歇性限流, Web 翻页可获取
@@ -48,7 +56,12 @@ channels:
     username: "@hanbaoyun666"
     enabled: true
 
-  # 以下频道 RSS 不可用, Web 翻页尝试
+  # go4sharing — 消息中含超链接指向订阅页面, 自动跟踪
+  - name: "go4sharing"
+    username: "@go4sharing"
+    enabled: true
+
+  # 以下频道需要加入才能查看消息 (Web 预览不可用)
   # - name: "ZDYZ2Y"
   #   username: "@ZDYZ2Y"
   #   enabled: true

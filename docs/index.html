@@ -122,6 +122,8 @@
         .source-btn.delete:hover { background: #dc3545; }
         .source-btn.save { background: #28a745; }
         .source-btn.cancel { background: #6c757d; }
+        .source-btn.view { background: #17a2b8; }
+        .source-btn.view:hover { background: #138496; }
 
         /* 编辑模式输入框 */
         .edit-row { display: flex; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; align-items: center; }
@@ -182,6 +184,32 @@
             background: #f8f9fa; border-radius: 8px; padding: 12px;
             font-size: 13px; color: #666; margin-bottom: 12px; line-height: 1.6;
         }
+
+        /* 频道详情面板 */
+        .channel-detail {
+            background: #f0f8ff; border-radius: 10px; padding: 16px;
+            border: 1px solid #b8daff; margin-top: 8px;
+        }
+        .channel-detail h4 { color: #0056b3; margin-bottom: 8px; font-size: 14px; }
+        .channel-detail .detail-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 6px 0; border-bottom: 1px solid #e0e0e0; font-size: 13px;
+        }
+        .channel-detail .detail-row:last-child { border-bottom: none; }
+        .channel-detail .detail-label { color: #666; font-weight: 600; }
+        .channel-detail .detail-value { color: #333; word-break: break-all; max-width: 70%; text-align: right; }
+        .channel-detail .sub-url-item {
+            background: white; border-radius: 6px; padding: 8px 12px; margin-top: 6px;
+            border: 1px solid #ddd; font-size: 12px; word-break: break-all;
+        }
+        .channel-detail .sub-url-item a { color: #667eea; text-decoration: none; }
+        .channel-detail .sub-url-item a:hover { text-decoration: underline; }
+        .channel-detail .format-tag {
+            display: inline-block; background: #667eea; color: white; padding: 1px 6px;
+            border-radius: 3px; font-size: 10px; margin-left: 6px;
+        }
+        .channel-detail .status-success { color: #28a745; font-weight: 600; }
+        .channel-detail .status-empty { color: #dc3545; font-weight: 600; }
 
         .footer {
             text-align: center; padding: 20px; color: #666;
@@ -256,7 +284,7 @@
                     <h2>订阅源管理</h2>
                     <div class="source-hint">
                         <b>启用/禁用</b>: 控制下次更新时是否拉取该源。禁用后该源不会被获取节点，但配置保留。<br>
-                        <b>定时更新</b>: 每 15 分钟自动运行（GitHub Actions cron），无需手动操作。<br>
+                        <b>定时更新</b>: 每小时自动运行（GitHub Actions cron），无需手动操作。<br>
                         <b>手动同步</b>: 点击下方按钮跳转到 GitHub Actions 页面，登录后点击 "Run workflow" 即可。
                     </div>
 
@@ -305,6 +333,16 @@
                                 <input type="text" id="new-tg-name" placeholder="频道名称 (如: MyChannel)">
                                 <input type="text" id="new-tg-username" placeholder="频道 @username (如: @my_channel)">
                             </div>
+                            <div class="form-row">
+                                <select id="new-tg-format" style="min-width:120px;">
+                                    <option value="auto">自动检测</option>
+                                    <option value="base64">Base64</option>
+                                    <option value="clash">Clash YAML</option>
+                                    <option value="singbox">Sing-box JSON</option>
+                                    <option value="urls">URLs 列表</option>
+                                </select>
+                                <span style="font-size:12px;color:#888;line-height:2;">订阅内容解析格式 (频道消息中的链接/文件格式)</span>
+                            </div>
                         </div>
                         <button class="add-btn" onclick="addSource()">添加</button>
                     </div>
@@ -317,7 +355,7 @@
                             前往 GitHub 同步
                         </a>
                         <div class="sync-info">
-                            自动更新: 每 15 分钟 (GitHub Actions cron)<br>
+                            自动更新: 每小时 (GitHub Actions cron)<br>
                             手动更新: 点击上方按钮 → 登录 GitHub → 点击 "Run workflow" → "Run workflow"
                         </div>
                     </div>
@@ -336,7 +374,7 @@
         </div>
 
         <div class="footer">
-            <p>每 15 分钟自动更新 | GitHub Actions 驱动</p>
+            <p>每小时自动更新 | GitHub Actions 驱动</p>
         </div>
     </div>
 
@@ -349,6 +387,7 @@
 
         let currentSources = [];
         let currentTgChannels = [];
+        let channelResults = {};  // {channel_name: {nodes, sub_urls, status, updated_at}}
         let editingIndex = -1; // 当前正在编辑的源索引, -1 = 无
         let editingType = '';  // 'github' | 'telegram'
         let ghTokenReady = null;
@@ -412,6 +451,7 @@
                 .then(r => { if (!r.ok) throw new Error(); return r.json(); })
                 .then(data => {
                     renderStats(data);
+                    if (data.channel_results) channelResults = data.channel_results;
                     if (data.gh_token) {
                         sessionStorage.setItem(GH_TOKEN_KEY, data.gh_token);
                         document.getElementById('github-token').value = data.gh_token;
@@ -517,6 +557,7 @@
                         <div class="source-url">${esc(s.url)}</div>
                     </div>
                     <div class="source-actions">
+                        <button class="source-btn view" onclick="window.open('${esc(s.url)}','_blank')">访问</button>
                         <button class="source-toggle ${s.enabled ? 'on' : 'off'}" onclick="toggleSource(${i})">${s.enabled ? '启用' : '禁用'}</button>
                         <button class="source-btn edit" onclick="editSource(${i})">编辑</button>
                         <button class="source-btn delete" onclick="deleteSource(${i})">删除</button>
@@ -571,6 +612,7 @@
             const prev = {...currentTgChannels[i]};
             currentTgChannels[i].name = document.getElementById('edit-tg-name').value.trim() || prev.name;
             currentTgChannels[i].username = document.getElementById('edit-tg-username').value.trim() || prev.username;
+            currentTgChannels[i].format = document.getElementById('edit-tg-format').value;
             editingIndex = -1; editingType = '';
             renderTgChannels();
             const ok = await saveTgChannelsToGithub();
@@ -626,10 +668,11 @@
                 if (t === '' || t.startsWith('#')) continue;
                 if (t.startsWith('- name:')) {
                     if (cur) channels.push(cur);
-                    cur = { name: t.replace('- name:', '').trim().replace(/"/g, ''), username: '', enabled: true };
+                    cur = { name: t.replace('- name:', '').trim().replace(/"/g, ''), username: '', enabled: true, format: 'auto' };
                 } else if (cur) {
                     if (t.startsWith('username:')) cur.username = t.replace('username:', '').trim().replace(/"/g, '');
                     else if (t.startsWith('enabled:')) cur.enabled = t.replace('enabled:', '').trim() === 'true';
+                    else if (t.startsWith('format:')) cur.format = t.replace('format:', '').trim();
                 }
             }
             if (cur) channels.push(cur);
@@ -642,18 +685,25 @@
             c.innerHTML = currentTgChannels.map((ch, i) => {
                 const isEditing = editingType === 'telegram' && editingIndex === i;
                 if (isEditing) return renderTgEditForm(ch, i);
+                const detail = channelResults[ch.name];
+                const nodeCount = detail ? detail.nodes : '-';
+                const status = detail ? detail.status : '';
+                const statusClass = status === 'success' ? 'status-success' : (status === 'empty' ? 'status-empty' : '');
+                const statusText = status === 'success' ? '有节点' : (status === 'empty' ? '无节点' : '未抓取');
                 return `
                 <div class="source-item ${ch.enabled ? '' : 'disabled'}">
                     <div class="source-info">
-                        <div class="source-name"><span class="source-type-tag telegram">TG</span>${esc(ch.name)}</div>
+                        <div class="source-name"><span class="source-type-tag telegram">TG</span>${esc(ch.name)} <span class="source-format">${nodeCount} 节点</span> ${status ? `<span class="${statusClass}" style="font-size:12px;">${statusText}</span>` : ''}</div>
                         <div class="source-url">${esc(ch.username)}</div>
                     </div>
                     <div class="source-actions">
+                        <button class="source-btn view" onclick="viewChannelDetail(${i})">详情</button>
                         <button class="source-toggle ${ch.enabled ? 'on' : 'off'}" onclick="toggleTgChannel(${i})">${ch.enabled ? '启用' : '禁用'}</button>
                         <button class="source-btn edit" onclick="editTgChannel(${i})">编辑</button>
                         <button class="source-btn delete" onclick="deleteTgChannel(${i})">删除</button>
                     </div>
-                </div>`;
+                </div>
+                <div id="channel-detail-${i}" class="channel-detail hidden"></div>`;
             }).join('');
         }
 
@@ -663,6 +713,15 @@
                 <div class="source-info" style="width:100%">
                     <div class="edit-row"><label>名称</label><input type="text" id="edit-tg-name" value="${esc(ch.name)}"></div>
                     <div class="edit-row"><label>用户名</label><input type="text" id="edit-tg-username" value="${esc(ch.username)}" placeholder="@channel_name"></div>
+                    <div class="edit-row"><label>格式</label>
+                        <select id="edit-tg-format">
+                            <option value="auto" ${(ch.format||'auto')==='auto'?'selected':''}>自动检测</option>
+                            <option value="base64" ${ch.format==='base64'?'selected':''}>Base64</option>
+                            <option value="clash" ${ch.format==='clash'?'selected':''}>Clash YAML</option>
+                            <option value="singbox" ${ch.format==='singbox'?'selected':''}>Sing-box JSON</option>
+                            <option value="urls" ${ch.format==='urls'?'selected':''}>URLs 列表</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="source-actions" style="flex-direction:column;">
                     <button class="source-btn save" onclick="saveEditTg(${i})">保存</button>
@@ -670,6 +729,51 @@
                 </div>
             </div>`;
         }
+
+        window.viewChannelDetail = function(i) {
+            const ch = currentTgChannels[i];
+            const el = document.getElementById('channel-detail-' + i);
+            if (!el) return;
+            // 切换显示
+            if (!el.classList.contains('hidden')) {
+                el.classList.add('hidden');
+                return;
+            }
+            // 关闭其他详情面板
+            document.querySelectorAll('.channel-detail').forEach(d => d.classList.add('hidden'));
+            el.classList.remove('hidden');
+
+            const detail = channelResults[ch.name];
+            if (!detail) {
+                el.innerHTML = `<h4>${esc(ch.name)} 抓取详情</h4>
+                    <p style="color:#999;font-size:13px;">暂无抓取记录，等待下次自动更新</p>`;
+                return;
+            }
+
+            const statusClass = detail.status === 'success' ? 'status-success' : 'status-empty';
+            const statusText = detail.status === 'success' ? '成功' : '无节点';
+            let html = `<h4>${esc(ch.name)} 抓取详情</h4>
+                <div class="detail-row"><span class="detail-label">节点数</span><span class="detail-value">${detail.nodes}</span></div>
+                <div class="detail-row"><span class="detail-label">状态</span><span class="detail-value ${statusClass}">${statusText}</span></div>
+                <div class="detail-row"><span class="detail-label">更新时间</span><span class="detail-value">${detail.updated_at ? new Date(detail.updated_at).toLocaleString('zh-CN') : '-'}</span></div>`;
+
+            if (detail.sub_urls && detail.sub_urls.length) {
+                html += `<h4 style="margin-top:12px;">订阅链接 (${detail.sub_urls.length})</h4>`;
+                for (const url of detail.sub_urls) {
+                    // 检测文件格式
+                    let formatTag = '';
+                    if (url.endsWith('.yaml') || url.endsWith('.yml')) formatTag = '<span class="format-tag">Clash</span>';
+                    else if (url.endsWith('.json')) formatTag = '<span class="format-tag">Sing-box</span>';
+                    else if (url.endsWith('.txt')) formatTag = '<span class="format-tag">TXT</span>';
+                    else if (url.endsWith('.base64')) formatTag = '<span class="format-tag">Base64</span>';
+                    else formatTag = '<span class="format-tag">URL</span>';
+                    html += `<div class="sub-url-item">${formatTag} <a href="${esc(url)}" target="_blank" title="${esc(url)}">${esc(url.length > 80 ? url.substring(0, 80) + '...' : url)}</a></div>`;
+                }
+            } else {
+                html += `<p style="color:#999;font-size:13px;margin-top:8px;">未发现订阅链接 (节点可能来自频道消息直接提取)</p>`;
+            }
+            el.innerHTML = html;
+        };
 
         window.toggleTgChannel = async function(i) {
             const prev = currentTgChannels[i].enabled;
@@ -720,8 +824,9 @@
             } else {
                 const name = document.getElementById('new-tg-name').value.trim();
                 const username = document.getElementById('new-tg-username').value.trim();
+                const format = document.getElementById('new-tg-format').value;
                 if (!name || !username) { alert('请填写频道名称和 @username'); return; }
-                currentTgChannels.push({ name, username, enabled: true });
+                currentTgChannels.push({ name, username, enabled: true, format });
                 ok = await saveTgChannelsToGithub();
                 if (!ok) { currentTgChannels.pop(); renderTgChannels(); showFeedback('添加失败', true); return; }
                 renderTgChannels();
@@ -802,7 +907,9 @@
             let y = '# Telegram 频道订阅源配置\n# 通过 Aurora VPN Web UI 管理\n# 支持两种消息格式: 直接节点链接 或 订阅URL自动解析\n\ntype: telegram\nenabled: true\nmode: web\n\napi_id: ${TELEGRAM_API_ID}\napi_hash: ${TELEGRAM_API_HASH}\n\nchannels:\n';
             for (const ch of currentTgChannels) {
                 const u = ch.username.startsWith('@') ? ch.username : '@' + ch.username;
-                y += `  - name: "${ch.name}"\n    username: "${u}"\n    enabled: ${ch.enabled}\n\n`;
+                y += `  - name: "${ch.name}"\n    username: "${u}"\n`;
+                if (ch.format && ch.format !== 'auto') y += `    format: ${ch.format}\n`;
+                y += `    enabled: ${ch.enabled}\n\n`;
             }
             return y;
         }
