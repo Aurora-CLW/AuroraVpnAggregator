@@ -142,18 +142,25 @@
             font-size: 16px; font-weight: 600; transition: transform 0.2s, box-shadow 0.2s;
         }
         .sync-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(102,126,234,0.4); }
-        .sync-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
         .sync-status { margin-top: 12px; font-size: 14px; color: #666; }
         .sync-status.success { color: #28a745; }
         .sync-status.error { color: #dc3545; }
+        .sync-info {
+            margin-top: 15px; font-size: 13px; color: #888; line-height: 1.8;
+        }
+        .sync-info a { color: #667eea; }
 
-        /* GitHub Token 输入 */
+        /* GitHub Token */
         .token-hint {
-            background: #fff3cd; border-radius: 8px; padding: 12px;
-            font-size: 13px; color: #856404; margin-top: 10px;
+            background: #e8f4fd; border-radius: 8px; padding: 12px;
+            font-size: 13px; color: #0c5460; margin-top: 10px;
         }
         .token-input-row { display: flex; gap: 10px; margin-top: 10px; }
         .token-input-row input { flex: 1; }
+        .source-hint {
+            background: #f8f9fa; border-radius: 8px; padding: 12px;
+            font-size: 13px; color: #666; margin-bottom: 12px; line-height: 1.6;
+        }
 
         .footer {
             text-align: center; padding: 20px; color: #666;
@@ -226,11 +233,25 @@
                 <!-- 源管理 Tab -->
                 <div id="tab-sources" class="section hidden">
                     <h2>订阅源管理</h2>
+                    <div class="source-hint">
+                        <b>启用/禁用</b>: 控制下次更新时是否拉取该源。禁用后该源不会被获取节点，但配置保留。<br>
+                        <b>定时更新</b>: 每 6 小时自动运行（GitHub Actions cron），无需手动操作。<br>
+                        <b>手动同步</b>: 点击下方按钮跳转到 GitHub Actions 页面，登录后点击 "Run workflow" 即可。
+                    </div>
                     <div id="source-list" class="source-list">
                         <p style="color:#999;">加载中...</p>
                     </div>
-                    <div class="add-source-form">
+
+                    <div class="add-source-form" id="add-source-form">
                         <h3>添加订阅源</h3>
+                        <div class="token-hint" style="margin-top:0;margin-bottom:10px;">
+                            添加/删除/禁用源需要修改仓库文件，请输入 GitHub Token (需要 repo 权限)。
+                            <a href="https://github.com/settings/tokens/new" target="_blank" style="color:#667eea;">创建 Token</a>
+                        </div>
+                        <div class="token-input-row" style="margin-bottom:10px;">
+                            <input type="password" id="github-token" class="auth-input"
+                                   placeholder="GitHub Personal Access Token (repo 权限)" autocomplete="off">
+                        </div>
                         <div class="form-row">
                             <input type="text" id="new-source-name" placeholder="源名称 (如: my_proxy)">
                             <input type="text" id="new-source-url" placeholder="订阅 URL">
@@ -246,16 +267,14 @@
 
                     <div class="sync-section" style="margin-top:20px;">
                         <h2>手动同步</h2>
-                        <p style="color:#666; margin-bottom:15px;">触发 GitHub Actions 立即更新节点</p>
-                        <button class="sync-btn" id="sync-btn" onclick="triggerSync()">立即同步</button>
-                        <div id="sync-status" class="sync-status"></div>
-                        <div class="token-hint">
-                            管理订阅源和同步需要 GitHub Token (repo 权限)。
-                            <a href="https://github.com/settings/tokens/new" target="_blank" style="color:#667eea;">创建 Token</a>
-                        </div>
-                        <div class="token-input-row">
-                            <input type="password" id="github-token" class="auth-input"
-                                   placeholder="输入 GitHub Personal Access Token" autocomplete="off">
+                        <p style="color:#666; margin-bottom:15px;">立即触发节点更新（无需 Token）</p>
+                        <a href="https://github.com/Aurora-CLW/AuroraVpnAggregator/actions/workflows/update-deploy.yml"
+                           target="_blank" class="sync-btn" style="display:inline-block;text-decoration:none;">
+                            前往 GitHub 同步
+                        </a>
+                        <div class="sync-info">
+                            自动更新: 每 6 小时 (0:00, 6:00, 12:00, 18:00 UTC)<br>
+                            手动更新: 点击上方按钮 → 登录 GitHub → 点击 "Run workflow" → "Run workflow"
                         </div>
                     </div>
                 </div>
@@ -500,48 +519,6 @@
             }
             return yaml;
         }
-
-        // 触发同步
-        window.triggerSync = async function() {
-            const ghToken = document.getElementById('github-token').value.trim();
-            if (!ghToken) {
-                document.getElementById('sync-status').textContent = '请先输入 GitHub Token';
-                document.getElementById('sync-status').className = 'sync-status error';
-                return;
-            }
-            sessionStorage.setItem(GH_TOKEN_KEY, ghToken);
-
-            const btn = document.getElementById('sync-btn');
-            btn.disabled = true;
-            btn.textContent = '同步中...';
-            document.getElementById('sync-status').textContent = '正在触发 GitHub Actions...';
-            document.getElementById('sync-status').className = 'sync-status';
-
-            try {
-                const resp = await fetch(`https://api.github.com/repos/${REPO}/actions/workflows/update-deploy.yml/dispatches`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': 'token ' + ghToken,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ ref: 'main' })
-                });
-
-                if (resp.ok) {
-                    document.getElementById('sync-status').textContent = '同步已触发！约 3-5 分钟后完成。';
-                    document.getElementById('sync-status').className = 'sync-status success';
-                } else {
-                    const err = await resp.json();
-                    throw new Error(err.message || '触发失败');
-                }
-            } catch (e) {
-                document.getElementById('sync-status').textContent = '同步失败: ' + e.message;
-                document.getElementById('sync-status').className = 'sync-status error';
-            }
-
-            btn.disabled = false;
-            btn.textContent = '立即同步';
-        };
 
         window.authenticate = async function() {
             const input = document.getElementById('token-input');
