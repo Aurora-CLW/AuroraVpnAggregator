@@ -177,7 +177,7 @@ class TelegramHandler(BaseHandler):
                 if mid:
                     seen_msg_ids.add(mid.group(1))
             msg_link_count = 0
-            max_msg_links = 5  # 限制消息链接抓取数量, 避免过度请求
+            max_msg_links = 10  # 限制消息链接抓取数量, 避免过度请求
             for link in pending_msg_links:
                 if msg_link_count >= max_msg_links:
                     break
