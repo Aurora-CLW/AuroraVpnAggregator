@@ -28,10 +28,6 @@ api_id: ${TELEGRAM_API_ID}
 api_hash: ${TELEGRAM_API_HASH}
 
 channels:
-  - name: "V2RayTz"
-    username: "@v2raytz"
-    enabled: true
-
   - name: "FreeV2rays"
     username: "@freev2rays"
     enabled: true
@@ -59,6 +55,11 @@ channels:
   # go4sharing — 消息中含超链接指向订阅页面, 自动跟踪
   - name: "go4sharing"
     username: "@go4sharing"
+    enabled: true
+
+  # freeyule — 免费娱乐资源频道
+  - name: "FreeYule"
+    username: "@freeyule"
     enabled: true
 
   # 以下频道需要加入才能查看消息 (Web 预览不可用)

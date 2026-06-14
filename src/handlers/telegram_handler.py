@@ -202,6 +202,11 @@ class TelegramHandler(BaseHandler):
                 # 跳过 ?single 参数链接 (页面内重复引用)
                 if "?single" in link:
                     continue
+                # 提取消息链接中的频道名和消息 ID, 用于 HF API
+                msg_match = self._TG_MSG_LINK_PATTERN.match(link)
+                link_channel = msg_match.group(1) if msg_match else None
+                link_msg_id = msg_match.group(2) if msg_match else None
+
                 logger.info(f"[{self.name}] {channel_name}: 抓取消息链接 {link}")
                 html = await self._fetch_page(session, link)
                 if html:
@@ -209,6 +214,14 @@ class TelegramHandler(BaseHandler):
                     nodes.extend(result["nodes"])
                     sub_urls.extend(result["sub_urls"])
                     msg_link_count += 1
+                elif link_channel and link_msg_id:
+                    # Web 抓取失败, 尝试 HF API 单条消息接口
+                    logger.info(f"[{self.name}] {channel_name}: Web 失败, 尝试 HF API 消息 {link_channel}/{link_msg_id}")
+                    hf_msg = await self._fetch_msg_via_hf_api(session, link_channel, link_msg_id)
+                    if hf_msg:
+                        nodes.extend(hf_msg["nodes"])
+                        sub_urls.extend(hf_msg["sub_urls"])
+                        msg_link_count += 1
                 await asyncio.sleep(1)
 
             # 4. 递归 fetch 订阅链接
@@ -313,7 +326,7 @@ class TelegramHandler(BaseHandler):
 
     async def _fetch_via_hf_api(self, session, username: str, channel_name: str) -> dict:
         """通过 HF Space TG Parser API 获取频道消息 (替代被屏蔽的 Web 镜像)"""
-        api_url = f"{HF_TG_PARSER_BASE}?channel={username}&limit=20&key={HF_TG_PARSER_KEY}"
+        api_url = f"{HF_TG_PARSER_BASE}?channel={username}&limit=50&key={HF_TG_PARSER_KEY}"
         logger.info(f"[{self.name}] 尝试 HF TG API: {api_url}")
         try:
             async with session.get(api_url, proxy=self.proxy, timeout=aiohttp.ClientTimeout(total=30)) as resp:
@@ -360,6 +373,26 @@ class TelegramHandler(BaseHandler):
         except Exception as e:
             logger.debug(f"HF TG API 失败 {username}: {e}")
             return {"nodes": [], "sub_urls": [], "msg_links": []}
+
+    async def _fetch_msg_via_hf_api(self, session, username: str, msg_id: str) -> Optional[dict]:
+        """通过 HF Space TG Parser API 获取单条消息 (替代 Web 抓取消息链接)"""
+        api_url = f"https://aurora0722-tg-parser-api.hf.space/tg/message?channel={username}&msg_id={msg_id}&key={HF_TG_PARSER_KEY}"
+        try:
+            async with session.get(api_url, proxy=self.proxy, timeout=aiohttp.ClientTimeout(total=15)) as resp:
+                if resp.status != 200:
+                    return None
+                data = await resp.json()
+                if isinstance(data, dict) and data.get("code") == 0:
+                    msg = data.get("message", {})
+                    text = msg.get("text", "") if isinstance(msg, dict) else ""
+                    if text:
+                        return {
+                            "nodes": self._extract_nodes_from_text(text),
+                            "sub_urls": self._extract_sub_urls(text),
+                        }
+                return None
+        except Exception:
+            return None
 
     # Telegram 频道消息链接匹配 (t.me/频道名/消息ID)
     _TG_MSG_LINK_PATTERN = re.compile(r'https?://(?:t\.me|telegram\.dog|telegram\.me)/([a-zA-Z0-9_]+)/(\d+)')
