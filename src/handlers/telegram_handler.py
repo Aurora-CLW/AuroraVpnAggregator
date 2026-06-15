@@ -173,14 +173,14 @@ class TelegramHandler(BaseHandler):
                             sub_urls.extend(older["sub_urls"])
                             break
 
-            # 3.5. 仍无结果, 尝试 HF Space TG Parser API (替代被屏蔽的 Web 镜像)
-            if not nodes and not sub_urls:
+            # 3.5. 节点数较少或无结果, 尝试 HF Space TG Parser API 补充
+            if len(nodes) < 5 or (not nodes and not sub_urls):
                 hf_result = await self._fetch_via_hf_api(session, username, channel_name)
                 if hf_result["nodes"] or hf_result["sub_urls"]:
                     nodes.extend(hf_result["nodes"])
                     sub_urls.extend(hf_result["sub_urls"])
                     pending_msg_links.extend(hf_result.get("msg_links", []))
-                    logger.info(f"[{self.name}] {channel_name}: HF API 获取 {len(hf_result['nodes'])} 个节点, {len(hf_result['sub_urls'])} 个订阅链接")
+                    logger.info(f"[{self.name}] {channel_name}: HF API 补充 {len(hf_result['nodes'])} 个节点, {len(hf_result['sub_urls'])} 个订阅链接")
 
             # 4. 抓取发现的消息链接 (如"点我传送"指向的置顶消息)
             seen_msg_ids = set()

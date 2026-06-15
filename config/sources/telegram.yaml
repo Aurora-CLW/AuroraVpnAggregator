@@ -57,6 +57,11 @@ channels:
     username: "@freeyule"
     enabled: true
 
+  # wxdy666 — 每日更新大量直接节点 (vless/vmess/ss)
+  - name: "Wxdy666"
+    username: "@wxdy666"
+    enabled: true
+
   # 以下频道需要加入才能查看消息 (Web 预览不可用)
   # - name: "ZDYZ2Y"
   #   username: "@ZDYZ2Y"
