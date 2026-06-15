@@ -194,6 +194,22 @@ class AuroraAggregator:
             valid_nodes = self.deduplicator.remove_invalid(tested_nodes)
             logger.info(f"节点测试完成: {len(valid_nodes)}/{len(tested_nodes)} 有效")
 
+            # 按频道统计校验结果, 更新 channel_results
+            from collections import defaultdict
+            ch_valid = defaultdict(int)
+            ch_invalid = defaultdict(int)
+            for node in tested_nodes:
+                src = node.source or ""
+                # source 格式: "tg:ChannelName"
+                ch_name = src.split(":", 1)[1] if ":" in src else src
+                if node.is_valid:
+                    ch_valid[ch_name] += 1
+                else:
+                    ch_invalid[ch_name] += 1
+            for name in self.channel_results:
+                self.channel_results[name]["valid_nodes"] = ch_valid.get(name, 0)
+                self.channel_results[name]["invalid_nodes"] = ch_invalid.get(name, 0)
+
         # Step 5: 过滤 (仅对有效节点做过滤)
         filter_config = self.config.get("filter", {})
         if filter_config.get("exclude_countries"):

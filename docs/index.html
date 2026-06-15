@@ -731,13 +731,17 @@
                 if (isEditing) return renderTgEditForm(ch, i);
                 const detail = channelResults[ch.name];
                 const nodeCount = detail ? detail.nodes : '-';
+                const validCount = detail ? (detail.valid_nodes ?? '-') : '-';
+                const invalidCount = detail ? (detail.invalid_nodes ?? '-') : '-';
                 const status = detail ? detail.status : '';
                 const statusClass = status === 'success' ? 'status-success' : (status === 'empty' ? 'status-empty' : '');
                 const statusText = status === 'success' ? '有节点' : (status === 'empty' ? '无节点' : '未抓取');
+                const validBadge = validCount !== '-' ? `<span style="color:#28a745;font-size:11px;">✅${validCount}</span>` : '';
+                const invalidBadge = invalidCount > 0 ? `<span style="color:#dc3545;font-size:11px;">❌${invalidCount}</span>` : '';
                 return `
                 <div class="source-item ${ch.enabled ? '' : 'disabled'}">
                     <div class="source-info">
-                        <div class="source-name"><span class="source-type-tag telegram">TG</span>${esc(ch.name)} <span class="source-format">${nodeCount} 节点</span> ${status ? `<span class="${statusClass}" style="font-size:12px;">${statusText}</span>` : ''}</div>
+                        <div class="source-name"><span class="source-type-tag telegram">TG</span>${esc(ch.name)} <span class="source-format">${nodeCount} 节点</span> ${status ? `<span class="${statusClass}" style="font-size:12px;">${statusText}</span>` : ''} ${validBadge} ${invalidBadge}</div>
                         <div class="source-url">${esc(ch.username)}</div>
                     </div>
                     <div class="source-actions">
@@ -797,8 +801,12 @@
 
             const statusClass = detail.status === 'success' ? 'status-success' : 'status-empty';
             const statusText = detail.status === 'success' ? '成功' : '无节点';
+            const validCount = detail.valid_nodes ?? '-';
+            const invalidCount = detail.invalid_nodes ?? '-';
             let html = `<h4>${esc(ch.name)} 抓取详情</h4>
-                <div class="detail-row"><span class="detail-label">节点数</span><span class="detail-value">${detail.nodes}</span></div>
+                <div class="detail-row"><span class="detail-label">抓取节点</span><span class="detail-value">${detail.nodes}</span></div>
+                <div class="detail-row"><span class="detail-label">校验通过</span><span class="detail-value" style="color:#28a745;">${validCount}</span></div>
+                <div class="detail-row"><span class="detail-label">校验失败</span><span class="detail-value" style="color:${invalidCount > 0 ? '#dc3545' : '#999'};">${invalidCount}</span></div>
                 <div class="detail-row"><span class="detail-label">状态</span><span class="detail-value ${statusClass}">${statusText}</span></div>
                 <div class="detail-row"><span class="detail-label">更新时间</span><span class="detail-value">${detail.updated_at ? new Date(detail.updated_at).toLocaleString('zh-CN') : '-'}</span></div>`;
 
