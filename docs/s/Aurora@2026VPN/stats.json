@@ -1,21 +1,24 @@
 {
-  "total_nodes": 416,
-  "avg_latency": 239,
+  "total_nodes": 617,
+  "valid_nodes": 403,
+  "invalid_nodes": 214,
+  "avg_latency": 231,
   "by_type": {
-    "vless": 281,
-    "trojan": 105,
-    "vmess": 6,
+    "vless": 269,
+    "trojan": 103,
+    "vmess": 7,
     "ss": 24
   },
   "by_country": {},
   "by_source": {
-    "peige_dapei": 162,
+    "peige_dapei": 160,
     "tg:FreeV2rays": 4,
-    "tg:ProxyShareCN": 159,
-    "tg:CrackHubCN": 4,
-    "tg:FreeYule": 50,
+    "tg:ProxyShareCN": 154,
+    "tg:CrackHubCN": 3,
+    "tg:go4sharing": 2,
+    "tg:FreeYule": 44,
     "tg:Wxdy666": 7,
-    "tg:V2Queen": 30
+    "tg:V2Queen": 29
   },
   "channel_results": {
     "FreeV2rays": {
@@ -25,10 +28,10 @@
       "failed_sub_urls": [],
       "dead_sub_urls": [],
       "status": "success",
-      "updated_at": "2026-06-15T13:16:11.198106"
+      "updated_at": "2026-06-15T14:39:05.783232"
     },
     "ProxyShareCN": {
-      "nodes": 275,
+      "nodes": 274,
       "sub_urls": [
         "https://shz.al/jYpG",
         "https://shz.al/XKeQ",
@@ -70,7 +73,7 @@
       ],
       "dead_sub_urls": [],
       "status": "success",
-      "updated_at": "2026-06-15T13:17:56.314089"
+      "updated_at": "2026-06-15T14:41:44.113561"
     },
     "CrackHubCN": {
       "nodes": 46,
@@ -96,14 +99,11 @@
       ],
       "dead_sub_urls": [],
       "status": "success",
-      "updated_at": "2026-06-15T13:21:15.433523"
+      "updated_at": "2026-06-15T14:45:13.676850"
     },
     "FreeVPNjd": {
-      "nodes": 15,
+      "nodes": 0,
       "sub_urls": [
-        "https://xn--u0x064d.com/",
-        "https://befriends.concubine.top/ggbjgpy?token=c9691f3ec51c7ebb1258f38365724f76",
-        "https://ldgb.pages.dev/sub?token=5238141bc3daa773b225209767b9fb2c",
         "http://t.me/rdsjo)**",
         "https://xn--u0x064d.com/",
         "https://befriends.concubine.top/ggbjgpy?token=c9691f3ec51c7ebb1258f38365724f76`",
@@ -113,13 +113,10 @@
         "https://tgnav.github.io/robot/",
         "https://wiki.tgnav.org/"
       ],
-      "valid_sub_urls": [
-        "https://ldgb.pages.dev/sub?token=5238141bc3daa773b225209767b9fb2c"
-      ],
+      "valid_sub_urls": [],
       "failed_sub_urls": [
-        "https://xn--u0x064d.com/",
-        "https://befriends.concubine.top/ggbjgpy?token=c9691f3ec51c7ebb1258f38365724f76",
         "http://t.me/rdsjo)**",
+        "https://xn--u0x064d.com/",
         "https://befriends.concubine.top/ggbjgpy?token=c9691f3ec51c7ebb1258f38365724f76`",
         "https://tgnav.github.io/",
         "https://tgnav.github.io/group/",
@@ -129,11 +126,11 @@
       "dead_sub_urls": [
         "https://ldgb.pages.dev/sub?token=5238141bc3daa773b225209767b9fb2c`"
       ],
-      "status": "success",
-      "updated_at": "2026-06-15T13:23:56.086666"
+      "status": "empty",
+      "updated_at": "2026-06-15T14:48:51.717726"
     },
     "go4sharing": {
-      "nodes": 0,
+      "nodes": 5,
       "sub_urls": [
         "https://node-share.web.app/2026/05/15/%E5%85%8D%E8%B4%B9%E6%9C%BA%E5%9C%BA-%E7%A9%BF%E4%BA%91%E5%8A%A0%E9%80%9F-100G-%E6%9C%88-4%E4%B8%AA%E8%8A%82%E7%82%B9/",
         "https://subsub.surge.sh/?url=https%3A%2F%2Fraw.githubusercontent.com%2Fgo4sharing%2Fsub%2Fmain%2Fworker.yaml",
@@ -153,10 +150,11 @@
         "https://node-share.web.app/2026/01/06/%E5%85%8D%E8%B4%B9%E6%9C%BA%E5%9C%BA-%E7%89%B9%E6%9C%97%E6%99%AE%E4%BA%91-200G-%E4%B8%8D%E9%99%90%E6%97%B6-15%E4%B8%AA%E8%8A%82%E7%82%B9/",
         "https://color-recognize.surge.sh/"
       ],
-      "valid_sub_urls": [],
+      "valid_sub_urls": [
+        "https://raw.githubusercontent.com/go4sharing/sub/main/sub.yaml"
+      ],
       "failed_sub_urls": [
         "https://node-share.web.app/2026/05/15/%E5%85%8D%E8%B4%B9%E6%9C%BA%E5%9C%BA-%E7%A9%BF%E4%BA%91%E5%8A%A0%E9%80%9F-100G-%E6%9C%88-4%E4%B8%AA%E8%8A%82%E7%82%B9/",
-        "https://raw.githubusercontent.com/go4sharing/sub/main/sub.yaml",
         "https://xingvoy.com/",
         "https://node-share.web.app/2026/04/22/%E5%85%8D%E8%B4%B9%E6%9C%BA%E5%9C%BA-%E5%96%B5%E5%96%B5vpn-100G-%E6%9C%88-6%E4%B8%AA%E8%8A%82%E7%82%B9/",
         "https://node-share.web.app/2026/04/22/%E5%85%8D%E8%B4%B9%E6%9C%BA%E5%9C%BA-%E8%81%94%E9%80%9A%E4%BA%91-500G-%E6%9C%88-7%E4%B8%AA%E8%8A%82%E7%82%B9/",
@@ -168,8 +166,8 @@
         "https://subsub.surge.sh/?url=https%3A%2F%2Fraw.githubusercontent.com%2Fgo4sharing%2Fsub%2Fmain%2Fclash.yaml",
         "https://subsub.surge.sh/?url=https%3A%2F%2Fraw.githubusercontent.com%2Fgo4sharing%2Fsub%2Fmain%2Fsub.yaml"
       ],
-      "status": "empty",
-      "updated_at": "2026-06-15T13:26:34.176437"
+      "status": "success",
+      "updated_at": "2026-06-15T14:51:05.361332"
     },
     "FreeYule": {
       "nodes": 60,
@@ -182,7 +180,7 @@
       "failed_sub_urls": [],
       "dead_sub_urls": [],
       "status": "success",
-      "updated_at": "2026-06-15T13:26:54.344452"
+      "updated_at": "2026-06-15T14:51:33.993075"
     },
     "Wxdy666": {
       "nodes": 14,
@@ -211,7 +209,7 @@
         "http://qulianvpn.com/"
       ],
       "status": "success",
-      "updated_at": "2026-06-15T13:29:54.174669"
+      "updated_at": "2026-06-15T14:54:24.004633"
     },
     "V2Queen": {
       "nodes": 86,
@@ -236,9 +234,9 @@
         "https://v2clash.blog/Link/20260608-clash.yaml"
       ],
       "status": "success",
-      "updated_at": "2026-06-15T13:30:39.018366"
+      "updated_at": "2026-06-15T14:55:26.961905"
     }
   },
-  "updated_at": "2026-06-15T13:32:10.640165",
+  "updated_at": "2026-06-15T14:57:17.757184",
   "gh_token": "${AURORA_GH_TOKEN}"
 }
