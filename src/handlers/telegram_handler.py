@@ -235,6 +235,24 @@ class TelegramHandler(BaseHandler):
                     sub_urls.extend(web_result["sub_urls"])
                     logger.info(f"[{self.name}] {channel_name}: 网站获取 {len(web_result['nodes'])} 个节点, {len(web_result['sub_urls'])} 个订阅链接")
 
+            # 4.6. V2Queen 特殊处理: 从消息 #fragment 中提取 v2clash.blog 日期, 构造订阅 URL (只取最新2个日期)
+            v2clash_dates = None
+            if channel_config.get("v2clash"):
+                v2clash_dates = await self._extract_v2clash_date(session, username)
+            if v2clash_dates:
+                v2clash_subs = []
+                for date in v2clash_dates[:2]:
+                    v2clash_subs.extend([
+                        {"url": f"https://v2clash.blog/Link/{date}-v2ray.txt", "format_hint": "auto"},
+                        {"url": f"https://v2clash.blog/Link/{date}-clash.yaml", "format_hint": "clash"},
+                    ])
+                seen_urls = {u["url"] for u in sub_urls}
+                for item in v2clash_subs:
+                    if item["url"] not in seen_urls:
+                        sub_urls.append(item)
+                        seen_urls.add(item["url"])
+                logger.info(f"[{self.name}] {channel_name}: v2clash.blog 日期 {v2clash_dates[:2]}, 构造 {len(v2clash_subs)} 个订阅链接")
+
             # 5. 递归 fetch 订阅链接
             if sub_urls:
                 # 去重
@@ -413,6 +431,31 @@ class TelegramHandler(BaseHandler):
                             "sub_urls": self._extract_sub_urls(text),
                         }
                 return None
+        except Exception:
+            return None
+
+    async def _extract_v2clash_date(self, session, username: str) -> Optional[str]:
+        """从频道最新消息中提取 v2clash.blog 日期, 返回 YYYYMMDD 格式列表 (最新2个)"""
+        api_url = f"{HF_TG_PARSER_BASE}?channel={username}&limit=10&key={HF_TG_PARSER_KEY}"
+        try:
+            async with session.get(api_url, proxy=self.proxy, timeout=aiohttp.ClientTimeout(total=15)) as resp:
+                if resp.status != 200:
+                    return None
+                data = await resp.json()
+                messages = data.get("messages", []) if isinstance(data, dict) else []
+                dates = []
+                for msg in messages:
+                    text = msg.get("text", "") if isinstance(msg, dict) else ""
+                    # 匹配 v2clash.blog%202026-6.9 或 v2clash.blog 2026-6.9
+                    match = re.search(r'v2clash\.blog(?:%20|\s+)(\d{4})-(\d+)\.(\d+)', text)
+                    if match:
+                        year, month, day = match.group(1), match.group(2), match.group(3)
+                        date_str = f"{year}{int(month):02d}{int(day):02d}"
+                        if date_str not in dates:
+                            dates.append(date_str)
+                        if len(dates) >= 2:
+                            break
+                return dates if dates else None
         except Exception:
             return None
 
