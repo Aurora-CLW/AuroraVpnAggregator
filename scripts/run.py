@@ -181,8 +181,8 @@ class AuroraAggregator:
         # Step 3: 丰富节点信息
         nodes = self.enrich_nodes(nodes)
 
-        # Step 4: 节点测试
-        tested_nodes = nodes  # 未测试时全部保留
+        # Step 4: 节点测试 / 从测试结果分流
+        tested_nodes = nodes
         valid_nodes = nodes
         if not skip_test and not generate_only:
             logger.info("开始节点测试...")
@@ -190,17 +190,24 @@ class AuroraAggregator:
             tester = NodeTester(testing_config)
             tested_nodes = await tester.test_all(nodes)
 
-            # 分流: 全部节点(保留校验结果) vs 仅有效节点
-            valid_nodes = self.deduplicator.remove_invalid(tested_nodes)
-            logger.info(f"节点测试完成: {len(valid_nodes)}/{len(tested_nodes)} 有效")
+        # 从节点列表分流: 全部节点 vs 仅有效节点
+        # generate_only 模式下，is_valid 标记来自 test_with_xray.py 的结果
+        valid_nodes = [n for n in tested_nodes if n.is_valid]
+        invalid_nodes = [n for n in tested_nodes if not n.is_valid]
 
-            # 按频道统计校验结果, 更新 channel_results
+        if len(valid_nodes) < len(tested_nodes):
+            logger.info(f"节点校验: {len(valid_nodes)} 通过 / {len(invalid_nodes)} 失败 / {len(tested_nodes)} 总计")
+        elif not valid_nodes and tested_nodes:
+            # 无测试结果时全部保留
+            valid_nodes = tested_nodes
+
+        # 按频道统计校验结果, 更新 channel_results
+        if self.channel_results:
             from collections import defaultdict
             ch_valid = defaultdict(int)
             ch_invalid = defaultdict(int)
             for node in tested_nodes:
                 src = node.source or ""
-                # source 格式: "tg:ChannelName"
                 ch_name = src.split(":", 1)[1] if ":" in src else src
                 if node.is_valid:
                     ch_valid[ch_name] += 1
@@ -297,20 +304,17 @@ class AuroraAggregator:
                 latency=n.get("latency", 0),
             )
             node.is_valid = n.get("is_valid", False)
+            node.tcp_valid = n.get("tcp_valid", False)
             nodes.append(node)
 
-        # 优先使用测试通过的节点，未测试的也保留
+        # 保留测试结果：is_valid=True 和 is_valid=False 的节点都保留
         valid = [n for n in nodes if n.is_valid]
-        untested = [n for n in nodes if not n.is_valid]
+        invalid = [n for n in nodes if not n.is_valid]
         if valid:
-            logger.info(f"加载 {len(valid)} 个有效节点, {len(untested)} 个未验证节点")
-            # 有效节点排前面，未验证的也包含
-            return valid + untested
+            logger.info(f"加载 {len(valid)} 个有效节点, {len(invalid)} 个失败节点")
         else:
-            logger.info(f"无有效节点，加载全部 {len(nodes)} 个节点（未验证）")
-            for n in nodes:
-                n.is_valid = True
-            return nodes
+            logger.info(f"无测试结果，加载全部 {len(nodes)} 个节点")
+        return nodes
 
     def _restore_channel_results(self):
         """从 output/channel_results.json 恢复频道抓取结果 (generate_only 模式使用)"""
