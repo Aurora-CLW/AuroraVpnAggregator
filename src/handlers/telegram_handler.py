@@ -115,6 +115,7 @@ class TelegramHandler(BaseHandler):
         channel_name = channel_config.get("name", "unknown")
         pinned_url = channel_config.get("pinned_url", "")
         channel_format = channel_config.get("format", "auto")
+        website_url = channel_config.get("website_url", "")
 
         if not username:
             logger.warning(f"[{self.name}] 需要 username: {channel_name}")
@@ -224,7 +225,17 @@ class TelegramHandler(BaseHandler):
                         msg_link_count += 1
                 await asyncio.sleep(1)
 
-            # 4. 递归 fetch 订阅链接
+            # 4.5. 抓取关联网站 (如频道消息中指向的博客/订阅页面)
+            if website_url:
+                logger.info(f"[{self.name}] {channel_name}: 抓取关联网站 {website_url}")
+                html = await self._fetch_page(session, website_url)
+                if html:
+                    web_result = self._extract_from_html(html, channel_name)
+                    nodes.extend(web_result["nodes"])
+                    sub_urls.extend(web_result["sub_urls"])
+                    logger.info(f"[{self.name}] {channel_name}: 网站获取 {len(web_result['nodes'])} 个节点, {len(web_result['sub_urls'])} 个订阅链接")
+
+            # 5. 递归 fetch 订阅链接
             if sub_urls:
                 # 去重
                 seen = set()

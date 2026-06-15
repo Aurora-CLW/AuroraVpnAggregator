@@ -613,6 +613,9 @@
             currentTgChannels[i].name = document.getElementById('edit-tg-name').value.trim() || prev.name;
             currentTgChannels[i].username = document.getElementById('edit-tg-username').value.trim() || prev.username;
             currentTgChannels[i].format = document.getElementById('edit-tg-format').value;
+            const website = document.getElementById('edit-tg-website').value.trim();
+            if (website) currentTgChannels[i].website_url = website;
+            else delete currentTgChannels[i].website_url;
             editingIndex = -1; editingType = '';
             renderTgChannels();
             const ok = await saveTgChannelsToGithub();
@@ -713,6 +716,7 @@
                 <div class="source-info" style="width:100%">
                     <div class="edit-row"><label>名称</label><input type="text" id="edit-tg-name" value="${esc(ch.name)}"></div>
                     <div class="edit-row"><label>用户名</label><input type="text" id="edit-tg-username" value="${esc(ch.username)}" placeholder="@channel_name"></div>
+                    <div class="edit-row"><label>网站</label><input type="text" id="edit-tg-website" value="${esc(ch.website_url||'')}" placeholder="https:// (关联网站)"></div>
                     <div class="edit-row"><label>格式</label>
                         <select id="edit-tg-format">
                             <option value="auto" ${(ch.format||'auto')==='auto'?'selected':''}>自动检测</option>
@@ -908,6 +912,7 @@
             for (const ch of currentTgChannels) {
                 const u = ch.username.startsWith('@') ? ch.username : '@' + ch.username;
                 y += `  - name: "${ch.name}"\n    username: "${u}"\n`;
+                if (ch.website_url) y += `    website_url: "${ch.website_url}"\n`;
                 if (ch.format && ch.format !== 'auto') y += `    format: ${ch.format}\n`;
                 y += `    enabled: ${ch.enabled}\n\n`;
             }

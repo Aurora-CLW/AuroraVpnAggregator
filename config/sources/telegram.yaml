@@ -62,6 +62,12 @@ channels:
     username: "@wxdy666"
     enabled: true
 
+  # V2Queen — 频道消息指向博客, 博客内有最新订阅链接
+  - name: "V2Queen"
+    username: "@v2queen"
+    website_url: "https://proxyqueen.top"
+    enabled: true
+
   # 以下频道需要加入才能查看消息 (Web 预览不可用)
   # - name: "ZDYZ2Y"
   #   username: "@ZDYZ2Y"
