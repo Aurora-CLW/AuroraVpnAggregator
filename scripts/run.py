@@ -213,14 +213,14 @@ class AuroraAggregator:
 
         logger.info(f"全部节点: {len(tested_nodes)} | 有效节点: {len(valid_nodes)}")
 
-        # Step 7: 生成订阅 — 两套: 全部节点 + 仅有效节点
+        # Step 7: 生成订阅 — 两套: 全部节点(主路径) + 校验通过的(pass/)
         output_dir = "output"
-        self.generator.generate_all(valid_nodes, output_dir)
+        self.generator.generate_all(tested_nodes, output_dir)
 
-        # 同时生成全部节点的订阅 (带 -all 后缀)
-        all_output_dir = Path(output_dir) / "all"
-        all_output_dir.mkdir(parents=True, exist_ok=True)
-        self.generator.generate_all(tested_nodes, str(all_output_dir))
+        # 校验通过的节点订阅 (pass/ 子目录)
+        pass_output_dir = Path(output_dir) / "pass"
+        pass_output_dir.mkdir(parents=True, exist_ok=True)
+        self.generator.generate_all(valid_nodes, str(pass_output_dir))
 
         # 保存频道抓取结果到 output (供 generate_only 模式恢复)
         if self.channel_results:
@@ -332,19 +332,19 @@ class AuroraAggregator:
                 if d.is_dir() and d.name != access_token:
                     shutil.rmtree(d, ignore_errors=True)
 
-        # 复制有效节点订阅 (主路径)
+        # 复制全部节点订阅 (主路径)
         for filename in ["clash.yaml", "v2ray.txt", "singbox.json", "nodes.json"]:
             src = output_dir / filename
             if src.exists():
                 shutil.copy(src, sub_dir / filename)
 
-        # 复制全部节点订阅 (all/ 子目录)
-        all_dir = sub_dir / "all"
-        all_dir.mkdir(parents=True, exist_ok=True)
+        # 复制校验通过的节点订阅 (pass/ 子目录)
+        pass_dir = sub_dir / "pass"
+        pass_dir.mkdir(parents=True, exist_ok=True)
         for filename in ["clash.yaml", "v2ray.txt", "singbox.json", "nodes.json"]:
-            src = output_dir / "all" / filename
+            src = output_dir / "pass" / filename
             if src.exists():
-                shutil.copy(src, all_dir / filename)
+                shutil.copy(src, pass_dir / filename)
 
         # 生成统计信息
         stats = self._generate_stats(valid_nodes, all_nodes)

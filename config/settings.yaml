@@ -8,28 +8,20 @@ update:
 
 # 节点测试设置
 testing:
-  # TCP 测试
+  # TCP 可达性测试
   tcp:
     enabled: true
     timeout: 5
     concurrent: 200
 
-  # HTTP 代理测试
-  http:
+  # TLS/协议握手验证
+  tls:
     enabled: true
-    timeout: 15
-    concurrent: 50
-    # 多个测试 URL, 依次尝试, 任一成功即视为有效
-    test_urls:
-      - "http://www.gstatic.com/generate_204"
-      - "http://www.cloudflare.com/cdn-cgi/trace"
-      - "http://cp.cloudflare.com/"
+    timeout: 10
+    concurrent: 100
 
-  # 速度测试
-  speed:
-    enabled: false
-    test_file: "https://proof.ovh.net/files/100Mb.dat"
-    max_time: 30
+  # 最大延迟阈值（毫秒），超过视为无效
+  max_latency: 5000
 
 # 节点过滤
 filter:
