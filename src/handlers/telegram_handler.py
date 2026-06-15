@@ -325,8 +325,11 @@ class TelegramHandler(BaseHandler):
             return {"nodes": [], "sub_urls": [], "msg_links": []}
 
     async def _fetch_via_hf_api(self, session, username: str, channel_name: str) -> dict:
-        """通过 HF Space TG Parser API 获取频道消息 (替代被屏蔽的 Web 镜像)"""
-        api_url = f"{HF_TG_PARSER_BASE}?channel={username}&limit=50&key={HF_TG_PARSER_KEY}"
+        """通过 HF Space TG Parser API 获取频道消息 (替代被屏蔽的 Web 镜像)
+        自动跳过纯广告消息, 只保留含有效订阅/节点内容的消息, 最多扫描到 10 条有效消息。
+        """
+        max_valid = 10  # 最多保留的有效消息数
+        api_url = f"{HF_TG_PARSER_BASE}?channel={username}&limit=100&key={HF_TG_PARSER_KEY}"
         logger.info(f"[{self.name}] 尝试 HF TG API: {api_url}")
         try:
             async with session.get(api_url, proxy=self.proxy, timeout=aiohttp.ClientTimeout(total=30)) as resp:
@@ -334,27 +337,35 @@ class TelegramHandler(BaseHandler):
                     logger.debug(f"HF TG API HTTP {resp.status} for {username}")
                     return {"nodes": [], "sub_urls": [], "msg_links": []}
                 data = await resp.json()
-                # API 返回 {"code":0, "messages":[{...}]} 或直接列表
                 if isinstance(data, dict):
                     messages = data.get("messages", [])
                 elif isinstance(data, list):
                     messages = data
                 else:
-                    logger.debug(f"HF TG API 非预期响应 for {username}")
                     return {"nodes": [], "sub_urls": [], "msg_links": []}
                 if not messages:
                     return {"nodes": [], "sub_urls": [], "msg_links": []}
-                # 解析消息列表
+                # 解析消息, 跳过纯广告消息
                 all_nodes = []
                 all_sub_urls: List[dict] = []
                 all_msg_links: List[str] = []
+                valid_count = 0
                 for msg in messages:
                     text = msg.get("text", "") if isinstance(msg, dict) else str(msg)
                     if not text:
                         continue
-                    all_nodes.extend(self._extract_nodes_from_text(text))
-                    all_sub_urls.extend(self._extract_sub_urls(text))
-                    all_msg_links.extend(self._extract_msg_links(text))
+                    nodes = self._extract_nodes_from_text(text)
+                    sub_urls = self._extract_sub_urls(text)
+                    msg_links = self._extract_msg_links(text)
+                    # 跳过无有效内容的广告消息
+                    if not nodes and not sub_urls and not msg_links:
+                        continue
+                    all_nodes.extend(nodes)
+                    all_sub_urls.extend(sub_urls)
+                    all_msg_links.extend(msg_links)
+                    valid_count += 1
+                    if valid_count >= max_valid:
+                        break
                 # 去重
                 seen = set()
                 unique_subs: List[dict] = []
@@ -368,7 +379,7 @@ class TelegramHandler(BaseHandler):
                     if l not in seen_links:
                         seen_links.add(l)
                         unique_msgs.append(l)
-                logger.info(f"[{self.name}] HF TG API {channel_name}: {len(messages)} 条消息, {len(all_nodes)} 节点, {len(unique_subs)} 订阅链接")
+                logger.info(f"[{self.name}] HF TG API {channel_name}: {len(messages)} 条消息, {valid_count} 条有效, {len(all_nodes)} 节点, {len(unique_subs)} 订阅链接")
                 return {"nodes": all_nodes, "sub_urls": unique_subs, "msg_links": unique_msgs}
         except Exception as e:
             logger.debug(f"HF TG API 失败 {username}: {e}")

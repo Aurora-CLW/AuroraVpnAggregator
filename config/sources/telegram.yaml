@@ -47,7 +47,7 @@ channels:
     username: "@freeVPNjd"
     enabled: true
 
-  # hanbaoyun666 — 全是机场注册广告, 无有效订阅, 已禁用
+  # hanbaoyun666 — 全是机场注册广告, 订阅链接返回机场页面, 已禁用
   - name: "Hanbaoyun666"
     username: "@hanbaoyun666"
     enabled: false
