@@ -265,6 +265,9 @@ class TelegramHandler(BaseHandler):
                 logger.info(f"[{self.name}] {channel_name}: v2clash.blog 日期 {v2clash_dates[:2]}, 构造 {len(new_v2clash)} 个订阅链接 (优先抓取)")
 
             # 5. 递归 fetch 订阅链接
+            sub_urls_valid: List[str] = []
+            sub_urls_failed: List[str] = []
+            sub_urls_dead: List[str] = []
             if sub_urls:
                 # URL 去重
                 seen = set()
@@ -275,11 +278,12 @@ class TelegramHandler(BaseHandler):
                         seen.add(url_key)
                         unique.append(u if isinstance(u, dict) else {"url": u, "format_hint": "auto"})
                 logger.info(f"[{self.name}] {channel_name}: 发现 {len(unique)} 个订阅链接, 开始递归解析")
-                sub_nodes, successful_urls = await self._fetch_sub_urls(session, unique, channel_name, channel_format)
-                logger.info(f"[{self.name}] {channel_name}: 订阅链接解析获取 {len(sub_nodes)} 个节点")
+                sub_nodes, valid_sub_urls, failed_sub_urls, dead_sub_urls = await self._fetch_sub_urls(session, unique, channel_name, channel_format)
+                logger.info(f"[{self.name}] {channel_name}: 订阅链接解析获取 {len(sub_nodes)} 个节点 (成功: {len(valid_sub_urls)}, 失败: {len(failed_sub_urls)}, 永久失效: {len(dead_sub_urls)})")
                 nodes.extend(sub_nodes)
-                # 只记录实际产生节点的订阅 URL
-                sub_urls = [u for u in sub_urls if (u["url"] if isinstance(u, dict) else u) in successful_urls]
+                sub_urls_valid = valid_sub_urls
+                sub_urls_failed = failed_sub_urls
+                sub_urls_dead = dead_sub_urls
 
             # 6. 频道内节点去重 (同一频道不同订阅源可能包含重复节点)
             if nodes:
@@ -298,12 +302,20 @@ class TelegramHandler(BaseHandler):
             logger.warning(f"[{self.name}] 频道 {channel_name} (@{username}) 抓取失败")
 
         # 记录频道抓取结果
+        all_urls = [u["url"] if isinstance(u, dict) else u for u in sub_urls]
         self.channel_results[channel_name] = {
             "nodes": len(nodes),
-            "sub_urls": [u["url"] if isinstance(u, dict) else u for u in sub_urls],
+            "sub_urls": all_urls,
+            "valid_sub_urls": sub_urls_valid,
+            "failed_sub_urls": sub_urls_failed,
+            "dead_sub_urls": sub_urls_dead,
             "status": "success" if nodes else "empty",
             "updated_at": datetime.now().isoformat(),
         }
+
+        # 永久失效的 URL (404/HTML) 自动加入排除列表, 下次跳过
+        for url in sub_urls_dead:
+            self._DEAD_SUB_URLS.add(url)
 
         self.mark_source(nodes, f"tg:{channel_name}")
         return nodes
@@ -788,46 +800,56 @@ class TelegramHandler(BaseHandler):
 
         sub_urls 为 [{"url": str, "format_hint": str}] 列表。
         优先使用 format_hint, 其次使用 channel_format, 最终降级为 auto。
-        返回 (nodes, successful_urls) — successful_urls 为实际产生节点的 URL 列表。
+        返回 (nodes, valid_urls, failed_urls, dead_urls):
+          - valid_urls: 产生节点的 URL
+          - failed_urls: 未产生节点但可能临时失败 (超时/解析失败), 下次可重试
+          - dead_urls: 永久失效 (404/HTML), 自动加入排除列表
         """
         all_nodes = []
-        successful_urls: List[str] = []
-        # 尝试更多订阅链接 (有些可能超时/不可达)
+        valid_urls: List[str] = []
+        failed_urls: List[str] = []
+        dead_urls: List[str] = []
         max_sub = 10
         for item in sub_urls[:max_sub]:
             url = item["url"] if isinstance(item, dict) else item
-            # 跳过已知无节点的死链接
+            # 跳过已知死链接
             if url in self._DEAD_SUB_URLS:
                 logger.debug(f"订阅链接在排除列表中, 跳过: {url}")
+                dead_urls.append(url)
                 continue
             hint = item.get("format_hint", "auto") if isinstance(item, dict) else "auto"
-            # 优先使用 format_hint, 若为 auto 则降级到 channel_format
             parse_format = hint if hint != "auto" else channel_format
             try:
                 logger.info(f"[{self.name}] {channel_name}: fetch 订阅链接 {url} (format={parse_format})")
                 async with session.get(url, proxy=self.proxy, timeout=aiohttp.ClientTimeout(total=30)) as resp:
                     if resp.status != 200:
                         logger.debug(f"订阅链接 HTTP {resp.status}: {url}")
+                        if resp.status == 404:
+                            dead_urls.append(url)
+                        else:
+                            failed_urls.append(url)
                         continue
                     content = await resp.text()
                     if not content or len(content) < 20:
+                        failed_urls.append(url)
                         continue
-                    # 如果返回 HTML 页面 (机场推广页/404), 跳过
                     content_stripped = content.strip()
                     if content_stripped.startswith("<!DOCTYPE") or content_stripped.startswith("<html"):
                         logger.debug(f"订阅链接返回 HTML 页面 (机场推广/404), 跳过: {url}")
+                        dead_urls.append(url)
                         continue
-                    # 用 Parser 解析, 优先使用推断格式, auto 则自动检测
                     nodes = self.parser.parse(content, parse_format)
                     if nodes:
                         logger.info(f"[{self.name}] {channel_name}: 订阅链接解析 {len(nodes)} 个节点: {url}")
                         all_nodes.extend(nodes)
-                        successful_urls.append(url)
+                        valid_urls.append(url)
                     else:
                         logger.debug(f"订阅链接无有效节点: {url}")
+                        failed_urls.append(url)
             except Exception as e:
                 logger.debug(f"订阅链接 fetch 失败 {url}: {e}")
-        return all_nodes, successful_urls
+                failed_urls.append(url)
+        return all_nodes, valid_urls, failed_urls, dead_urls
 
     # ── Telethon 模式 (可选, 需要 api_id/api_hash) ──
 

@@ -382,7 +382,7 @@
     (function() {
         const TOKEN_KEY = 'aurora_token';
         const GH_TOKEN_KEY = 'aurora_gh_token';
-        const AUTH_HASH = '__AUTH_HASH_PLACEHOLDER__';
+        const AUTH_HASH = 'a9dc4b423961031fc1c3527bf69d0430c9c3d27b9010a36aa49a3f9bfd7d75d8';
         const REPO = 'Aurora-CLW/AuroraVpnAggregator';
 
         let currentSources = [];
@@ -513,6 +513,14 @@
             const div = document.createElement('div');
             div.textContent = str || '';
             return div.innerHTML;
+        }
+
+        function getFormatTag(url) {
+            if (url.endsWith('.yaml') || url.endsWith('.yml')) return '<span class="format-tag">Clash</span>';
+            if (url.endsWith('.json')) return '<span class="format-tag">Sing-box</span>';
+            if (url.endsWith('.txt')) return '<span class="format-tag">TXT</span>';
+            if (url.endsWith('.base64')) return '<span class="format-tag">Base64</span>';
+            return '<span class="format-tag">URL</span>';
         }
 
         // ════════════════════════════════════════════
@@ -762,17 +770,31 @@
                 <div class="detail-row"><span class="detail-label">更新时间</span><span class="detail-value">${detail.updated_at ? new Date(detail.updated_at).toLocaleString('zh-CN') : '-'}</span></div>`;
 
             if (detail.sub_urls && detail.sub_urls.length) {
-                html += `<h4 style="margin-top:12px;">订阅链接 (${detail.sub_urls.length})</h4>`;
-                for (const url of detail.sub_urls) {
-                    // 检测文件格式
-                    let formatTag = '';
-                    if (url.endsWith('.yaml') || url.endsWith('.yml')) formatTag = '<span class="format-tag">Clash</span>';
-                    else if (url.endsWith('.json')) formatTag = '<span class="format-tag">Sing-box</span>';
-                    else if (url.endsWith('.txt')) formatTag = '<span class="format-tag">TXT</span>';
-                    else if (url.endsWith('.base64')) formatTag = '<span class="format-tag">Base64</span>';
-                    else formatTag = '<span class="format-tag">URL</span>';
-                    html += `<div class="sub-url-item">${formatTag} <a href="${esc(url)}" target="_blank" title="${esc(url)}">${esc(url.length > 80 ? url.substring(0, 80) + '...' : url)}</a></div>`;
+                // 分类显示订阅链接: valid / failed / dead
+                const valid = detail.valid_sub_urls || [];
+                const failed = detail.failed_sub_urls || [];
+                const dead = detail.dead_sub_urls || [];
+
+                if (valid.length) {
+                    html += `<h4 style="margin-top:12px;color:#28a745;">有效订阅 (${valid.length})</h4>`;
+                    for (const url of valid) {
+                        let formatTag = getFormatTag(url);
+                        html += `<div class="sub-url-item">${formatTag} <a href="${esc(url)}" target="_blank" title="${esc(url)}">${esc(url.length > 80 ? url.substring(0, 80) + '...' : url)}</a></div>`;
+                    }
                 }
+                if (failed.length) {
+                    html += `<h4 style="margin-top:12px;color:#ffc107;">失败订阅 (${failed.length})</h4>`;
+                    for (const url of failed) {
+                        html += `<div class="sub-url-item" style="opacity:0.6;"><span class="format-tag" style="background:#ffc107;color:#333;">FAIL</span> <a href="${esc(url)}" target="_blank" title="${esc(url)}">${esc(url.length > 80 ? url.substring(0, 80) + '...' : url)}</a></div>`;
+                    }
+                }
+                if (dead.length) {
+                    html += `<h4 style="margin-top:12px;color:#dc3545;">永久失效 (${dead.length})</h4>`;
+                    for (const url of dead) {
+                        html += `<div class="sub-url-item" style="opacity:0.4;"><span class="format-tag" style="background:#dc3545;color:#fff;">DEAD</span> <span title="${esc(url)}">${esc(url.length > 80 ? url.substring(0, 80) + '...' : url)}</span></div>`;
+                    }
+                }
+                html += `<p style="color:#999;font-size:12px;margin-top:4px;">总计 ${detail.sub_urls.length} 个订阅: ${valid.length} 有效, ${failed.length} 失败, ${dead.length} 永久失效</p>`;
             } else {
                 html += `<p style="color:#999;font-size:13px;margin-top:8px;">未发现订阅链接 (节点可能来自频道消息直接提取)</p>`;
             }
