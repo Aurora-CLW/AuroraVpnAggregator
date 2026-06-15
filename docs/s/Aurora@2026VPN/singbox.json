@@ -1,0 +1,4599 @@
+{
+  "outbounds": [
+    {
+      "type": "dns",
+      "tag": "DNS"
+    },
+    {
+      "type": "direct",
+      "tag": "DIRECT"
+    },
+    {
+      "type": "ss",
+      "tag": "SS | IEPL | 美国 | LA",
+      "server": "mn.qwer-cn.org",
+      "server_port": 10930
+    },
+    {
+      "type": "ss",
+      "tag": "SS | IEPL | 法国",
+      "server": "mn.qwer-cn.org",
+      "server_port": 10913
+    },
+    {
+      "type": "ss",
+      "tag": "SS | IEPL | 狮城-GPT",
+      "server": "mn.qwer-cn.org",
+      "server_port": 10934
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | US美国(v2clash.blog 2026-6.9更新)",
+      "server": "youxuan.cf.090227.xyz",
+      "server_port": 443,
+      "uuid": "00000000-0000-4000-8000-000000000000",
+      "transport": {
+        "type": "ws",
+        "path": "/@Marisa_kristi"
+      },
+      "tls": {
+        "server_name": "rvbtoc55o588ipfx2qieoygyk0hur.saghv.filegear-sg.me"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 不要大批量测试ping值",
+      "server": "dnew.cc",
+      "server_port": 443,
+      "uuid": "ce069292-c8bf-40dd-a6b1-87818a1e64e9",
+      "transport": {
+        "type": "ws",
+        "path": "/",
+        "headers": {
+          "Host": "gogo10.kmj.qzz.io"
+        }
+      },
+      "tls": {
+        "server_name": "gogo10.kmj.qzz.io"
+      }
+    },
+    {
+      "type": "ss",
+      "tag": "SS | IEPL | 台湾 | GPT",
+      "server": "mn.qwer-cn.org",
+      "server_port": 10936
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | US美国(v2clash.blog 2026-6.9更新) | 002",
+      "server": "104.17.223.130",
+      "server_port": 443,
+      "uuid": "c135158e-5869-4397-8116-6695ca18cd48",
+      "transport": {
+        "type": "ws",
+        "path": "/",
+        "headers": {
+          "Host": "cf.hulume.ccwu.cc"
+        }
+      },
+      "tls": {
+        "server_name": "cf.hulume.ccwu.cc"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇰🇷韩国KR004 9.2MB/s中性 TG",
+      "server": "kr1-r.link-t7.com",
+      "server_port": 10046,
+      "uuid": "F4391700-A342-41B9-9629-AE54FF2A32EA",
+      "transport": {
+        "type": "grpc"
+      },
+      "tls": {
+        "enabled": true,
+        "server_name": "s0.awsstatic.com",
+        "reality": {}
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | free",
+      "server": "01-qq.com",
+      "server_port": 443,
+      "uuid": "ce069292-c8bf-40dd-a6b1-87818a1e64e9",
+      "transport": {
+        "type": "ws",
+        "path": "/",
+        "headers": {
+          "Host": "3-vud.pages.dev"
+        }
+      },
+      "tls": {
+        "server_name": "3-vud.pages.dev"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇯🇵",
+      "server": "4.216.102.153",
+      "server_port": 38765,
+      "uuid": "00000000-0000-4000-8000-000000000000",
+      "transport": {
+        "type": "ws",
+        "path": "/@Marisa_kristi",
+        "headers": {
+          "Host": "162q5rc5uyvd.rh8xe8d22f0k6t6ok0y1oi6qm29fr77ht70ntdbyx4jmbzn98.workers.dev"
+        }
+      },
+      "tls": {
+        "server_name": "162q5rc5uyvd.rh8xe8d22f0k6t6ok0y1oi6qm29fr77ht70ntdbyx4jmbzn98.workers.dev",
+        "insecure": true
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇨🇳 台湾 广播IP 0.72MB/s 322",
+      "server": "1.sdwan.realm-sync.com",
+      "server_port": 54387,
+      "uuid": "e0c3a80e-6290-4c29-9605-fbd6c4fb3322",
+      "flow": "xtls-rprx-vision",
+      "transport": {},
+      "tls": {
+        "enabled": true,
+        "server_name": "swcdn.apple.com",
+        "reality": {
+          "public_key": "qqb-vrDIPSrFIithw497zM-LmGUEcTo-dqAjhHi6kyY",
+          "short_id": "f810"
+        }
+      }
+    },
+    {
+      "type": "ss",
+      "tag": "SS | IEPL | 英国",
+      "server": "mn.qwer-cn.org",
+      "server_port": 10929
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧",
+      "server": "1.sdwan.realm-sync.com",
+      "server_port": 5457,
+      "uuid": "e0c3a80e-6290-4c29-9605-fbd6c4fb3322",
+      "flow": "xtls-rprx-vision",
+      "transport": {},
+      "tls": {
+        "enabled": true,
+        "server_name": "swcdn.apple.com",
+        "reality": {
+          "public_key": "8Ct9wBZLha-ePZMWbSau9ViKgbwlCgEsbGMjNnoVDzw",
+          "short_id": "9da3779ceafd"
+        }
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | Free v",
+      "server": "store.ubi.com",
+      "server_port": 443,
+      "uuid": "ce069292-c8bf-40dd-a6b1-87818a1e64e9",
+      "transport": {
+        "type": "ws",
+        "path": "/",
+        "headers": {
+          "Host": "3-7v4.pages.dev"
+        }
+      },
+      "tls": {
+        "server_name": "3-7v4.pages.dev"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇭🇰香港HK009 10.3MB/s中性 TG",
+      "server": "hk3-r.link-t7.com",
+      "server_port": 10128,
+      "uuid": "F4391700-A342-41B9-9629-AE54FF2A32EA",
+      "transport": {
+        "type": "grpc"
+      },
+      "tls": {
+        "enabled": true,
+        "server_name": "s0.awsstatic.com",
+        "reality": {}
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | free | 002",
+      "server": "cu.877774.xyz",
+      "server_port": 443,
+      "uuid": "ce069292-c8bf-40dd-a6b1-87818a1e64e9",
+      "transport": {
+        "type": "ws",
+        "path": "/",
+        "headers": {
+          "Host": "czvjaheuiweghruiwegfbldsafsdgaryreygnxvbhsfgretgreyhthsfgj.pages.dev"
+        }
+      },
+      "tls": {
+        "server_name": "czvjaheuiweghruiwegfbldsafsdgaryreygnxvbhsfgretgreyhthsfgj.pages.dev"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇭🇰香港HK007 10.4MB/s中性 TG",
+      "server": "hk1-r.link-t7.com",
+      "server_port": 10126,
+      "uuid": "F4391700-A342-41B9-9629-AE54FF2A32EA",
+      "transport": {
+        "type": "grpc"
+      },
+      "tls": {
+        "enabled": true,
+        "server_name": "s0.awsstatic.com",
+        "reality": {}
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇨🇦 加拿大-[AVToday.io]  08",
+      "server": "151.101.130.133",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "ss",
+      "tag": "SS | IEPL | 香港 | WAP",
+      "server": "mn.qwer-cn.org",
+      "server_port": 10920
+    },
+    {
+      "type": "vmess",
+      "tag": "VMESS | 🇫🇷法国2 | ⬇️ 4.1MB/s",
+      "server": "104.19.32.0",
+      "server_port": 443,
+      "uuid": "93ea486a-bada-42a4-ac38-d088b320fa1e",
+      "alter_id": 0,
+      "security": "auto",
+      "transport": {
+        "type": "ws",
+        "path": "/linkws",
+        "headers": {
+          "Host": "xmivideo.cfd"
+        }
+      },
+      "tls": {
+        "server_name": "xmivideo.cfd"
+      }
+    },
+    {
+      "type": "vmess",
+      "tag": "VMESS | 🇭🇰香港4 | ⬇️ 1.1MB/s",
+      "server": "hk2.lrzdx.uk",
+      "server_port": 443,
+      "uuid": "db69d5bc-d36c-4903-f471-74b98c5cefe5",
+      "alter_id": 0,
+      "security": "auto",
+      "transport": {
+        "type": "ws",
+        "path": "/register"
+      },
+      "tls": {
+        "server_name": "hk2.lrzdx.uk"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | free | 003",
+      "server": "www.mc.js.cool",
+      "server_port": 443,
+      "uuid": "ce069292-c8bf-40dd-a6b1-87818a1e64e9",
+      "transport": {
+        "type": "ws",
+        "path": "/",
+        "headers": {
+          "Host": "3-9sp.pages.dev"
+        }
+      },
+      "tls": {
+        "server_name": "3-9sp.pages.dev"
+      }
+    },
+    {
+      "type": "ss",
+      "tag": "SS | IEPL | 日本|家宽",
+      "server": "mn.qwer-cn.org",
+      "server_port": 10937
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | 🇯🇵",
+      "server": "13.192.18.59",
+      "server_port": 443,
+      "password": "eeb6823c-b926-4ea2-866a-5542edd26e59"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇯🇵日本JP004 16.0MB/s中性 TG",
+      "server": "jp3-r.link-t7.com",
+      "server_port": 10033,
+      "uuid": "F4391700-A342-41B9-9629-AE54FF2A32EA",
+      "transport": {
+        "type": "grpc"
+      },
+      "tls": {
+        "enabled": true,
+        "server_name": "s0.awsstatic.com",
+        "reality": {}
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇺🇸 美国",
+      "server": "1.sdwan.realm-sync.com",
+      "server_port": 60776,
+      "uuid": "48959fe8-4a5e-4996-bc87-8d66398e6860",
+      "flow": "xtls-rprx-vision",
+      "transport": {},
+      "tls": {
+        "enabled": true,
+        "server_name": "swcdn.apple.com",
+        "reality": {
+          "public_key": "rPR7TUpmOpwShZeyLs2QFa46zzCBNkNdYkxe7-trUUc",
+          "short_id": "63290ae7179078"
+        }
+      }
+    },
+    {
+      "type": "ss",
+      "tag": "SS | 🇯🇵 JP日本(v2clash.blog 2026-6.9更新) 6",
+      "server": "35.72.81.216",
+      "server_port": 443
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇭🇰香港HK008 10.4MB/s中性 TG",
+      "server": "hk2-r.link-t7.com",
+      "server_port": 10127,
+      "uuid": "F4391700-A342-41B9-9629-AE54FF2A32EA",
+      "transport": {
+        "type": "grpc"
+      },
+      "tls": {
+        "enabled": true,
+        "server_name": "s0.awsstatic.com",
+        "reality": {}
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇭🇰香港HK004 4.0MB/s纯净 TG",
+      "server": "kvmyun9aa.collabcut.de",
+      "server_port": 443,
+      "uuid": "8d9b3426-b505-427a-974c-59d60999661b",
+      "transport": {
+        "type": "ws",
+        "path": "/video_clip",
+        "headers": {
+          "Host": "kvmyun9aa.collabcut.de"
+        }
+      },
+      "tls": {
+        "server_name": "kvmyun9aa.collabcut.de"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇭🇰",
+      "server": "1.sdwan.realm-sync.com",
+      "server_port": 58712,
+      "uuid": "da4f61d1-8ca2-4bbf-a79a-1dfff04073e6",
+      "flow": "xtls-rprx-vision",
+      "transport": {},
+      "tls": {
+        "enabled": true,
+        "server_name": "swcdn.apple.com",
+        "reality": {
+          "public_key": "en2L9xxQOv2w4eD0sxqu3eOFGnqOxZLWuR9sFqBDdAM",
+          "short_id": "f266fd3d4e"
+        }
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇯🇵日本JP002 16.0MB/s中性 TG",
+      "server": "jp1-r.link-t7.com",
+      "server_port": 10031,
+      "uuid": "F4391700-A342-41B9-9629-AE54FF2A32EA",
+      "transport": {
+        "type": "grpc"
+      },
+      "tls": {
+        "enabled": true,
+        "server_name": "s0.awsstatic.com",
+        "reality": {}
+      }
+    },
+    {
+      "type": "ss",
+      "tag": "SS | 🇨🇳 TW台湾(v2clash.blog 2026-6.9更新) 2",
+      "server": "account-center.zzdy25.com",
+      "server_port": 38320
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | US美国(v2clash.blog 2026-6.9更新) | 003",
+      "server": "104.17.121.243",
+      "server_port": 443,
+      "uuid": "c135158e-5869-4397-8116-6695ca18cd48",
+      "transport": {
+        "type": "ws",
+        "path": "/",
+        "headers": {
+          "Host": "cf.hulume.ccwu.cc"
+        }
+      },
+      "tls": {
+        "server_name": "cf.hulume.ccwu.cc"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇯🇵日本JP003 17.2MB/s中性 TG",
+      "server": "jp2-r.link-t7.com",
+      "server_port": 10032,
+      "uuid": "F4391700-A342-41B9-9629-AE54FF2A32EA",
+      "transport": {
+        "type": "grpc"
+      },
+      "tls": {
+        "enabled": true,
+        "server_name": "s0.awsstatic.com",
+        "reality": {}
+      }
+    },
+    {
+      "type": "ss",
+      "tag": "SS | 🇯🇵 JP日本(v2clash.blog 2026-6.9更新) 4",
+      "server": "47.79.37.210",
+      "server_port": 443
+    },
+    {
+      "type": "ss",
+      "tag": "SS | 🇨🇳 TW台湾(v2clash.blog 2026-6.9更新)",
+      "server": "account-center.zzdy25.com",
+      "server_port": 36321
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | US美国(v2clash.blog 2026-6.9更新) | 004",
+      "server": "209.97.170.177",
+      "server_port": 74,
+      "uuid": "00000000-0000-4000-8000-000000000000",
+      "transport": {
+        "type": "ws",
+        "path": "/@Marisa_kristi"
+      },
+      "tls": {
+        "server_name": "nn9jdg-k7yewrrk.acg.xx.kg"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | US美国(v2clash.blog 2026-6.9更新) | 005",
+      "server": "158.178.225.153",
+      "server_port": 41493,
+      "uuid": "00000000-0000-4000-8000-000000000000",
+      "transport": {
+        "type": "ws",
+        "path": "/@Marisa_kristi"
+      },
+      "tls": {
+        "server_name": "020g5uxcxmqlndg.luyuju.dpdns.org"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇸🇬新加坡SG005 19.0MB/s中性 TG",
+      "server": "s586.okgfw.top",
+      "server_port": 443,
+      "uuid": "fb4b6e56-cb3d-3199-a685-c60f4cf9c2f4",
+      "flow": "xtls-rprx-vision",
+      "transport": {},
+      "tls": {
+        "server_name": "u826156us586.okgfw.top"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | US美国(v2clash.blog 2026-6.9更新) | 006",
+      "server": "8.219.2.255",
+      "server_port": 33284,
+      "uuid": "00000000-0000-4000-8000-000000000000",
+      "transport": {
+        "type": "ws",
+        "path": "/@Marisa_kristi"
+      },
+      "tls": {
+        "server_name": "nn9jdg-k7yewrrk.acg.xx.kg"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS",
+      "server": "fastly.com",
+      "server_port": 80,
+      "uuid": "InternetAzadRobot",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  71",
+      "server": "151.101.3.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vmess",
+      "tag": "VMESS | 🇭🇰香港HK005 0.2MB/s中性 TG",
+      "server": "154.37.223.56",
+      "server_port": 52080,
+      "uuid": "f1ac5c82-00a4-400b-bb20-530c91b7c5bb",
+      "alter_id": 0,
+      "security": "auto",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | CA加拿大(v2clash.blog 2026-6.9更新)",
+      "server": "151.101.193.57",
+      "server_port": 80,
+      "uuid": "TIGNAL-CRYPTO",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  77",
+      "server": "151.101.193.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vmess",
+      "tag": "VMESS | 🇭🇰香港HK006 0.2MB/s中性 TG",
+      "server": "154.37.223.56",
+      "server_port": 43203,
+      "uuid": "68bd04a1-0547-46a6-cdb2-c8ac3fce1e67",
+      "alter_id": 0,
+      "security": "auto",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇸🇬新加坡SG006 19.0MB/s中性 TG",
+      "server": "s578.okgfw.top",
+      "server_port": 443,
+      "uuid": "fb4b6e56-cb3d-3199-a685-c60f4cf9c2f4",
+      "flow": "xtls-rprx-vision",
+      "transport": {},
+      "tls": {
+        "server_name": "u826156us578.okgfw.top"
+      }
+    },
+    {
+      "type": "ss",
+      "tag": "SS | 🇹🇼台湾TW 001 1.4MB/s TG",
+      "server": "r3mrcg001286ek2.cybervena.com",
+      "server_port": 50099
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇸🇬新加坡SG007 21.1MB/s中性 TG",
+      "server": "s584.okgfw.top",
+      "server_port": 443,
+      "uuid": "fb4b6e56-cb3d-3199-a685-c60f4cf9c2f4",
+      "flow": "xtls-rprx-vision",
+      "transport": {},
+      "tls": {
+        "server_name": "u826156us584.okgfw.top"
+      }
+    },
+    {
+      "type": "ss",
+      "tag": "SS | 🇸🇬 SG新加坡(v2clash.blog 2026-6.9更新) 3",
+      "server": "47.82.162.142",
+      "server_port": 443
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇩🇪",
+      "server": "speedtest.net",
+      "server_port": 80,
+      "uuid": "cabbfe13-038b-4dbb-9c45-5079c829abfa",
+      "transport": {
+        "type": "ws",
+        "path": "/",
+        "headers": {
+          "Host": "max-gb1.global.ssl.fastly.net"
+        }
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | CA加拿大(v2clash.blog 2026-6.9更新) | 002",
+      "server": "151.101.1.57",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇫🇷 法国-[AVToday.io]  09",
+      "server": "fastly.com",
+      "server_port": 80,
+      "uuid": "InternetAzadRobot",
+      "transport": {}
+    },
+    {
+      "type": "ss",
+      "tag": "SS | 🇯🇵 JP日本(v2clash.blog 2026-6.9更新) 3",
+      "server": "54.199.97.220",
+      "server_port": 443
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 002",
+      "server": "151.101.129.57",
+      "server_port": 80,
+      "uuid": "5cdf99d3-a51b-570e-8245-f87d674dc652",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 003",
+      "server": "fastly.com",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 004",
+      "server": "109.176.19.182",
+      "server_port": 8443,
+      "uuid": "00000000-0000-4000-8000-000000000000",
+      "transport": {
+        "type": "ws",
+        "path": "/@Marisa_kristi",
+        "headers": {
+          "Host": "162q5rc5uyvd.rh8xe8d22f0k6t6ok0y1oi6qm29fr77ht70ntdbyx4jmbzn98.workers.dev"
+        }
+      },
+      "tls": {
+        "server_name": "162q5rc5uyvd.rh8xe8d22f0k6t6ok0y1oi6qm29fr77ht70ntdbyx4jmbzn98.workers.dev",
+        "insecure": true
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 下面ECH配置请不要开启dns覆写",
+      "server": "cf.tencentapp.cn",
+      "server_port": 443,
+      "uuid": "ce069292-c8bf-40dd-a6b1-87818a1e64e9",
+      "transport": {
+        "type": "ws",
+        "path": "/https://128.84.46.176:443",
+        "headers": {
+          "Host": "tptpss.pages.dev"
+        }
+      },
+      "tls": {
+        "server_name": "tptpss.pages.dev"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 005",
+      "server": "fastly.com",
+      "server_port": 80,
+      "uuid": "TIGNAL-CRYPTO",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 006",
+      "server": "103.170.233.139",
+      "server_port": 8443,
+      "uuid": "00000000-0000-4000-8000-000000000000",
+      "transport": {
+        "type": "ws",
+        "path": "/@Marisa_kristi",
+        "headers": {
+          "Host": "162q5rc5uyvd.rh8xe8d22f0k6t6ok0y1oi6qm29fr77ht70ntdbyx4jmbzn98.workers.dev"
+        }
+      },
+      "tls": {
+        "server_name": "162q5rc5uyvd.rh8xe8d22f0k6t6ok0y1oi6qm29fr77ht70ntdbyx4jmbzn98.workers.dev",
+        "insecure": true
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇸🇬新加坡SG008 14.7MB/s中性 TG",
+      "server": "sg3.miyazono-kaori.com",
+      "server_port": 443,
+      "uuid": "0c08af4a-2d79-44c4-addd-14b00f3489d6",
+      "flow": "xtls-rprx-vision",
+      "transport": {},
+      "tls": {
+        "enabled": true,
+        "server_name": "www.changiairport.com",
+        "reality": {}
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | FR法国(v2clash.blog 2026-6.9更新)",
+      "server": "151.101.128.223",
+      "server_port": 80,
+      "uuid": "InternetAzadRobot",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  58",
+      "server": "151.101.66.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "ss",
+      "tag": "SS | 🇸🇬 SG新加坡(v2clash.blog 2026-6.9更新) 2",
+      "server": "8.222.185.236",
+      "server_port": 443
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 007",
+      "server": "103.137.63.227",
+      "server_port": 8443,
+      "uuid": "00000000-0000-4000-8000-000000000000",
+      "transport": {
+        "type": "ws",
+        "path": "/@Marisa_kristi",
+        "headers": {
+          "Host": "162q5rc5uyvd.rh8xe8d22f0k6t6ok0y1oi6qm29fr77ht70ntdbyx4jmbzn98.workers.dev"
+        }
+      },
+      "tls": {
+        "server_name": "162q5rc5uyvd.rh8xe8d22f0k6t6ok0y1oi6qm29fr77ht70ntdbyx4jmbzn98.workers.dev",
+        "insecure": true
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  74",
+      "server": "151.101.79.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 008",
+      "server": "43.218.77.16",
+      "server_port": 443,
+      "uuid": "00000000-0000-4000-8000-000000000000",
+      "transport": {
+        "type": "ws",
+        "path": "/@Marisa_kristi",
+        "headers": {
+          "Host": "162q5rc5uyvd.rh8xe8d22f0k6t6ok0y1oi6qm29fr77ht70ntdbyx4jmbzn98.workers.dev"
+        }
+      },
+      "tls": {
+        "server_name": "162q5rc5uyvd.rh8xe8d22f0k6t6ok0y1oi6qm29fr77ht70ntdbyx4jmbzn98.workers.dev",
+        "insecure": true
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇹🇼台湾TW002 8.8MB/s中性 TG",
+      "server": "tw3.miyazono-kaori.com",
+      "server_port": 443,
+      "uuid": "0c08af4a-2d79-44c4-addd-14b00f3489d6",
+      "flow": "xtls-rprx-vision",
+      "transport": {},
+      "tls": {
+        "enabled": true,
+        "server_name": "dlcdnets.asus.com",
+        "reality": {}
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  99",
+      "server": "151.101.89.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 009",
+      "server": "103.137.22.71",
+      "server_port": 443,
+      "uuid": "00000000-0000-4000-8000-000000000000",
+      "transport": {
+        "type": "ws",
+        "path": "/@Marisa_kristi",
+        "headers": {
+          "Host": "162q5rc5uyvd.rh8xe8d22f0k6t6ok0y1oi6qm29fr77ht70ntdbyx4jmbzn98.workers.dev"
+        }
+      },
+      "tls": {
+        "server_name": "162q5rc5uyvd.rh8xe8d22f0k6t6ok0y1oi6qm29fr77ht70ntdbyx4jmbzn98.workers.dev",
+        "insecure": true
+      }
+    },
+    {
+      "type": "ss",
+      "tag": "SS | 🇬🇧 英国-[AVToday.io]  185",
+      "server": "chengbai02.ascwt179.com",
+      "server_port": 13223
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 010",
+      "server": "103.106.228.126",
+      "server_port": 2053,
+      "uuid": "00000000-0000-4000-8000-000000000000",
+      "transport": {
+        "type": "ws",
+        "path": "/@Marisa_kristi",
+        "headers": {
+          "Host": "162q5rc5uyvd.rh8xe8d22f0k6t6ok0y1oi6qm29fr77ht70ntdbyx4jmbzn98.workers.dev"
+        }
+      },
+      "tls": {
+        "server_name": "162q5rc5uyvd.rh8xe8d22f0k6t6ok0y1oi6qm29fr77ht70ntdbyx4jmbzn98.workers.dev",
+        "insecure": true
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  92",
+      "server": "151.101.158.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  100",
+      "server": "151.101.209.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  34",
+      "server": "151.101.211.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | 🇺🇸 美国 抓取节点 3",
+      "server": "64.186.248.160",
+      "server_port": 443,
+      "password": "eeb6823c-b926-4ea2-866a-5542edd26e59"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  47",
+      "server": "151.101.107.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | 🇺🇸",
+      "server": "154.17.26.200",
+      "server_port": 443,
+      "password": "eeb6823c-b926-4ea2-866a-5542edd26e59"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  83",
+      "server": "151.101.29.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  94",
+      "server": "151.101.30.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  76",
+      "server": "151.101.31.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  29",
+      "server": "151.101.141.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | US美国(v2clash.blog 2026-6.9更新) | 007",
+      "server": "141.101.121.196",
+      "server_port": 443,
+      "uuid": "2bcfbfba-b446-4ad5-93ad-72af9e008f61",
+      "transport": {
+        "type": "ws",
+        "path": "/44.209.52.7-443"
+      },
+      "tls": {
+        "server_name": "blackshadow.dpdns.org"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  84",
+      "server": "151.101.81.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 011",
+      "server": "93.179.99.130",
+      "server_port": 777,
+      "uuid": "00000000-0000-4000-8000-000000000000",
+      "transport": {
+        "type": "ws",
+        "path": "/@Marisa_kristi"
+      },
+      "tls": {
+        "server_name": "nn9jdg-k7yewrrk.acg.xx.kg"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  85",
+      "server": "151.101.82.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇨🇦 加拿大-[AVToday.io]  02",
+      "server": "188.114.97.6",
+      "server_port": 2087,
+      "uuid": "bb318dc7-f2c9-48f6-ab96-0fc3466b46e9",
+      "transport": {},
+      "tls": {
+        "server_name": "vaslbeshim_dop54.mgwarrior.ir",
+        "insecure": true
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | US美国(v2clash.blog 2026-6.9更新) | 008",
+      "server": "173.245.58.62",
+      "server_port": 443,
+      "uuid": "a6f1755f-0140-4bea-8727-0db1bed7c4df",
+      "transport": {
+        "type": "ws",
+        "path": "/"
+      },
+      "tls": {
+        "server_name": "juzi.qea.ccwu.cc"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇺🇸 美国-[AVToday.io]  15",
+      "server": "newyorkcity.instasup.ir",
+      "server_port": 1004,
+      "uuid": "ad356e93-cc14-417d-9f4e-32376d03f5b7",
+      "transport": {},
+      "tls": {
+        "enabled": true,
+        "server_name": "yahoo.com",
+        "reality": {
+          "public_key": "437UW8qHz_L4qlOZ_AgufdsA9me_uS5MWM-eptxM3w4",
+          "short_id": "998ad2ef2d977802"
+        }
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇮🇷伊朗IR001 0.8MB/s中性 TG",
+      "server": "141.101.90.101",
+      "server_port": 8443,
+      "uuid": "12c181c7-5801-4c21-943d-d315017ae004",
+      "transport": {},
+      "tls": {
+        "server_name": "network-cpp-cloudnet.vexaservice.ir"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇺🇸 美国-[AVToday.io]  20",
+      "server": "31.185.108.30",
+      "server_port": 8880,
+      "uuid": "6202b230-417c-4d8e-b624-0f71afa9c75d",
+      "transport": {
+        "type": "ws",
+        "path": "/",
+        "headers": {
+          "Host": "vms.lifetime23.workers.dev"
+        }
+      }
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Oracle Cloud 🇦🇪",
+      "server": "ava.game.naver.com.novantunnel.tech",
+      "server_port": 443,
+      "password": "1dad45ea-b091-486a-88f7-f1148c413494"
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | 🇨🇦 加拿大 抓取节点",
+      "server": "188.114.97.6",
+      "server_port": 443,
+      "password": "mitivpn"
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | 🇯🇵 日本 抓取节点 2",
+      "server": "45.32.26.252",
+      "server_port": 8443,
+      "password": "eeb6823c-b926-4ea2-866a-5542edd26e59"
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Zenlayer 🇦🇪",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "password": "b6e92fd8-7e58-41ee-984f-eb0b2cff851e"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) Oracle Cloud 🇦🇪",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "uuid": "a8a258e8-aae5-4979-b16e-ba7dc88c5f62",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE17",
+        "headers": {
+          "Host": "support.zoom.us.novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "support.zoom.us.novantunnel.tech"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇯🇵 日本 广播IP 0.71MB/s 064",
+      "server": "69.84.182.13",
+      "server_port": 443,
+      "uuid": "33b83411-cf14-48af-8105-ff8370f7a3d5",
+      "transport": {
+        "type": "ws",
+        "path": "/kbjc/jp1",
+        "headers": {
+          "Host": "jp1-jp1.aiopen.sbs"
+        }
+      },
+      "tls": {
+        "server_name": "jp1-jp1.aiopen.sbs",
+        "insecure": true
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇺🇸",
+      "server": "216.36.124.219",
+      "server_port": 37462,
+      "uuid": "e04378e8-3406-4abe-d388-9e3dbb046c54",
+      "flow": "xtls-rprx-vision",
+      "transport": {},
+      "tls": {
+        "enabled": true,
+        "server_name": "addons.mozilla.org",
+        "reality": {
+          "public_key": "g-oxbqigzCaXqARxuyD2_vbTYeMD9zn8wnTo02S69QM"
+        }
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) Zenlayer 🇦🇪",
+      "server": "ava.game.naver.com.novantunnel.tech",
+      "server_port": 443,
+      "uuid": "aacc57f1-78fd-490d-ba61-40b6e6ffb0d7",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE25",
+        "headers": {
+          "Host": "ava.game.naver.com.novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "ava.game.naver.com.novantunnel.tech"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇩🇪 德国-[AVToday.io]  01",
+      "server": "162.159.36.79",
+      "server_port": 8443,
+      "uuid": "Shh_Proxy",
+      "transport": {},
+      "tls": {
+        "server_name": "turbo-v2.ir",
+        "insecure": true
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  89",
+      "server": "151.101.43.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Zenlayer 🇦🇪 | 002",
+      "server": "ava.game.naver.com.novantunnel.tech",
+      "server_port": 443,
+      "password": "44d0620d-6235-438f-bb86-c75ba153fcdf"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  57",
+      "server": "151.101.51.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Global Connectivity Solutions Llp 🇦🇪",
+      "server": "novantunnel.tech",
+      "server_port": 443,
+      "password": "36421ed4-00bd-490f-b405-7d2e02377b6b"
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Global Connectivity Solutions Llp 🇦🇪 | 002",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "password": "1a2321dc-e382-4f01-8eaa-bf0682903d72"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  54",
+      "server": "151.101.42.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  72",
+      "server": "151.101.97.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  93",
+      "server": "151.101.233.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 012",
+      "server": "23.235.42.205",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) PDR 🇦🇪",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "password": "3ce373f8-35ef-4a22-b7bb-d992b7778857"
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Global Connectivity Solutions Llp 🇦🇪 | 003",
+      "server": "novantunnel.tech",
+      "server_port": 443,
+      "password": "0eec018a-3972-4552-9bf2-7eeafe5679a4"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) G-Core Labs SA 🇦🇪",
+      "server": "ava.game.naver.com.novantunnel.tech",
+      "server_port": 443,
+      "uuid": "bdd445dc-3615-48f9-85d8-e5f9b543572a",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE24",
+        "headers": {
+          "Host": "ava.game.naver.com.novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "ava.game.naver.com.novantunnel.tech"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) Oracle Cloud 🇦🇪 | 002",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "uuid": "e4015563-00ad-4d9c-bfcc-9f150f4c01f6",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE20",
+        "headers": {
+          "Host": "support.zoom.us.novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "support.zoom.us.novantunnel.tech"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) Kaopu Cloud HK 🇦🇪",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "uuid": "815ea82d-5d18-4d41-8cb5-0322e0754aa3",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE29",
+        "headers": {
+          "Host": "support.zoom.us.novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "support.zoom.us.novantunnel.tech"
+      }
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Global Connectivity Solutions Llp 🇦🇪 | 004",
+      "server": "novantunnel.tech",
+      "server_port": 443,
+      "password": "f34a3035-95ad-4494-b5f7-338d8cd39c80"
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) LLC Baxet 🇦🇪",
+      "server": "novantunnel.tech",
+      "server_port": 443,
+      "password": "e2657a5a-4ea0-4e6d-8ddf-ae9d27eb60f6"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) Ucloud Information Technology Hk 🇦🇪",
+      "server": "novantunnel.tech",
+      "server_port": 443,
+      "uuid": "d70a645e-ff4e-4614-b10d-de4a8241d72a",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE16",
+        "headers": {
+          "Host": "novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "novantunnel.tech"
+      }
+    },
+    {
+      "type": "vmess",
+      "tag": "VMESS | 🇺🇸美国27 | ⬇️ 1.4MB/s",
+      "server": "time.is",
+      "server_port": 443,
+      "uuid": "b526926d-1474-4f41-985e-8b877cb840cd",
+      "alter_id": 0,
+      "security": "auto",
+      "transport": {
+        "type": "ws",
+        "path": "/",
+        "headers": {
+          "Host": "shs111.kejixiaoqi666.store"
+        }
+      },
+      "tls": {
+        "server_name": "time.is"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  91",
+      "server": "151.101.35.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) Kaopu Cloud HK 🇦🇪 | 002",
+      "server": "ava.game.naver.com.novantunnel.tech",
+      "server_port": 443,
+      "uuid": "a8a43fbd-5031-4e5c-a54f-b55afbe324e4",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE29",
+        "headers": {
+          "Host": "ava.game.naver.com.novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "ava.game.naver.com.novantunnel.tech"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) Oracle Cloud 🇦🇪 | 003",
+      "server": "novantunnel.tech",
+      "server_port": 443,
+      "uuid": "25a1f1a8-9f8d-4f40-955e-abd2aefc0912",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE11",
+        "headers": {
+          "Host": "novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "novantunnel.tech"
+      }
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Global Connectivity Solutions Llp 🇦🇪 | 005",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "password": "93606263-c8d9-44fc-8862-045e761ae4bc"
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) G-Core Labs SA 🇦🇪",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "password": "9f55dddf-9baf-4d58-bb2b-6813fc46db3c"
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Kaopu Cloud HK 🇦🇪",
+      "server": "ava.game.naver.com.novantunnel.tech",
+      "server_port": 443,
+      "password": "a8a43fbd-5031-4e5c-a54f-b55afbe324e4"
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Global Connectivity Solutions Llp 🇦🇪 | 006",
+      "server": "novantunnel.tech",
+      "server_port": 443,
+      "password": "f2057d40-cd01-4785-850f-406a02f91213"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) Oracle Cloud 🇦🇪 | 004",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "uuid": "71507705-8ce9-443b-a3fe-cbb48d1125ea",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE10",
+        "headers": {
+          "Host": "support.zoom.us.novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "support.zoom.us.novantunnel.tech"
+      }
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Global Connectivity Solutions Llp 🇦🇪 | 007",
+      "server": "novantunnel.tech",
+      "server_port": 443,
+      "password": "635737d0-c289-4862-b939-c66864004dfb"
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (ID) Amazon.com🇮🇩",
+      "server": "shazira.app",
+      "server_port": 443,
+      "password": "18f0a073-ec66-4b6d-b8cf-4181213ee90e"
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Kaopu Cloud HK 🇦🇪 | 002",
+      "server": "ava.game.naver.com.novantunnel.tech",
+      "server_port": 443,
+      "password": "17e832df-ebd6-4e7e-be9a-37a618b57d9b"
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) G-Core Labs SA 🇦🇪 | 002",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "password": "973cc768-0258-43f6-9a8d-47ad14a2458f"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇺🇸 美国-[AVToday.io]  02",
+      "server": "108.162.198.11",
+      "server_port": 443,
+      "uuid": "c135158e-5869-4397-8116-6695ca18cd48",
+      "transport": {
+        "type": "ws",
+        "path": "/",
+        "headers": {
+          "Host": "cfnode-1xg.pages.dev"
+        }
+      },
+      "tls": {
+        "server_name": "cfnode-1xg.pages.dev",
+        "insecure": true
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇩🇪德国DE 002 2.5MB/s TG",
+      "server": "176.100.36.36",
+      "server_port": 443,
+      "uuid": "b99cf749-28b8-4f72-ac8b-ff146ef1238b",
+      "flow": "xtls-rprx-vision",
+      "transport": {},
+      "tls": {
+        "enabled": true,
+        "server_name": "www.github.com",
+        "reality": {}
+      }
+    },
+    {
+      "type": "ss",
+      "tag": "SS | DE德国(v2clash.blog 2026-6.8更新)",
+      "server": "188.114.98.0",
+      "server_port": 443
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) G-Core Labs SA 🇦🇪 | 003",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "password": "340b90be-c2d1-4e6a-bc3c-032798de9583"
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Oracle Cloud 🇦🇪 | 002",
+      "server": "ava.game.naver.com.novantunnel.tech",
+      "server_port": 443,
+      "password": "b8ec3167-9f40-49d3-9d37-fa709f918956"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) Global Connectivity Solutions Llp 🇦🇪",
+      "server": "ava.game.naver.com.novantunnel.tech",
+      "server_port": 443,
+      "uuid": "4ad35ed0-ac7f-4f69-a26b-2894d780c545",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE2",
+        "headers": {
+          "Host": "ava.game.naver.com.novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "ava.game.naver.com.novantunnel.tech"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) Oracle Cloud 🇦🇪 | 005",
+      "server": "novantunnel.tech",
+      "server_port": 443,
+      "uuid": "76f34ed5-3dcb-4fb1-b78b-cdb553fab13c",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE17",
+        "headers": {
+          "Host": "novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "novantunnel.tech"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) Zenlayer 🇦🇪 | 002",
+      "server": "novantunnel.tech",
+      "server_port": 443,
+      "uuid": "94b05e5b-f8ea-4cb5-a9d7-341fe9870474",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE28",
+        "headers": {
+          "Host": "novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "novantunnel.tech"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  36",
+      "server": "151.101.116.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) M247 Europe 🇦🇪",
+      "server": "ava.game.naver.com.novantunnel.tech",
+      "server_port": 443,
+      "uuid": "3ca5e8a4-456d-4be2-8f71-26c298da2631",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE7",
+        "headers": {
+          "Host": "ava.game.naver.com.novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "ava.game.naver.com.novantunnel.tech"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) Global Connectivity Solutions Llp 🇦🇪 | 002",
+      "server": "novantunnel.tech",
+      "server_port": 443,
+      "uuid": "f2057d40-cd01-4785-850f-406a02f91213",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE1",
+        "headers": {
+          "Host": "novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "novantunnel.tech"
+      }
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Oracle Cloud 🇦🇪 | 003",
+      "server": "novantunnel.tech",
+      "server_port": 443,
+      "password": "57920983-3892-4d5f-802c-5bf5f3da3ae6"
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) G-Core Labs SA 🇦🇪 | 004",
+      "server": "novantunnel.tech",
+      "server_port": 443,
+      "password": "0a4562fe-ddeb-4413-a161-4de7ce18bddb"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) PDR 🇦🇪",
+      "server": "novantunnel.tech",
+      "server_port": 443,
+      "uuid": "67586cfa-eec4-4b8a-8cf7-e7e5f35ccb6d",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE6",
+        "headers": {
+          "Host": "novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "novantunnel.tech"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) M247 Europe 🇦🇪 | 002",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "uuid": "b46fe381-3480-462d-b94d-9f0997c68760",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE15",
+        "headers": {
+          "Host": "support.zoom.us.novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "support.zoom.us.novantunnel.tech"
+      }
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) M247 Europe 🇦🇪",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "password": "b46fe381-3480-462d-b94d-9f0997c68760"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) Global Connectivity Solutions Llp 🇦🇪 | 003",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "uuid": "86236043-92e6-454f-a068-7e20f7436858",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE2",
+        "headers": {
+          "Host": "support.zoom.us.novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "support.zoom.us.novantunnel.tech"
+      }
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) M247 Europe 🇦🇪 | 002",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "password": "a7308aa1-f085-4ca5-bf7b-d9a6f0acf984"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) Zenlayer 🇦🇪 | 003",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "uuid": "802e8d8a-aabe-4b44-9ac7-d78060be98de",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE27",
+        "headers": {
+          "Host": "support.zoom.us.novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "support.zoom.us.novantunnel.tech"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) G-Core Labs SA 🇦🇪 | 002",
+      "server": "ava.game.naver.com.novantunnel.tech",
+      "server_port": 443,
+      "uuid": "79ccea41-169e-4181-8034-e55d8b178270",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE22",
+        "headers": {
+          "Host": "ava.game.naver.com.novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "ava.game.naver.com.novantunnel.tech"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 013",
+      "server": "104.24.14.72",
+      "server_port": 443,
+      "uuid": "5fb6c5d2-629b-48c6-bb3c-595caf2007ee",
+      "transport": {
+        "type": "ws",
+        "path": "/5fb6c5d2-629b-48c6-bb3c-595caf2007ee-vless?ed=2560",
+        "headers": {
+          "Host": "krali.chlove.top"
+        }
+      },
+      "tls": {
+        "server_name": "krali.chlove.top"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) PDR 🇦🇪 | 002",
+      "server": "novantunnel.tech",
+      "server_port": 443,
+      "uuid": "5e5e813b-6ada-4fa2-8f1c-46716272a838",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE6",
+        "headers": {
+          "Host": "novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "novantunnel.tech"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  61",
+      "server": "151.101.118.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) M247 Europe 🇦🇪 | 003",
+      "server": "ava.game.naver.com.novantunnel.tech",
+      "server_port": 443,
+      "uuid": "b9bbbb63-ee93-4085-885a-306702a663ac",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE9",
+        "headers": {
+          "Host": "ava.game.naver.com.novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "ava.game.naver.com.novantunnel.tech"
+      }
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Kaopu Cloud HK 🇦🇪 | 003",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "password": "ab2f2c57-5850-4f91-acdb-baf3ee9afb3b"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) M247 Europe 🇦🇪 | 004",
+      "server": "novantunnel.tech",
+      "server_port": 443,
+      "uuid": "ee556a4f-d9f6-44de-af02-42c51659416a",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE9",
+        "headers": {
+          "Host": "novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "novantunnel.tech"
+      }
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) M247 Europe 🇦🇪 | 003",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "password": "fba1164d-0ece-49a5-b061-9be3f076038c"
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Zenlayer 🇦🇪 | 003",
+      "server": "edu.ruangguru.com.novantunnel.tech",
+      "server_port": 443,
+      "password": "7f7be157-ce9d-4588-8eb7-65e0ee1640b9"
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Zenlayer 🇦🇪 | 004",
+      "server": "novantunnel.tech",
+      "server_port": 443,
+      "password": "94b05e5b-f8ea-4cb5-a9d7-341fe9870474"
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Itglobal Com Dmcc 🇦🇪",
+      "server": "edu.ruangguru.com.novantunnel.tech",
+      "server_port": 443,
+      "password": "66cc8f7c-a315-40ee-80b0-7b5e67cce0db"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇯🇵日本JP 001 2.5MB/s TG",
+      "server": "151.101.109.223",
+      "server_port": 443,
+      "uuid": "c8541f02-4efd-401d-beb7-dc017b12ee94",
+      "transport": {
+        "type": "ws",
+        "path": "/",
+        "headers": {
+          "Host": "pan1.global.ssl.fastly.net"
+        }
+      },
+      "tls": {
+        "server_name": "default.ssl.fastly.net"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) G-Core Labs SA 🇦🇪 | 003",
+      "server": "novantunnel.tech",
+      "server_port": 443,
+      "uuid": "b28d5e68-19fb-45c1-a0cd-bedacf4f765b",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE8",
+        "headers": {
+          "Host": "novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "novantunnel.tech"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) M247 Europe 🇦🇪 | 005",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "uuid": "a2d2e0e1-97fb-4317-ab5a-60ebb8c035d4",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE26",
+        "headers": {
+          "Host": "support.zoom.us.novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "support.zoom.us.novantunnel.tech"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) Global Connectivity Solutions Llp 🇦🇪 | 004",
+      "server": "novantunnel.tech",
+      "server_port": 443,
+      "uuid": "0eec018a-3972-4552-9bf2-7eeafe5679a4",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE1",
+        "headers": {
+          "Host": "novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "novantunnel.tech"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (ID) Amazon.com🇮🇩",
+      "server": "shazira.app",
+      "server_port": 443,
+      "uuid": "18f0a073-ec66-4b6d-b8cf-4181213ee90e",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-ID2",
+        "headers": {
+          "Host": "shazira.app"
+        }
+      },
+      "tls": {
+        "server_name": "shazira.app"
+      }
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Oracle Cloud 🇦🇪 | 004",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "password": "ee8389e7-052d-4ed6-a934-42485c53d64f"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) Oracle Cloud 🇦🇪 | 006",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "uuid": "ee8389e7-052d-4ed6-a934-42485c53d64f",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE13",
+        "headers": {
+          "Host": "support.zoom.us.novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "support.zoom.us.novantunnel.tech"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) G-Core Labs SA 🇦🇪 | 004",
+      "server": "ava.game.naver.com.novantunnel.tech",
+      "server_port": 443,
+      "uuid": "a433827c-14ee-4060-8581-6baac2fd9f58",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE14",
+        "headers": {
+          "Host": "ava.game.naver.com.novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "ava.game.naver.com.novantunnel.tech"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 014",
+      "server": "199.232.78.160",
+      "server_port": 443,
+      "uuid": "52c0dab9-2187-49a4-8e31-f1db94bd7a9e",
+      "transport": {
+        "type": "ws",
+        "path": "/",
+        "headers": {
+          "Host": "alesis724.global.ssl.fastly.net"
+        }
+      },
+      "tls": {
+        "server_name": "speedtest.net",
+        "insecure": true
+      }
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | 🇺🇸 | 002",
+      "server": "69.63.212.251",
+      "server_port": 443,
+      "password": "eeb6823c-b926-4ea2-866a-5542edd26e59"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  52",
+      "server": "151.101.74.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (ID) Alibaba🇮🇩",
+      "server": "shazira.app",
+      "server_port": 443,
+      "password": "111d8ca1-4d08-43af-b4d6-2ac65477c20d"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) Global Connectivity Solutions Llp 🇦🇪 | 005",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "uuid": "2cc41a6e-c32c-45c4-a700-42dafd38786c",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE4",
+        "headers": {
+          "Host": "support.zoom.us.novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "support.zoom.us.novantunnel.tech"
+      }
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Kaopu Cloud HK 🇦🇪 | 004",
+      "server": "novantunnel.tech",
+      "server_port": 443,
+      "password": "90135fae-0c11-4215-a101-0d43428b4d22"
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Ucloud Information Technology Hk 🇦🇪",
+      "server": "novantunnel.tech",
+      "server_port": 443,
+      "password": "d70a645e-ff4e-4614-b10d-de4a8241d72a"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) Global Connectivity Solutions Llp 🇦🇪 | 006",
+      "server": "novantunnel.tech",
+      "server_port": 443,
+      "uuid": "635737d0-c289-4862-b939-c66864004dfb",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE4",
+        "headers": {
+          "Host": "novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "novantunnel.tech"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (ID) Google Cloud🇮🇩",
+      "server": "shazira.app",
+      "server_port": 443,
+      "uuid": "257d8622-6701-4c98-a432-67a9696f58ae",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-ID9",
+        "headers": {
+          "Host": "shazira.app"
+        }
+      },
+      "tls": {
+        "server_name": "shazira.app"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) Oracle Cloud 🇦🇪 | 007",
+      "server": "edu.ruangguru.com.novantunnel.tech",
+      "server_port": 443,
+      "uuid": "ca40726e-4c36-4929-a735-74223ebd1b96",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE12",
+        "headers": {
+          "Host": "edu.ruangguru.com.novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "edu.ruangguru.com.novantunnel.tech"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) G-Core Labs SA 🇦🇪 | 005",
+      "server": "novantunnel.tech",
+      "server_port": 443,
+      "uuid": "cd5dfff9-1f88-45da-a3b1-4e74ccf5749b",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE24",
+        "headers": {
+          "Host": "novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "novantunnel.tech"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) Oracle Cloud 🇦🇪 | 008",
+      "server": "novantunnel.tech",
+      "server_port": 443,
+      "uuid": "f0cae8f4-7ef6-45ee-bab0-fdcaf77e94ff",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE12",
+        "headers": {
+          "Host": "novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "novantunnel.tech"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) Ucloud Information Technology Hk 🇦🇪 | 002",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "uuid": "8d91d1ea-72d3-4bc4-8c19-6e409c07757d",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE16",
+        "headers": {
+          "Host": "support.zoom.us.novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "support.zoom.us.novantunnel.tech"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) Global Connectivity Solutions Llp 🇦🇪 | 007",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "uuid": "2a1a0f9f-821f-40b1-8426-b3de66b3311b",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE4",
+        "headers": {
+          "Host": "support.zoom.us.novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "support.zoom.us.novantunnel.tech"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  37",
+      "server": "151.101.58.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  50",
+      "server": "151.101.203.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | Free v | 002",
+      "server": "tajikistan.mfa.gov.ua",
+      "server_port": 443,
+      "uuid": "ce069292-c8bf-40dd-a6b1-87818a1e64e9",
+      "transport": {
+        "type": "ws",
+        "path": "/",
+        "headers": {
+          "Host": "3-8gy.pages.dev"
+        }
+      },
+      "tls": {
+        "server_name": "3-8gy.pages.dev"
+      }
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Itglobal Com Dmcc 🇦🇪 | 002",
+      "server": "ava.game.naver.com.novantunnel.tech",
+      "server_port": 443,
+      "password": "01c7b48f-e2c0-45ad-a68f-709c33b3c23b"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) Global Connectivity Solutions Llp 🇦🇪 | 008",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "uuid": "8c14657e-9209-4d27-8cce-37bfa002745b",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE1",
+        "headers": {
+          "Host": "support.zoom.us.novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "support.zoom.us.novantunnel.tech"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) Oracle Cloud 🇦🇪 | 009",
+      "server": "ava.game.naver.com.novantunnel.tech",
+      "server_port": 443,
+      "uuid": "1dad45ea-b091-486a-88f7-f1148c413494",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE18",
+        "headers": {
+          "Host": "ava.game.naver.com.novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "ava.game.naver.com.novantunnel.tech"
+      }
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Global Connectivity Solutions Llp 🇦🇪 | 008",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "password": "8c14657e-9209-4d27-8cce-37bfa002745b"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) Oracle Cloud 🇦🇪 | 010",
+      "server": "novantunnel.tech",
+      "server_port": 443,
+      "uuid": "e1d39218-95e3-48b7-b542-62ac7f2d7d2f",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE11",
+        "headers": {
+          "Host": "novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "novantunnel.tech"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  27",
+      "server": "151.101.10.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) Oracle Cloud 🇦🇪 | 011",
+      "server": "ava.game.naver.com.novantunnel.tech",
+      "server_port": 443,
+      "uuid": "0377fb4f-a6ea-4ff6-b2d9-c6d1a46aee5a",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE20",
+        "headers": {
+          "Host": "ava.game.naver.com.novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "ava.game.naver.com.novantunnel.tech"
+      }
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Oracle Cloud 🇦🇪 | 005",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "password": "b8e4767c-58c6-40d8-961e-a6b38050e300"
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (ID) Google Cloud🇮🇩",
+      "server": "shazira.app",
+      "server_port": 443,
+      "password": "8d19cac6-defb-46d1-a84a-a8100a86fd11"
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Itglobal Com Dmcc 🇦🇪 | 003",
+      "server": "novantunnel.tech",
+      "server_port": 443,
+      "password": "18c93882-d6b5-4992-ba76-49c48e986445"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) Oracle Cloud 🇦🇪 | 012",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "uuid": "ff363634-152c-4800-abbd-733dd136e5c7",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE12",
+        "headers": {
+          "Host": "support.zoom.us.novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "support.zoom.us.novantunnel.tech"
+      }
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Oracle Cloud 🇦🇪 | 006",
+      "server": "edu.ruangguru.com.novantunnel.tech",
+      "server_port": 443,
+      "password": "f82edb55-2907-4402-817b-882d7083937c"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  02",
+      "server": "151.101.7.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  08",
+      "server": "151.101.243.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  33",
+      "server": "151.101.171.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (ID) Alibaba🇮🇩",
+      "server": "shazira.app",
+      "server_port": 443,
+      "uuid": "111d8ca1-4d08-43af-b4d6-2ac65477c20d",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-ID11",
+        "headers": {
+          "Host": "shazira.app"
+        }
+      },
+      "tls": {
+        "server_name": "shazira.app"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) Oracle Cloud 🇦🇪 | 013",
+      "server": "ava.game.naver.com.novantunnel.tech",
+      "server_port": 443,
+      "uuid": "48be9474-698d-44a0-8426-ec892e2b4305",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE21",
+        "headers": {
+          "Host": "ava.game.naver.com.novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "ava.game.naver.com.novantunnel.tech"
+      }
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Oracle Cloud 🇦🇪 | 007",
+      "server": "novantunnel.tech",
+      "server_port": 443,
+      "password": "25a1f1a8-9f8d-4f40-955e-abd2aefc0912"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) Oracle Cloud 🇦🇪 | 014",
+      "server": "novantunnel.tech",
+      "server_port": 443,
+      "uuid": "55dbd8c8-0f1b-421b-a1d9-8b2bed442312",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE13",
+        "headers": {
+          "Host": "novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "novantunnel.tech"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) Zenlayer 🇦🇪 | 004",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "uuid": "1931fdfd-4e93-4c74-b5ba-d9f4cabb5704",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE25",
+        "headers": {
+          "Host": "support.zoom.us.novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "support.zoom.us.novantunnel.tech"
+      }
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) M247 Europe 🇦🇪 | 004",
+      "server": "novantunnel.tech",
+      "server_port": 443,
+      "password": "138097fe-dc48-44f5-8633-e47d2fb693d0"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) PDR 🇦🇪 | 003",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "uuid": "0f8616d5-1c78-4586-b499-53c839116a16",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE6",
+        "headers": {
+          "Host": "support.zoom.us.novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "support.zoom.us.novantunnel.tech"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) M247 Europe 🇦🇪 | 006",
+      "server": "edu.ruangguru.com.novantunnel.tech",
+      "server_port": 443,
+      "uuid": "6c016c23-044a-487f-8b38-14e3ea38d300",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE15",
+        "headers": {
+          "Host": "edu.ruangguru.com.novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "edu.ruangguru.com.novantunnel.tech"
+      }
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) G-Core Labs SA 🇦🇪 | 005",
+      "server": "novantunnel.tech",
+      "server_port": 443,
+      "password": "e6462ac3-ef34-4490-82d8-485eee4568f8"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) Zenlayer 🇦🇪 | 005",
+      "server": "novantunnel.tech",
+      "server_port": 443,
+      "uuid": "631058a5-f513-4bca-89af-d04e5c08f021",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE25",
+        "headers": {
+          "Host": "novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "novantunnel.tech"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 015",
+      "server": "199.232.78.160",
+      "server_port": 443,
+      "uuid": "52c0dab9-2187-49a4-8e31-f1db94bd7a9e",
+      "transport": {
+        "type": "ws",
+        "path": "/",
+        "headers": {
+          "Host": "alesis724.global.ssl.fastly.net"
+        }
+      },
+      "tls": {
+        "server_name": "speedtest.net"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  82",
+      "server": "151.101.235.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Oracle Cloud 🇦🇪 | 008",
+      "server": "ava.game.naver.com.novantunnel.tech",
+      "server_port": 443,
+      "password": "e3d75968-7874-47e7-aea2-30e6e89770a6"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | CF住宅IP",
+      "server": "188.114.97.149",
+      "server_port": 443,
+      "uuid": "23ffebbc-141b-4056-b110-cb68e7821af7",
+      "transport": {
+        "type": "ws",
+        "path": "/?ed=2048",
+        "headers": {
+          "Host": "ip.racknerd.henso.wiki"
+        }
+      },
+      "tls": {
+        "server_name": "ip.racknerd.henso.wiki"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) G-Core Labs SA 🇦🇪 | 006",
+      "server": "novantunnel.tech",
+      "server_port": 443,
+      "uuid": "e6462ac3-ef34-4490-82d8-485eee4568f8",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE14",
+        "headers": {
+          "Host": "novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "novantunnel.tech"
+      }
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) M247 Europe 🇦🇪 | 005",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "password": "a2d2e0e1-97fb-4317-ab5a-60ebb8c035d4"
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Oracle Cloud 🇦🇪 | 009",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "password": "a5d47e46-3fcc-4232-bd6f-3703df3e99d4"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) G-Core Labs SA 🇦🇪 | 007",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "uuid": "d5112816-e95b-4223-83e5-526129e8beab",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE24",
+        "headers": {
+          "Host": "support.zoom.us.novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "support.zoom.us.novantunnel.tech"
+      }
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Itglobal Com Dmcc 🇦🇪 | 004",
+      "server": "ava.game.naver.com.novantunnel.tech",
+      "server_port": 443,
+      "password": "20910d82-396d-4c60-b97d-15161435c9f5"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇫🇷 法国",
+      "server": "cloudflare-ip.mofashi.ltd",
+      "server_port": 443,
+      "uuid": "eeb6823c-b926-4ea2-866a-5542edd26e59",
+      "transport": {
+        "type": "ws",
+        "path": "/",
+        "headers": {
+          "Host": "t1s1.rittbo.kdns.fr"
+        }
+      },
+      "tls": {
+        "server_name": "t1s1.rittbo.kdns.fr",
+        "insecure": true
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) LLC Baxet 🇦🇪",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "uuid": "5413b1ba-fe63-4020-9fec-5c17aa15d88e",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE5",
+        "headers": {
+          "Host": "support.zoom.us.novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "support.zoom.us.novantunnel.tech"
+      }
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Oracle Cloud 🇦🇪 | 010",
+      "server": "novantunnel.tech",
+      "server_port": 443,
+      "password": "32bad0d4-0e4d-464f-9d38-6226c34d1399"
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Kaopu Cloud HK 🇦🇪 | 005",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "password": "bc090949-8630-4faa-bf0d-839a703af09c"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  86",
+      "server": "151.101.71.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  09",
+      "server": "151.101.37.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  35",
+      "server": "151.101.59.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | free | 004",
+      "server": "cdn.7zz.cn",
+      "server_port": 443,
+      "uuid": "ce069292-c8bf-40dd-a6b1-87818a1e64e9",
+      "transport": {
+        "type": "ws",
+        "path": "/",
+        "headers": {
+          "Host": "p-6fa.pages.dev"
+        }
+      },
+      "tls": {
+        "server_name": "p-6fa.pages.dev"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) Zenlayer 🇦🇪 | 006",
+      "server": "novantunnel.tech",
+      "server_port": 443,
+      "uuid": "ec5cf915-2203-403c-9710-dbd553857929",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE27",
+        "headers": {
+          "Host": "novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "novantunnel.tech"
+      }
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (ID) Amazon.com🇮🇩 | 002",
+      "server": "shazira.app",
+      "server_port": 443,
+      "password": "56cdd5df-4d50-4278-a388-41f2ca640dc2"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  62",
+      "server": "151.101.121.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 016",
+      "server": "151.101.108.223",
+      "server_port": 443,
+      "uuid": "98c9f668-1f2f-4a6d-bd7a-606fab0ac035",
+      "transport": {
+        "type": "ws",
+        "path": "/",
+        "headers": {
+          "Host": "jookeji.global.ssl.fastly.net"
+        }
+      },
+      "tls": {
+        "server_name": "default.ssl.fastly.net"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) M247 Europe 🇦🇪 | 007",
+      "server": "novantunnel.tech",
+      "server_port": 443,
+      "uuid": "4ce6c9f5-3226-4065-992a-cd611c727280",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE15",
+        "headers": {
+          "Host": "novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "novantunnel.tech"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) Oracle Cloud 🇦🇪 | 015",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "uuid": "758ba2c8-5142-46ca-95b8-440adec2a4c5",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE17",
+        "headers": {
+          "Host": "support.zoom.us.novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "support.zoom.us.novantunnel.tech"
+      }
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Oracle Cloud 🇦🇪 | 011",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "password": "71507705-8ce9-443b-a3fe-cbb48d1125ea"
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Global Connectivity Solutions Llp 🇦🇪 | 009",
+      "server": "novantunnel.tech",
+      "server_port": 443,
+      "password": "76d8e271-9293-4660-a235-654ecf27925d"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  38",
+      "server": "151.101.99.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) Oracle Cloud 🇦🇪 | 016",
+      "server": "novantunnel.tech",
+      "server_port": 443,
+      "uuid": "519b24bd-1826-44f1-9515-6f785956c2cb",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE21",
+        "headers": {
+          "Host": "novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "novantunnel.tech"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) G-Core Labs SA 🇦🇪 | 008",
+      "server": "edu.ruangguru.com.novantunnel.tech",
+      "server_port": 443,
+      "uuid": "64953679-b30d-4538-8d41-fd48c0f033cb",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE14",
+        "headers": {
+          "Host": "edu.ruangguru.com.novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "edu.ruangguru.com.novantunnel.tech"
+      }
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Zenlayer 🇦🇪 | 005",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "password": "6113911f-8a3e-4de3-949a-500d9c50fe0c"
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | 🇺🇸 美国-[AVToday.io]  18",
+      "server": "154.31.114.10",
+      "server_port": 443,
+      "password": "an70aOaIjcCF43gOlSB6eKER53Z38DYDx8l9RCSCpYTwXS3pueyAqyFZx2zDNA"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) LLC Baxet 🇦🇪 | 002",
+      "server": "novantunnel.tech",
+      "server_port": 443,
+      "uuid": "e18aa221-41af-4186-859e-78c83b8aaac9",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE5",
+        "headers": {
+          "Host": "novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "novantunnel.tech"
+      }
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Global Connectivity Solutions Llp 🇦🇪 | 010",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "password": "500c0168-755c-4f25-a763-dd19542e714c"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) G-Core Labs SA 🇦🇪 | 009",
+      "server": "novantunnel.tech",
+      "server_port": 443,
+      "uuid": "0a4562fe-ddeb-4413-a161-4de7ce18bddb",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE8",
+        "headers": {
+          "Host": "novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "novantunnel.tech"
+      }
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Oracle Cloud 🇦🇪 | 012",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "password": "d06a3438-5ff0-4e71-bf31-cb14e5b658fd"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) Oracle Cloud 🇦🇪 | 017",
+      "server": "novantunnel.tech",
+      "server_port": 443,
+      "uuid": "8f6465e0-ea3b-4f8b-b329-56008cde0b50",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE20",
+        "headers": {
+          "Host": "novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "novantunnel.tech"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | US美国(v2clash.blog 2026-6.9更新) | 009",
+      "server": "45.32.103.8",
+      "server_port": 20742,
+      "uuid": "00000000-0000-4000-8000-000000000000",
+      "transport": {
+        "type": "ws",
+        "path": "/@Marisa_kristi"
+      },
+      "tls": {
+        "server_name": "nn9jdg-k7yewrrk.acg.xx.kg"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) Oracle Cloud 🇦🇪 | 018",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "uuid": "9061f777-a15d-4835-8983-bb7cbdb11763",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE18",
+        "headers": {
+          "Host": "support.zoom.us.novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "support.zoom.us.novantunnel.tech"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  44",
+      "server": "151.101.207.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  48",
+      "server": "151.101.215.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) G-Core Labs SA 🇦🇪 | 006",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "password": "94186f2d-e780-4dba-9f58-761294f0f5b1"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) M247 Europe 🇦🇪 | 008",
+      "server": "novantunnel.tech",
+      "server_port": 443,
+      "uuid": "b5d0f328-2314-4eb8-88e4-c09e7cc25ff0",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE9",
+        "headers": {
+          "Host": "novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "novantunnel.tech"
+      }
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) LLC Baxet 🇦🇪 | 002",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "password": "5413b1ba-fe63-4020-9fec-5c17aa15d88e"
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Oracle Cloud 🇦🇪 | 013",
+      "server": "edu.ruangguru.com.novantunnel.tech",
+      "server_port": 443,
+      "password": "f22f35ea-1c02-4b20-b5d3-4b63c135ef49"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) M247 Europe 🇦🇪 | 009",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "uuid": "fba1164d-0ece-49a5-b061-9be3f076038c",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE9",
+        "headers": {
+          "Host": "support.zoom.us.novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "support.zoom.us.novantunnel.tech"
+      }
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Oracle Cloud 🇦🇪 | 014",
+      "server": "edu.ruangguru.com.novantunnel.tech",
+      "server_port": 443,
+      "password": "ca40726e-4c36-4929-a735-74223ebd1b96"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  53",
+      "server": "151.101.41.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Global Connectivity Solutions Llp 🇦🇪 | 011",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "password": "2cc41a6e-c32c-45c4-a700-42dafd38786c"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  79",
+      "server": "151.101.167.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Oracle Cloud 🇦🇪 | 015",
+      "server": "novantunnel.tech",
+      "server_port": 443,
+      "password": "55dbd8c8-0f1b-421b-a1d9-8b2bed442312"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) Oracle Cloud 🇦🇪 | 019",
+      "server": "ava.game.naver.com.novantunnel.tech",
+      "server_port": 443,
+      "uuid": "b8ec3167-9f40-49d3-9d37-fa709f918956",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE13",
+        "headers": {
+          "Host": "ava.game.naver.com.novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "ava.game.naver.com.novantunnel.tech"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  40",
+      "server": "151.101.182.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) G-Core Labs SA 🇦🇪 | 010",
+      "server": "novantunnel.tech",
+      "server_port": 443,
+      "uuid": "05b1737c-c92e-41cd-af4f-b4b8c6150e7b",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE8",
+        "headers": {
+          "Host": "novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "novantunnel.tech"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) Kaopu Cloud HK 🇦🇪 | 003",
+      "server": "novantunnel.tech",
+      "server_port": 443,
+      "uuid": "e62b28a6-ba40-4360-90aa-c4e6a2a6d166",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE29",
+        "headers": {
+          "Host": "novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "novantunnel.tech"
+      }
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Global Connectivity Solutions Llp 🇦🇪 | 012",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "password": "5369315b-28a2-425b-a97c-e634452dbfcc"
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Oracle Cloud 🇦🇪 | 016",
+      "server": "novantunnel.tech",
+      "server_port": 443,
+      "password": "ab4ec77c-c4cb-4cb9-95bc-da98e7ef02c2"
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) M247 Europe 🇦🇪 | 006",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "password": "f7d86f43-b758-4b2a-89c5-5e0e725d97c1"
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Zenlayer 🇦🇪 | 006",
+      "server": "novantunnel.tech",
+      "server_port": 443,
+      "password": "ec5cf915-2203-403c-9710-dbd553857929"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇺🇸 美国-[AVToday.io]  16",
+      "server": "108.162.198.18",
+      "server_port": 443,
+      "uuid": "c135158e-5869-4397-8116-6695ca18cd48",
+      "transport": {
+        "type": "ws",
+        "path": "/",
+        "headers": {
+          "Host": "cfnode-1xg.pages.dev"
+        }
+      },
+      "tls": {
+        "server_name": "cfnode-1xg.pages.dev",
+        "insecure": true
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  96",
+      "server": "151.101.102.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇭🇰香港HK003 5.5MB/s纯净 TG",
+      "server": "pccw.edit-sync.club",
+      "server_port": 443,
+      "uuid": "8d9b3426-b505-427a-974c-59d60999661b",
+      "transport": {
+        "type": "ws",
+        "path": "/video",
+        "headers": {
+          "Host": "pccw.edit-sync.club"
+        }
+      },
+      "tls": {
+        "server_name": "pccw.edit-sync.club"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) Zenlayer 🇦🇪 | 007",
+      "server": "ava.game.naver.com.novantunnel.tech",
+      "server_port": 443,
+      "uuid": "16c5085f-6c41-49a9-8e58-ce3c2c622e3e",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE27",
+        "headers": {
+          "Host": "ava.game.naver.com.novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "ava.game.naver.com.novantunnel.tech"
+      }
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Oracle Cloud 🇦🇪 | 017",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "password": "758ba2c8-5142-46ca-95b8-440adec2a4c5"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  26",
+      "server": "151.101.214.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  42",
+      "server": "151.101.23.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) PDR 🇦🇪 | 002",
+      "server": "novantunnel.tech",
+      "server_port": 443,
+      "password": "5e5e813b-6ada-4fa2-8f1c-46716272a838"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) Zenlayer 🇦🇪 | 008",
+      "server": "ava.game.naver.com.novantunnel.tech",
+      "server_port": 443,
+      "uuid": "8d7b7ed9-9621-43df-928c-785f1a7efe26",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE28",
+        "headers": {
+          "Host": "ava.game.naver.com.novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "ava.game.naver.com.novantunnel.tech"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) G-Core Labs SA 🇦🇪 | 011",
+      "server": "ava.game.naver.com.novantunnel.tech",
+      "server_port": 443,
+      "uuid": "c5c01c17-c517-4a23-9df8-7ff25a7f5b33",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE22",
+        "headers": {
+          "Host": "ava.game.naver.com.novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "ava.game.naver.com.novantunnel.tech"
+      }
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Global Connectivity Solutions Llp 🇦🇪 | 013",
+      "server": "ava.game.naver.com.novantunnel.tech",
+      "server_port": 443,
+      "password": "e841e506-ebfe-408d-bb8a-5d198bcd4371"
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) LLC Baxet 🇦🇪 | 003",
+      "server": "edu.ruangguru.com.novantunnel.tech",
+      "server_port": 443,
+      "password": "724aaffc-f4c6-49f9-b50e-f76065afbe7c"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) M247 Europe 🇦🇪 | 010",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "uuid": "0fbb804b-187f-48e2-9def-1bd4b8dbaf18",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE7",
+        "headers": {
+          "Host": "support.zoom.us.novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "support.zoom.us.novantunnel.tech"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) Global Connectivity Solutions Llp 🇦🇪 | 009",
+      "server": "novantunnel.tech",
+      "server_port": 443,
+      "uuid": "76d8e271-9293-4660-a235-654ecf27925d",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE2",
+        "headers": {
+          "Host": "novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "novantunnel.tech"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  67",
+      "server": "151.101.32.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) G-Core Labs SA 🇦🇪 | 012",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "uuid": "5963b106-9358-4510-bb4d-90dbe5f103de",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE22",
+        "headers": {
+          "Host": "support.zoom.us.novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "support.zoom.us.novantunnel.tech"
+      }
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Kaopu Cloud HK 🇦🇪 | 006",
+      "server": "edu.ruangguru.com.novantunnel.tech",
+      "server_port": 443,
+      "password": "cd7bce83-6396-43a2-bac8-b2dd796b509c"
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Kaopu Cloud HK 🇦🇪 | 007",
+      "server": "novantunnel.tech",
+      "server_port": 443,
+      "password": "e62b28a6-ba40-4360-90aa-c4e6a2a6d166"
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (ID) Google Cloud🇮🇩 | 002",
+      "server": "shazira.app",
+      "server_port": 443,
+      "password": "257d8622-6701-4c98-a432-67a9696f58ae"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) Ucloud Information Technology Hk 🇦🇪 | 003",
+      "server": "ava.game.naver.com.novantunnel.tech",
+      "server_port": 443,
+      "uuid": "366d99ec-dd82-4ed4-83bc-c678a2bc966a",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE16",
+        "headers": {
+          "Host": "ava.game.naver.com.novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "ava.game.naver.com.novantunnel.tech"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) Oracle Cloud 🇦🇪 | 020",
+      "server": "ava.game.naver.com.novantunnel.tech",
+      "server_port": 443,
+      "uuid": "4c7acdb1-0808-43ff-90ca-7d7b9e1db286",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE21",
+        "headers": {
+          "Host": "ava.game.naver.com.novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "ava.game.naver.com.novantunnel.tech"
+      }
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Oracle Cloud 🇦🇪 | 018",
+      "server": "novantunnel.tech",
+      "server_port": 443,
+      "password": "8f6465e0-ea3b-4f8b-b329-56008cde0b50"
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Global Connectivity Solutions Llp 🇦🇪 | 014",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "password": "85401f9d-fd71-4a78-9c6c-856ba1e3b46e"
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) G-Core Labs SA 🇦🇪 | 007",
+      "server": "ava.game.naver.com.novantunnel.tech",
+      "server_port": 443,
+      "password": "bdd445dc-3615-48f9-85d8-e5f9b543572a"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  69",
+      "server": "151.101.242.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  21",
+      "server": "151.101.246.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Oracle Cloud 🇦🇪 | 019",
+      "server": "ava.game.naver.com.novantunnel.tech",
+      "server_port": 443,
+      "password": "17e0ae25-7037-481f-9588-7d076404f75f"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  80",
+      "server": "151.101.115.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  03",
+      "server": "151.101.133.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  07",
+      "server": "151.101.39.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  55",
+      "server": "151.101.247.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 017",
+      "server": "91.206.71.50",
+      "server_port": 8880,
+      "uuid": "6202b230-417c-4d8e-b624-0f71afa9c75d",
+      "transport": {
+        "type": "ws",
+        "path": "/?ed=2560&https://t.me/YouTube@小青科学网🇨🇳",
+        "headers": {
+          "Host": "vms.lifetime15.workers.dev"
+        }
+      }
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Global Connectivity Solutions Llp 🇦🇪 | 015",
+      "server": "ava.game.naver.com.novantunnel.tech",
+      "server_port": 443,
+      "password": "5316d3cc-32c1-4b0f-a84e-881708616fe5"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) PDR 🇦🇪 | 004",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "uuid": "3ce373f8-35ef-4a22-b7bb-d992b7778857",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE6",
+        "headers": {
+          "Host": "support.zoom.us.novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "support.zoom.us.novantunnel.tech"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  23",
+      "server": "151.101.38.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  63",
+      "server": "151.101.123.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Oracle Cloud 🇦🇪 | 020",
+      "server": "support.zoom.us.novantunnel.tech",
+      "server_port": 443,
+      "password": "b5b88aea-a7f0-4936-b56d-059e39d19b85"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  75",
+      "server": "151.101.85.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  97",
+      "server": "151.101.150.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  81",
+      "server": "151.101.245.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "ss",
+      "tag": "SS | 🇩🇪德国DE008 3.1MB/s中性 TG",
+      "server": "3.121.86.152",
+      "server_port": 443
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇵🇱波兰PL003 4.3MB/s纯净 TG",
+      "server": "77.239.114.140",
+      "server_port": 603,
+      "uuid": "f7166a73-c0d8-0001-8c33-00af87919774",
+      "flow": "xtls-rprx-vision",
+      "transport": {},
+      "tls": {
+        "enabled": true,
+        "server_name": "ss.31431411.xyz",
+        "reality": {}
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | US美国(v2clash.blog 2026-6.9更新) | 010",
+      "server": "213.179.69.150",
+      "server_port": 35130,
+      "uuid": "00000000-0000-4000-8000-000000000000",
+      "transport": {
+        "type": "ws",
+        "path": "/@Marisa_kristi"
+      },
+      "tls": {
+        "server_name": "nn9jdg-k7yewrrk.acg.xx.kg"
+      }
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Kaopu Cloud HK 🇦🇪 | 008",
+      "server": "edu.ruangguru.com.novantunnel.tech",
+      "server_port": 443,
+      "password": "4c993345-7c1c-49ec-8a3c-7d3764cbc791"
+    },
+    {
+      "type": "vmess",
+      "tag": "VMESS | 🇺🇸美国24 | ⬇️ 3.4MB/s",
+      "server": "xcf037.facai2024.com",
+      "server_port": 443,
+      "uuid": "d9863037-0463-4615-e972-36ba9662d1e9",
+      "alter_id": 0,
+      "security": "auto",
+      "transport": {
+        "type": "ws",
+        "path": "/d9863037",
+        "headers": {
+          "Host": "xcf037.facai2024.com"
+        }
+      },
+      "tls": {
+        "server_name": "xcf037.facai2024.com"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  98",
+      "server": "151.101.53.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | (AE) Itglobal Com Dmcc 🇦🇪",
+      "server": "novantunnel.tech",
+      "server_port": 443,
+      "uuid": "18c93882-d6b5-4992-ba76-49c48e986445",
+      "transport": {
+        "type": "ws",
+        "path": "/Novan-AE30",
+        "headers": {
+          "Host": "novantunnel.tech"
+        }
+      },
+      "tls": {
+        "server_name": "novantunnel.tech"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  46",
+      "server": "151.101.14.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN",
+      "server": "103.177.136.42",
+      "server_port": 46424,
+      "password": "4f4d1167-ef14-4304-9bce-0740472503ef"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  16",
+      "server": "151.101.54.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | CA加拿大(v2clash.blog 2026-6.9更新) | 003",
+      "server": "151.101.67.57",
+      "server_port": 80,
+      "uuid": "TIGNAL-CRYPTO",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  65",
+      "server": "151.101.63.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  73",
+      "server": "151.101.189.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  19",
+      "server": "151.101.55.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  22",
+      "server": "151.101.5.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇺🇸美国US008 0.2MB/s纯净 TG",
+      "server": "38.101.31.225",
+      "server_port": 28932,
+      "uuid": "c8637192-8e0e-4a5d-b2d3-8b245eae47c2",
+      "flow": "xtls-rprx-vision",
+      "transport": {},
+      "tls": {
+        "enabled": true,
+        "server_name": "www.speedtest.net",
+        "reality": {}
+      }
+    },
+    {
+      "type": "ss",
+      "tag": "SS | US美国(v2clash.blog 2026-5.30更新)",
+      "server": "109.176.239.50",
+      "server_port": 8880
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | 002",
+      "server": "103.177.136.42",
+      "server_port": 41943,
+      "password": "4f4d1167-ef14-4304-9bce-0740472503ef"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  06",
+      "server": "151.101.18.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | (AE) Oracle Cloud 🇦🇪 | 021",
+      "server": "edu.ruangguru.com.novantunnel.tech",
+      "server_port": 443,
+      "password": "0291f571-478a-483a-8206-06e196f9af1c"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  01",
+      "server": "151.101.61.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  14",
+      "server": "151.101.125.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  05",
+      "server": "151.101.127.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  20",
+      "server": "151.101.190.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "ss",
+      "tag": "SS | 🇨🇦加拿大CA006 2.7MB/s中性 TG",
+      "server": "3.97.8.224",
+      "server_port": 443
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | 003",
+      "server": "103.177.136.42",
+      "server_port": 45619,
+      "password": "4f4d1167-ef14-4304-9bce-0740472503ef"
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | 004",
+      "server": "103.177.136.45",
+      "server_port": 48697,
+      "password": "4f4d1167-ef14-4304-9bce-0740472503ef"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇩🇪 德国-[AVToday.io]  05",
+      "server": "osre3.jykvpn.com",
+      "server_port": 2048,
+      "uuid": "1fa43951-0c8e-4fbc-b350-2b11f67efb57",
+      "transport": {
+        "type": "ws",
+        "path": "/",
+        "headers": {
+          "Host": "ads.x5.ru"
+        }
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  10",
+      "server": "151.101.206.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "ss",
+      "tag": "SS | 🇨🇦加拿大CA003 0.2MB/s中性 TG",
+      "server": "15.223.5.86",
+      "server_port": 443
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  45",
+      "server": "151.101.191.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "ss",
+      "tag": "SS | 🇨🇦加拿大CA 002 3.0MB/s TG",
+      "server": "35.183.126.173",
+      "server_port": 443
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  04",
+      "server": "151.101.241.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | 005",
+      "server": "103.177.136.45",
+      "server_port": 45553,
+      "password": "4f4d1167-ef14-4304-9bce-0740472503ef"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇺🇸美国US002 0.7MB/s中性 TG",
+      "server": "45.76.2.235",
+      "server_port": 443,
+      "uuid": "3a8f8e39-db1c-4e28-ad59-577744bf45ea",
+      "flow": "xtls-rprx-vision",
+      "transport": {},
+      "tls": {
+        "enabled": true,
+        "server_name": "www.microsoft.com",
+        "reality": {}
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | US美国(v2clash.blog 2026-6.9更新) | 011",
+      "server": "fl.gamelistak.com",
+      "server_port": 443,
+      "uuid": "efb51103-661b-4a32-a96f-f60a4fa178d0",
+      "transport": {},
+      "tls": {
+        "server_name": "fl.gamelistak.com"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  24",
+      "server": "151.101.6.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇩🇪德国DE003 0.6MB/s纯净 TG",
+      "server": "94.26.83.213",
+      "server_port": 44443,
+      "uuid": "3f00f3a1-6d20-49a0-b4c6-8e2c0fea7c2f",
+      "flow": "xtls-rprx-vision",
+      "transport": {},
+      "tls": {
+        "enabled": true,
+        "server_name": "de.cluster07.vpnizator.online",
+        "reality": {}
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  15",
+      "server": "151.101.62.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  78",
+      "server": "151.101.90.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  17",
+      "server": "151.101.146.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | 006",
+      "server": "103.177.136.45",
+      "server_port": 45619,
+      "password": "4f4d1167-ef14-4304-9bce-0740472503ef"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  70",
+      "server": "151.101.126.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  18",
+      "server": "151.101.122.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "ss",
+      "tag": "SS | 🇨🇦加拿大CA001 0.5MB/s中性 TG",
+      "server": "35.182.251.131",
+      "server_port": 443
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | 007",
+      "server": "103.177.136.42",
+      "server_port": 47909,
+      "password": "4f4d1167-ef14-4304-9bce-0740472503ef"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  68",
+      "server": "151.101.46.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇳🇴挪威NO002 2.5MB/s中性 TG",
+      "server": "195.16.73.208",
+      "server_port": 443,
+      "uuid": "f64cab0a-75a4-44f1-b2f6-8ecc6c73c249",
+      "flow": "xtls-rprx-vision",
+      "transport": {},
+      "tls": {
+        "enabled": true,
+        "server_name": "no.buycloud.app",
+        "reality": {}
+      }
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | 008",
+      "server": "103.177.136.42",
+      "server_port": 45553,
+      "password": "4f4d1167-ef14-4304-9bce-0740472503ef"
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | 🇺🇸 美国-[AVToday.io]  19",
+      "server": "11u8k6n04q3y4ajoai.lovebaipiao.net",
+      "server_port": 443,
+      "password": "497dae1f-6db8-4c35-957f-ceb8c1500909"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  12",
+      "server": "151.101.155.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇵🇱波兰PL006 2.5MB/s中性 TG",
+      "server": "45.194.71.13",
+      "server_port": 8443,
+      "uuid": "9aa2b6e9-3c89-4440-88dd-b3f63c5c9578",
+      "flow": "xtls-rprx-vision",
+      "transport": {},
+      "tls": {
+        "enabled": true,
+        "server_name": "storage.yandex.net",
+        "reality": {}
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇺🇸美国US004 0.5MB/s中性 TG",
+      "server": "74.208.191.140",
+      "server_port": 443,
+      "uuid": "8584983e-e4ac-4fd9-96b9-7f4db8dc5790",
+      "flow": "xtls-rprx-vision",
+      "transport": {},
+      "tls": {
+        "enabled": true,
+        "server_name": "www.microsoft.com",
+        "reality": {}
+      }
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | 009",
+      "server": "103.177.136.45",
+      "server_port": 46424,
+      "password": "4f4d1167-ef14-4304-9bce-0740472503ef"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  43",
+      "server": "151.101.147.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | 010",
+      "server": "103.177.136.45",
+      "server_port": 41943,
+      "password": "4f4d1167-ef14-4304-9bce-0740472503ef"
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | 011",
+      "server": "103.177.136.42",
+      "server_port": 48697,
+      "password": "4f4d1167-ef14-4304-9bce-0740472503ef"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  95",
+      "server": "151.101.13.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  87",
+      "server": "151.101.255.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  49",
+      "server": "151.101.149.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  59",
+      "server": "151.101.113.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | 012",
+      "server": "103.177.136.45",
+      "server_port": 47909,
+      "password": "4f4d1167-ef14-4304-9bce-0740472503ef"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇸🇪瑞典SE001 1.3MB/s纯净 TG",
+      "server": "109.120.188.54",
+      "server_port": 443,
+      "uuid": "4e5017e0-07da-48ef-a882-fa26a845ead6",
+      "flow": "xtls-rprx-vision",
+      "transport": {},
+      "tls": {
+        "enabled": true,
+        "server_name": "ads.x5.ru",
+        "reality": {}
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇭🇺匈牙利HU001 4.3MB/s中性 TG",
+      "server": "195.20.115.164",
+      "server_port": 443,
+      "uuid": "f64cab0a-75a4-44f1-b2f6-8ecc6c73c249",
+      "flow": "xtls-rprx-vision",
+      "transport": {},
+      "tls": {
+        "enabled": true,
+        "server_name": "hu.buycloud.app",
+        "reality": {}
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇩🇪德国DE004 1.0MB/s纯净 TG",
+      "server": "178.18.147.252",
+      "server_port": 2053,
+      "uuid": "d98c856e-4aec-4d6c-ac66-fca0e474991d",
+      "flow": "xtls-rprx-vision",
+      "transport": {},
+      "tls": {
+        "enabled": true,
+        "server_name": "nl-t.vinnypuxtomoon.today",
+        "reality": {}
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇷🇺俄罗斯RU001 3.1MB/s中性 TG",
+      "server": "217.149.25.165",
+      "server_port": 443,
+      "uuid": "ff19693c-11f3-4df9-8713-79a85a5ca090",
+      "flow": "xtls-rprx-vision",
+      "transport": {},
+      "tls": {
+        "enabled": true,
+        "server_name": "sellflow.org",
+        "reality": {}
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇵🇱波兰PL001 3.7MB/s纯净 TG",
+      "server": "77.239.114.140",
+      "server_port": 443,
+      "uuid": "f7166a73-c0d8-0001-8c33-00af87919774",
+      "transport": {
+        "type": "grpc"
+      },
+      "tls": {
+        "enabled": true,
+        "server_name": "ssg.31431411.xyz",
+        "reality": {}
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇳🇱荷兰NL002 3.7MB/s中性 TG",
+      "server": "68.209.56.54",
+      "server_port": 443,
+      "uuid": "f64cab0a-75a4-44f1-b2f6-8ecc6c73c249",
+      "flow": "xtls-rprx-vision",
+      "transport": {},
+      "tls": {
+        "enabled": true,
+        "server_name": "auto.buycloud.app",
+        "reality": {}
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇳🇱荷兰NL004 3.1MB/s中性 TG",
+      "server": "23.236.186.6",
+      "server_port": 443,
+      "uuid": "f64cab0a-75a4-44f1-b2f6-8ecc6c73c249",
+      "flow": "xtls-rprx-vision",
+      "transport": {},
+      "tls": {
+        "enabled": true,
+        "server_name": "nl10.buycloud.app",
+        "reality": {}
+      }
+    },
+    {
+      "type": "ss",
+      "tag": "SS | US美国(v2clash.blog 2026-6.9更新)",
+      "server": "146.70.20.110",
+      "server_port": 20205
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇳🇱荷兰NL007 2.8MB/s中性 TG",
+      "server": "72.57.78.226",
+      "server_port": 443,
+      "uuid": "f64cab0a-75a4-44f1-b2f6-8ecc6c73c249",
+      "flow": "xtls-rprx-vision",
+      "transport": {},
+      "tls": {
+        "enabled": true,
+        "server_name": "auto.buycloud.app",
+        "reality": {}
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  64",
+      "server": "151.101.139.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇮🇱以色列IL001 0.1MB/s中性 TG",
+      "server": "195.211.24.49",
+      "server_port": 443,
+      "uuid": "8584983e-e4ac-4fd9-96b9-7f4db8dc5790",
+      "flow": "xtls-rprx-vision",
+      "transport": {},
+      "tls": {
+        "enabled": true,
+        "server_name": "www.microsoft.com",
+        "reality": {}
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇩🇪德国DE005 3.8MB/s纯净 TG",
+      "server": "178.18.147.252",
+      "server_port": 7444,
+      "uuid": "d98c856e-4aec-4d6c-ac66-fca0e474991d",
+      "transport": {
+        "type": "grpc"
+      },
+      "tls": {
+        "enabled": true,
+        "server_name": "nl-t.vinnypuxtomoon.today",
+        "reality": {}
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇺🇸美国US003 1.8MB/s纯净 TG",
+      "server": "23.177.185.216",
+      "server_port": 443,
+      "uuid": "f7166a73-c0d8-0001-8c33-00af87919774",
+      "flow": "xtls-rprx-vision",
+      "transport": {},
+      "tls": {
+        "enabled": true,
+        "server_name": "max.ru",
+        "reality": {}
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇮🇱以色列IL002 0.6MB/s中性 TG",
+      "server": "195.211.24.49",
+      "server_port": 48932,
+      "uuid": "8584983e-e4ac-4fd9-96b9-7f4db8dc5790",
+      "transport": {},
+      "tls": {
+        "enabled": true,
+        "server_name": "www.nvidia.com",
+        "reality": {}
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇪🇸西班牙ES001 0.4MB/s纯净 TG",
+      "server": "78.40.111.222",
+      "server_port": 443,
+      "uuid": "f64cab0a-75a4-44f1-b2f6-8ecc6c73c249",
+      "flow": "xtls-rprx-vision",
+      "transport": {},
+      "tls": {
+        "enabled": true,
+        "server_name": "es.buycloud.app",
+        "reality": {}
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇦🇹奥地利AT004 3.8MB/s中性 TG",
+      "server": "94.177.9.149",
+      "server_port": 443,
+      "uuid": "f64cab0a-75a4-44f1-b2f6-8ecc6c73c249",
+      "flow": "xtls-rprx-vision",
+      "transport": {},
+      "tls": {
+        "enabled": true,
+        "server_name": "at-c3.buycloud.app",
+        "reality": {}
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  60",
+      "server": "151.101.135.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  90",
+      "server": "151.101.137.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇳🇱荷兰NL006 3.1MB/s中性 TG",
+      "server": "72.57.78.170",
+      "server_port": 443,
+      "uuid": "f64cab0a-75a4-44f1-b2f6-8ecc6c73c249",
+      "flow": "xtls-rprx-vision",
+      "transport": {},
+      "tls": {
+        "enabled": true,
+        "server_name": "nl10.buycloud.app",
+        "reality": {}
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 018",
+      "server": "166.88.167.206",
+      "server_port": 30715,
+      "uuid": "00000000-0000-4000-8000-000000000000",
+      "transport": {
+        "type": "ws",
+        "path": "/@Marisa_kristi"
+      },
+      "tls": {
+        "server_name": "nn9jdg-k7yewrrk.acg.xx.kg"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  13",
+      "server": "151.101.237.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | ba",
+      "server": "185.164.35.37",
+      "server_port": 443,
+      "uuid": "43488128-319e-f480-64ea-0acdc712e2a8",
+      "flow": "xtls-rprx-vision",
+      "transport": {},
+      "tls": {
+        "enabled": true,
+        "server_name": "www.hyundai.com",
+        "reality": {}
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 019",
+      "server": "185.164.35.37",
+      "server_port": 443,
+      "uuid": "43488128-319e-f480-64ea-0acdc712e2a8",
+      "flow": "xtls-rprx-vision",
+      "transport": {},
+      "tls": {
+        "enabled": true,
+        "server_name": "www.hyundai.com",
+        "reality": {
+          "public_key": "wPDTWjK4PYbOlruZOvX64vVS9tkOPSM6X4Ymg-FzvxY",
+          "short_id": "ad9cf8818428d847"
+        }
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇳🇱荷兰NL 001 4.9MB/s TG",
+      "server": "185.229.191.10",
+      "server_port": 8443,
+      "uuid": "394f6981-a782-4779-9a85-e6cf22935d93",
+      "transport": {},
+      "tls": {
+        "server_name": "ams1.fromblancwithlove.com"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  39",
+      "server": "151.101.217.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  32",
+      "server": "151.101.239.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | US美国(v2clash.blog 2026-6.9更新) | 012",
+      "server": "91.184.240.106",
+      "server_port": 433,
+      "uuid": "00000000-0000-4000-8000-000000000000",
+      "transport": {
+        "type": "ws",
+        "path": "/@Marisa_kristi"
+      },
+      "tls": {
+        "server_name": "nn9jdg-k7yewrrk.acg.xx.kg"
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  28",
+      "server": "151.101.175.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  31",
+      "server": "151.101.174.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  41",
+      "server": "151.101.93.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  25",
+      "server": "151.101.249.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | 🇭🇰",
+      "server": "46.8.226.197",
+      "server_port": 8443,
+      "password": "eeb6823c-b926-4ea2-866a-5542edd26e59"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  88",
+      "server": "151.101.94.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  184",
+      "server": "151.101.185.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  66",
+      "server": "151.101.173.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  30",
+      "server": "151.101.227.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  51",
+      "server": "151.101.187.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  56",
+      "server": "151.101.179.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | 🇺🇸 | 003",
+      "server": "69.63.216.10",
+      "server_port": 443,
+      "password": "eeb6823c-b926-4ea2-866a-5542edd26e59"
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇳🇱荷兰NL003 3.1MB/s中性 TG",
+      "server": "152.232.8.106",
+      "server_port": 443,
+      "uuid": "f64cab0a-75a4-44f1-b2f6-8ecc6c73c249",
+      "flow": "xtls-rprx-vision",
+      "transport": {},
+      "tls": {
+        "enabled": true,
+        "server_name": "auto.buycloud.app",
+        "reality": {}
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇨🇭瑞士CH001 3.7MB/s中性 TG",
+      "server": "51.250.23.0",
+      "server_port": 443,
+      "uuid": "0e86bcd6-9b31-4cbc-b4f4-bc85f3c5f5d5",
+      "flow": "xtls-rprx-vision",
+      "transport": {},
+      "tls": {
+        "enabled": true,
+        "server_name": "ads.x5.ru",
+        "reality": {}
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS | 🇬🇧 英国-[AVToday.io]  11",
+      "server": "151.101.238.119",
+      "server_port": 80,
+      "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
+      "transport": {}
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | 🇺🇸 | 004",
+      "server": "69.63.222.124",
+      "server_port": 443,
+      "password": "eeb6823c-b926-4ea2-866a-5542edd26e59"
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | 🇺🇸 美国-[AVToday.io]  26",
+      "server": "92.243.75.49",
+      "server_port": 2087,
+      "password": "wb6368"
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | 🇰🇷",
+      "server": "130.162.130.105",
+      "server_port": 443,
+      "password": "eeb6823c-b926-4ea2-866a-5542edd26e59"
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | 🇸🇬",
+      "server": "168.138.165.174",
+      "server_port": 443,
+      "password": "eeb6823c-b926-4ea2-866a-5542edd26e59"
+    },
+    {
+      "type": "trojan",
+      "tag": "TROJAN | 🇯🇵 日本 抓取节点 4",
+      "server": "158.101.78.162",
+      "server_port": 443,
+      "password": "eeb6823c-b926-4ea2-866a-5542edd26e59"
+    }
+  ],
+  "route": {
+    "rules": [
+      {
+        "protocol": "dns",
+        "outbound": "DNS"
+      },
+      {
+        "geoip": [
+          "cn"
+        ],
+        "outbound": "DIRECT"
+      },
+      {
+        "geosite": [
+          "cn"
+        ],
+        "outbound": "DIRECT"
+      }
+    ],
+    "final": "Proxy"
+  }
+}
