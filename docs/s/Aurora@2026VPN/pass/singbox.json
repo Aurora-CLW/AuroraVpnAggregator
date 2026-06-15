@@ -3880,23 +3880,6 @@
     {
       "type": "vless",
       "tag": "VLESS | 238",
-      "server": "185.164.35.37",
-      "server_port": 443,
-      "uuid": "43488128-319e-f480-64ea-0acdc712e2a8",
-      "flow": "xtls-rprx-vision",
-      "transport": {},
-      "tls": {
-        "enabled": true,
-        "server_name": "www.hyundai.com",
-        "reality": {
-          "public_key": "wPDTWjK4PYbOlruZOvX64vVS9tkOPSM6X4Ymg-FzvxY",
-          "short_id": "ad9cf8818428d847"
-        }
-      }
-    },
-    {
-      "type": "vless",
-      "tag": "VLESS | 239",
       "server": "178.18.147.252",
       "server_port": 2053,
       "uuid": "d98c856e-4aec-4d6c-ac66-fca0e474991d",
@@ -3910,7 +3893,7 @@
     },
     {
       "type": "vless",
-      "tag": "VLESS | 240",
+      "tag": "VLESS | 239",
       "server": "ava.game.naver.com.novantunnel.tech",
       "server_port": 443,
       "uuid": "0377fb4f-a6ea-4ff6-b2d9-c6d1a46aee5a",
@@ -3927,7 +3910,7 @@
     },
     {
       "type": "vless",
-      "tag": "VLESS | 241",
+      "tag": "VLESS | 240",
       "server": "ava.game.naver.com.novantunnel.tech",
       "server_port": 443,
       "uuid": "3ca5e8a4-456d-4be2-8f71-26c298da2631",
@@ -3951,7 +3934,7 @@
     },
     {
       "type": "vless",
-      "tag": "VLESS | 242",
+      "tag": "VLESS | 241",
       "server": "151.101.217.119",
       "server_port": 80,
       "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
@@ -3966,7 +3949,7 @@
     },
     {
       "type": "vless",
-      "tag": "VLESS | 243",
+      "tag": "VLESS | 242",
       "server": "91.184.240.106",
       "server_port": 433,
       "uuid": "00000000-0000-4000-8000-000000000000",
@@ -3980,7 +3963,7 @@
     },
     {
       "type": "vless",
-      "tag": "VLESS | 244",
+      "tag": "VLESS | 243",
       "server": "151.101.249.119",
       "server_port": 80,
       "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
@@ -3988,7 +3971,7 @@
     },
     {
       "type": "vless",
-      "tag": "VLESS | 245",
+      "tag": "VLESS | 244",
       "server": "151.101.94.119",
       "server_port": 80,
       "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
@@ -3996,7 +3979,7 @@
     },
     {
       "type": "vless",
-      "tag": "VLESS | 246",
+      "tag": "VLESS | 245",
       "server": "74.208.191.140",
       "server_port": 443,
       "uuid": "8584983e-e4ac-4fd9-96b9-7f4db8dc5790",
@@ -4017,7 +4000,7 @@
     },
     {
       "type": "vless",
-      "tag": "VLESS | 247",
+      "tag": "VLESS | 246",
       "server": "151.101.227.119",
       "server_port": 80,
       "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
@@ -4025,7 +4008,7 @@
     },
     {
       "type": "vless",
-      "tag": "VLESS | 248",
+      "tag": "VLESS | 247",
       "server": "151.101.93.119",
       "server_port": 80,
       "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
@@ -4033,7 +4016,7 @@
     },
     {
       "type": "vless",
-      "tag": "VLESS | 249",
+      "tag": "VLESS | 248",
       "server": "shazira.app",
       "server_port": 443,
       "uuid": "111d8ca1-4d08-43af-b4d6-2ac65477c20d",
@@ -4050,7 +4033,7 @@
     },
     {
       "type": "vless",
-      "tag": "VLESS | 250",
+      "tag": "VLESS | 249",
       "server": "151.101.179.119",
       "server_port": 80,
       "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
@@ -4058,7 +4041,7 @@
     },
     {
       "type": "vless",
-      "tag": "VLESS | 251",
+      "tag": "VLESS | 250",
       "server": "151.101.187.119",
       "server_port": 80,
       "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
@@ -4066,7 +4049,7 @@
     },
     {
       "type": "vless",
-      "tag": "VLESS | 252",
+      "tag": "VLESS | 251",
       "server": "151.101.185.119",
       "server_port": 80,
       "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
@@ -4081,7 +4064,7 @@
     },
     {
       "type": "vless",
-      "tag": "VLESS | 253",
+      "tag": "VLESS | 252",
       "server": "151.101.174.119",
       "server_port": 80,
       "uuid": "96eec36e-2c44-5b09-898e-6f0f0526e57f",
@@ -4089,7 +4072,7 @@
     },
     {
       "type": "vless",
-      "tag": "VLESS | 254",
+      "tag": "VLESS | 253",
       "server": "38.101.31.225",
       "server_port": 28932,
       "uuid": "c8637192-8e0e-4a5d-b2d3-8b245eae47c2",
@@ -4110,7 +4093,7 @@
     },
     {
       "type": "vless",
-      "tag": "VLESS | 255",
+      "tag": "VLESS | 254",
       "server": "51.250.23.0",
       "server_port": 443,
       "uuid": "0e86bcd6-9b31-4cbc-b4f4-bc85f3c5f5d5",
@@ -4137,7 +4120,7 @@
     },
     {
       "type": "vless",
-      "tag": "VLESS | 256",
+      "tag": "VLESS | 255",
       "server": "23.177.185.216",
       "server_port": 443,
       "uuid": "f7166a73-c0d8-0001-8c33-00af87919774",
@@ -4151,7 +4134,7 @@
     },
     {
       "type": "vless",
-      "tag": "VLESS | 257",
+      "tag": "VLESS | 256",
       "server": "23.236.186.6",
       "server_port": 443,
       "uuid": "f64cab0a-75a4-44f1-b2f6-8ecc6c73c249",

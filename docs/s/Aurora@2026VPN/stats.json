@@ -1,24 +1,24 @@
 {
-  "total_nodes": 617,
-  "valid_nodes": 388,
-  "invalid_nodes": 229,
-  "avg_latency": 237,
+  "total_nodes": 615,
+  "valid_nodes": 387,
+  "invalid_nodes": 228,
+  "avg_latency": 236,
   "by_type": {
-    "vless": 257,
-    "trojan": 104,
+    "ss": 22,
     "vmess": 5,
-    "ss": 22
+    "vless": 256,
+    "trojan": 104
   },
   "by_country": {},
   "by_source": {
-    "peige_dapei": 161,
-    "tg:FreeV2rays": 3,
-    "tg:ProxyShareCN": 148,
-    "tg:CrackHubCN": 1,
-    "tg:go4sharing": 2,
-    "tg:FreeYule": 42,
     "tg:Wxdy666": 6,
-    "tg:V2Queen": 25
+    "tg:FreeV2rays": 3,
+    "tg:ProxyShareCN": 147,
+    "tg:FreeYule": 42,
+    "tg:V2Queen": 25,
+    "peige_dapei": 161,
+    "tg:CrackHubCN": 1,
+    "tg:go4sharing": 2
   },
   "channel_results": {
     "FreeV2rays": {
@@ -76,7 +76,7 @@
       "dead_sub_urls": [],
       "status": "success",
       "updated_at": "2026-06-15T16:28:07.111228",
-      "valid_nodes": 148,
+      "valid_nodes": 147,
       "invalid_nodes": 126
     },
     "CrackHubCN": {
@@ -254,6 +254,6 @@
       "invalid_nodes": 48
     }
   },
-  "updated_at": "2026-06-15T16:43:41.281220",
+  "updated_at": "2026-06-15T16:59:18.828425",
   "gh_token": "${AURORA_GH_TOKEN}"
 }

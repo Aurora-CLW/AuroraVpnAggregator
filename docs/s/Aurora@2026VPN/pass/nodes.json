@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
-  "updated_at": "2026-06-15T16:43:41.260221",
-  "total": 388,
+  "updated_at": "2026-06-15T16:59:18.816374",
+  "total": 387,
   "nodes": [
     {
       "name": "SS",
@@ -9953,33 +9953,6 @@
     {
       "name": "VLESS | 238",
       "type": "vless",
-      "server": "185.164.35.37",
-      "port": 443,
-      "country": null,
-      "latency": 330,
-      "tcp_valid": true,
-      "is_valid": true,
-      "source": "tg:ProxyShareCN",
-      "uuid": "43488128-319e-f480-64ea-0acdc712e2a8",
-      "password": null,
-      "cipher": null,
-      "network": "tcp",
-      "security": "reality",
-      "sni": "www.hyundai.com",
-      "skip_cert_verify": true,
-      "ws_path": null,
-      "ws_headers": null,
-      "grpc_service_name": null,
-      "reality_public_key": "wPDTWjK4PYbOlruZOvX64vVS9tkOPSM6X4Ymg-FzvxY",
-      "reality_short_id": "ad9cf8818428d847",
-      "fingerprint": "chrome",
-      "hysteria2_password": null,
-      "flow": "xtls-rprx-vision",
-      "alterId": 0
-    },
-    {
-      "name": "VLESS | 239",
-      "type": "vless",
       "server": "178.18.147.252",
       "port": 2053,
       "country": null,
@@ -10005,7 +9978,7 @@
       "alterId": 0
     },
     {
-      "name": "VLESS | 240",
+      "name": "VLESS | 239",
       "type": "vless",
       "server": "ava.game.naver.com.novantunnel.tech",
       "port": 443,
@@ -10034,7 +10007,7 @@
       "alterId": 0
     },
     {
-      "name": "VLESS | 241",
+      "name": "VLESS | 240",
       "type": "vless",
       "server": "ava.game.naver.com.novantunnel.tech",
       "port": 443,
@@ -10090,7 +10063,7 @@
       "alterId": 0
     },
     {
-      "name": "VLESS | 242",
+      "name": "VLESS | 241",
       "type": "vless",
       "server": "151.101.217.119",
       "port": 80,
@@ -10146,7 +10119,7 @@
       "alterId": 0
     },
     {
-      "name": "VLESS | 243",
+      "name": "VLESS | 242",
       "type": "vless",
       "server": "91.184.240.106",
       "port": 433,
@@ -10173,7 +10146,7 @@
       "alterId": 0
     },
     {
-      "name": "VLESS | 244",
+      "name": "VLESS | 243",
       "type": "vless",
       "server": "151.101.249.119",
       "port": 80,
@@ -10200,7 +10173,7 @@
       "alterId": 0
     },
     {
-      "name": "VLESS | 245",
+      "name": "VLESS | 244",
       "type": "vless",
       "server": "151.101.94.119",
       "port": 80,
@@ -10227,7 +10200,7 @@
       "alterId": 0
     },
     {
-      "name": "VLESS | 246",
+      "name": "VLESS | 245",
       "type": "vless",
       "server": "74.208.191.140",
       "port": 443,
@@ -10283,7 +10256,7 @@
       "alterId": 0
     },
     {
-      "name": "VLESS | 247",
+      "name": "VLESS | 246",
       "type": "vless",
       "server": "151.101.227.119",
       "port": 80,
@@ -10310,7 +10283,7 @@
       "alterId": 0
     },
     {
-      "name": "VLESS | 248",
+      "name": "VLESS | 247",
       "type": "vless",
       "server": "151.101.93.119",
       "port": 80,
@@ -10337,7 +10310,7 @@
       "alterId": 0
     },
     {
-      "name": "VLESS | 249",
+      "name": "VLESS | 248",
       "type": "vless",
       "server": "shazira.app",
       "port": 443,
@@ -10366,7 +10339,7 @@
       "alterId": 0
     },
     {
-      "name": "VLESS | 250",
+      "name": "VLESS | 249",
       "type": "vless",
       "server": "151.101.179.119",
       "port": 80,
@@ -10393,7 +10366,7 @@
       "alterId": 0
     },
     {
-      "name": "VLESS | 251",
+      "name": "VLESS | 250",
       "type": "vless",
       "server": "151.101.187.119",
       "port": 80,
@@ -10420,7 +10393,7 @@
       "alterId": 0
     },
     {
-      "name": "VLESS | 252",
+      "name": "VLESS | 251",
       "type": "vless",
       "server": "151.101.185.119",
       "port": 80,
@@ -10476,7 +10449,7 @@
       "alterId": 0
     },
     {
-      "name": "VLESS | 253",
+      "name": "VLESS | 252",
       "type": "vless",
       "server": "151.101.174.119",
       "port": 80,
@@ -10503,7 +10476,7 @@
       "alterId": 0
     },
     {
-      "name": "VLESS | 254",
+      "name": "VLESS | 253",
       "type": "vless",
       "server": "38.101.31.225",
       "port": 28932,
@@ -10559,7 +10532,7 @@
       "alterId": 0
     },
     {
-      "name": "VLESS | 255",
+      "name": "VLESS | 254",
       "type": "vless",
       "server": "51.250.23.0",
       "port": 443,
@@ -10642,7 +10615,7 @@
       "alterId": 0
     },
     {
-      "name": "VLESS | 256",
+      "name": "VLESS | 255",
       "type": "vless",
       "server": "23.177.185.216",
       "port": 443,
@@ -10669,7 +10642,7 @@
       "alterId": 0
     },
     {
-      "name": "VLESS | 257",
+      "name": "VLESS | 256",
       "type": "vless",
       "server": "23.236.186.6",
       "port": 443,

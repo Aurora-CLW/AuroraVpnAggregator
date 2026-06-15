@@ -1,6 +1,6 @@
 # Aurora VPN Aggregator
-# Updated: 2026-06-15 16:43:40
-# Nodes: 388
+# Updated: 2026-06-15 16:59:18
+# Nodes: 387
 
 mixed-port: 7890
 allow-lan: true
@@ -3722,21 +3722,6 @@ proxies:
   udp: true
 - name: VLESS | 238
   type: vless
-  server: 185.164.35.37
-  port: 443
-  uuid: 43488128-319e-f480-64ea-0acdc712e2a8
-  flow: xtls-rprx-vision
-  network: tcp
-  tls: true
-  servername: www.hyundai.com
-  skip-cert-verify: true
-  reality-opts:
-    public-key: wPDTWjK4PYbOlruZOvX64vVS9tkOPSM6X4Ymg-FzvxY
-    short-id: ad9cf8818428d847
-  client-fingerprint: chrome
-  udp: true
-- name: VLESS | 239
-  type: vless
   server: 178.18.147.252
   port: 2053
   uuid: d98c856e-4aec-4d6c-ac66-fca0e474991d
@@ -3746,7 +3731,7 @@ proxies:
   servername: nl-t.vinnypuxtomoon.today
   reality-opts: {}
   udp: true
-- name: VLESS | 240
+- name: VLESS | 239
   type: vless
   server: ava.game.naver.com.novantunnel.tech
   port: 443
@@ -3759,7 +3744,7 @@ proxies:
     headers:
       Host: ava.game.naver.com.novantunnel.tech
   udp: true
-- name: VLESS | 241
+- name: VLESS | 240
   type: vless
   server: ava.game.naver.com.novantunnel.tech
   port: 443
@@ -3782,7 +3767,7 @@ proxies:
   tls: true
   servername: ava.game.naver.com.novantunnel.tech
   udp: true
-- name: VLESS | 242
+- name: VLESS | 241
   type: vless
   server: 151.101.217.119
   port: 80
@@ -3804,7 +3789,7 @@ proxies:
     headers:
       Host: tjsp.hhxaf.cc.cd
   udp: true
-- name: VLESS | 243
+- name: VLESS | 242
   type: vless
   server: 91.184.240.106
   port: 433
@@ -3815,7 +3800,7 @@ proxies:
   ws-opts:
     path: /@Marisa_kristi
   udp: true
-- name: VLESS | 244
+- name: VLESS | 243
   type: vless
   server: 151.101.249.119
   port: 80
@@ -3823,7 +3808,7 @@ proxies:
   network: h2
   tls: true
   udp: true
-- name: VLESS | 245
+- name: VLESS | 244
   type: vless
   server: 151.101.94.119
   port: 80
@@ -3831,7 +3816,7 @@ proxies:
   network: h2
   tls: true
   udp: true
-- name: VLESS | 246
+- name: VLESS | 245
   type: vless
   server: 74.208.191.140
   port: 443
@@ -3856,7 +3841,7 @@ proxies:
     headers:
       Host: tjsp.hhxaf.cc.cd
   udp: true
-- name: VLESS | 247
+- name: VLESS | 246
   type: vless
   server: 151.101.227.119
   port: 80
@@ -3864,7 +3849,7 @@ proxies:
   network: h2
   tls: true
   udp: true
-- name: VLESS | 248
+- name: VLESS | 247
   type: vless
   server: 151.101.93.119
   port: 80
@@ -3872,7 +3857,7 @@ proxies:
   network: h2
   tls: true
   udp: true
-- name: VLESS | 249
+- name: VLESS | 248
   type: vless
   server: shazira.app
   port: 443
@@ -3885,7 +3870,7 @@ proxies:
     headers:
       Host: shazira.app
   udp: true
-- name: VLESS | 250
+- name: VLESS | 249
   type: vless
   server: 151.101.179.119
   port: 80
@@ -3893,7 +3878,7 @@ proxies:
   network: h2
   tls: true
   udp: true
-- name: VLESS | 251
+- name: VLESS | 250
   type: vless
   server: 151.101.187.119
   port: 80
@@ -3901,7 +3886,7 @@ proxies:
   network: h2
   tls: true
   udp: true
-- name: VLESS | 252
+- name: VLESS | 251
   type: vless
   server: 151.101.185.119
   port: 80
@@ -3923,7 +3908,7 @@ proxies:
     headers:
       Host: hhcm.hhxaf.cc.cd
   udp: true
-- name: VLESS | 253
+- name: VLESS | 252
   type: vless
   server: 151.101.174.119
   port: 80
@@ -3931,7 +3916,7 @@ proxies:
   network: h2
   tls: true
   udp: true
-- name: VLESS | 254
+- name: VLESS | 253
   type: vless
   server: 38.101.31.225
   port: 28932
@@ -3956,7 +3941,7 @@ proxies:
     headers:
       Host: tjsp.hhxaf.cc.cd
   udp: true
-- name: VLESS | 255
+- name: VLESS | 254
   type: vless
   server: 51.250.23.0
   port: 443
@@ -3988,7 +3973,7 @@ proxies:
     headers:
       Host: tjsp.hhxaf.cc.cd
   udp: true
-- name: VLESS | 256
+- name: VLESS | 255
   type: vless
   server: 23.177.185.216
   port: 443
@@ -3999,7 +3984,7 @@ proxies:
   servername: max.ru
   reality-opts: {}
   udp: true
-- name: VLESS | 257
+- name: VLESS | 256
   type: vless
   server: 23.236.186.6
   port: 443
@@ -4379,30 +4364,29 @@ proxy-groups:
   - VLESS | 238
   - VLESS | 239
   - VLESS | 240
-  - VLESS | 241
   - TROJAN | 099
-  - VLESS | 242
+  - VLESS | 241
   - TROJAN | 100
+  - VLESS | 242
   - VLESS | 243
   - VLESS | 244
   - VLESS | 245
-  - VLESS | 246
   - TROJAN | 101
+  - VLESS | 246
   - VLESS | 247
   - VLESS | 248
   - VLESS | 249
   - VLESS | 250
   - VLESS | 251
-  - VLESS | 252
   - TROJAN | 102
+  - VLESS | 252
   - VLESS | 253
-  - VLESS | 254
   - TROJAN | 103
-  - VLESS | 255
+  - VLESS | 254
   - SS | 022
   - TROJAN | 104
+  - VLESS | 255
   - VLESS | 256
-  - VLESS | 257
 - name: AUTO
   type: url-test
   proxies:
@@ -4770,30 +4754,29 @@ proxy-groups:
   - VLESS | 238
   - VLESS | 239
   - VLESS | 240
-  - VLESS | 241
   - TROJAN | 099
-  - VLESS | 242
+  - VLESS | 241
   - TROJAN | 100
+  - VLESS | 242
   - VLESS | 243
   - VLESS | 244
   - VLESS | 245
-  - VLESS | 246
   - TROJAN | 101
+  - VLESS | 246
   - VLESS | 247
   - VLESS | 248
   - VLESS | 249
   - VLESS | 250
   - VLESS | 251
-  - VLESS | 252
   - TROJAN | 102
+  - VLESS | 252
   - VLESS | 253
-  - VLESS | 254
   - TROJAN | 103
-  - VLESS | 255
+  - VLESS | 254
   - SS | 022
   - TROJAN | 104
+  - VLESS | 255
   - VLESS | 256
-  - VLESS | 257
   url: http://www.gstatic.com/generate_204
   interval: 300
 rules:
