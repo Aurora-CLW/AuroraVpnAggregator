@@ -263,6 +263,7 @@ class Generator:
                     "port": n.port,
                     "country": n.country,
                     "latency": n.latency,
+                    "tcp_valid": n.tcp_valid,
                     "is_valid": n.is_valid,
                     "source": n.source,
                     "uuid": n.uuid,

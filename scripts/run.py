@@ -182,37 +182,45 @@ class AuroraAggregator:
         nodes = self.enrich_nodes(nodes)
 
         # Step 4: 节点测试
+        tested_nodes = nodes  # 未测试时全部保留
+        valid_nodes = nodes
         if not skip_test and not generate_only:
             logger.info("开始节点测试...")
             testing_config = self.config.get("testing", {})
             tester = NodeTester(testing_config)
-            nodes = await tester.test_all(nodes)
+            tested_nodes = await tester.test_all(nodes)
 
-            # 过滤无效节点
-            nodes = self.deduplicator.remove_invalid(nodes)
+            # 分流: 全部节点(保留校验结果) vs 仅有效节点
+            valid_nodes = self.deduplicator.remove_invalid(tested_nodes)
+            logger.info(f"节点测试完成: {len(valid_nodes)}/{len(tested_nodes)} 有效")
 
-        # Step 5: 过滤
+        # Step 5: 过滤 (仅对有效节点做过滤)
         filter_config = self.config.get("filter", {})
         if filter_config.get("exclude_countries"):
-            nodes = self.deduplicator.filter_by_country(
-                nodes,
+            valid_nodes = self.deduplicator.filter_by_country(
+                valid_nodes,
                 exclude=filter_config["exclude_countries"]
             )
         if filter_config.get("exclude_keywords"):
-            nodes = self.deduplicator.filter_by_keywords(
-                nodes,
+            valid_nodes = self.deduplicator.filter_by_keywords(
+                valid_nodes,
                 filter_config["exclude_keywords"]
             )
 
         # Step 6: 限制节点数
         max_nodes = self.config.get("output", {}).get("max_nodes", 500)
-        nodes = self.deduplicator.limit_nodes(nodes, max_nodes)
+        valid_nodes = self.deduplicator.limit_nodes(valid_nodes, max_nodes)
 
-        logger.info(f"最终有效节点: {len(nodes)} 个")
+        logger.info(f"全部节点: {len(tested_nodes)} | 有效节点: {len(valid_nodes)}")
 
-        # Step 7: 生成订阅
+        # Step 7: 生成订阅 — 两套: 全部节点 + 仅有效节点
         output_dir = "output"
-        self.generator.generate_all(nodes, output_dir)
+        self.generator.generate_all(valid_nodes, output_dir)
+
+        # 同时生成全部节点的订阅 (带 -all 后缀)
+        all_output_dir = Path(output_dir) / "all"
+        all_output_dir.mkdir(parents=True, exist_ok=True)
+        self.generator.generate_all(tested_nodes, str(all_output_dir))
 
         # 保存频道抓取结果到 output (供 generate_only 模式恢复)
         if self.channel_results:
@@ -222,13 +230,13 @@ class AuroraAggregator:
                 json.dump(self.channel_results, f, indent=2, ensure_ascii=False)
 
         # Step 8: 复制到 docs 目录（用于 GitHub Pages）
-        self._copy_to_docs(nodes)
+        self._copy_to_docs(valid_nodes, tested_nodes)
 
         # 完成
         elapsed = (datetime.now() - start_time).total_seconds()
         logger.info("=" * 60)
         logger.info(f"聚合完成，耗时: {elapsed:.2f} 秒")
-        logger.info(f"有效节点: {len(nodes)} 个")
+        logger.info(f"有效节点: {len(valid_nodes)} | 全部节点: {len(tested_nodes)}")
         logger.info("=" * 60)
 
         return nodes
@@ -297,7 +305,7 @@ class AuroraAggregator:
                 self.channel_results = json.load(f)
             logger.info(f"恢复频道抓取结果: {len(self.channel_results)} 个频道")
 
-    def _copy_to_docs(self, nodes: List[Node]):
+    def _copy_to_docs(self, valid_nodes: List[Node], all_nodes: List[Node]):
         """复制输出到 docs 目录（安全混淆路径）"""
         import shutil
         import hashlib
@@ -324,14 +332,22 @@ class AuroraAggregator:
                 if d.is_dir() and d.name != access_token:
                     shutil.rmtree(d, ignore_errors=True)
 
-        # 复制订阅文件到混淆路径
+        # 复制有效节点订阅 (主路径)
         for filename in ["clash.yaml", "v2ray.txt", "singbox.json", "nodes.json"]:
             src = output_dir / filename
             if src.exists():
                 shutil.copy(src, sub_dir / filename)
 
+        # 复制全部节点订阅 (all/ 子目录)
+        all_dir = sub_dir / "all"
+        all_dir.mkdir(parents=True, exist_ok=True)
+        for filename in ["clash.yaml", "v2ray.txt", "singbox.json", "nodes.json"]:
+            src = output_dir / "all" / filename
+            if src.exists():
+                shutil.copy(src, all_dir / filename)
+
         # 生成统计信息
-        stats = self._generate_stats(nodes)
+        stats = self._generate_stats(valid_nodes, all_nodes)
 
         # 将 GitHub Token 嵌入受保护的 stats.json（已通过密码门保护）
         gh_token = os.environ.get("AURORA_GH_TOKEN", "")
@@ -384,31 +400,36 @@ class AuroraAggregator:
         template_path.write_text(content, encoding="utf-8")
         logger.info(f"已注入安全验证 (hash: {token_hash[:16]}...)")
 
-    def _generate_stats(self, nodes: List[Node]) -> dict:
+    def _generate_stats(self, valid_nodes: List[Node], all_nodes: List[Node] = None) -> dict:
         """生成统计信息"""
         from collections import Counter
 
-        if not nodes:
+        if all_nodes is None:
+            all_nodes = valid_nodes
+
+        if not valid_nodes and not all_nodes:
             return {
                 "total_nodes": 0,
                 "updated_at": datetime.now().isoformat(),
             }
 
         # 按类型统计
-        by_type = Counter(n.type for n in nodes)
+        by_type = Counter(n.type for n in valid_nodes)
 
         # 按国家统计
-        by_country = Counter(n.country for n in nodes if n.country)
+        by_country = Counter(n.country for n in valid_nodes if n.country)
 
         # 按来源统计
-        by_source = Counter(n.source for n in nodes if n.source)
+        by_source = Counter(n.source for n in valid_nodes if n.source)
 
         # 平均延迟
-        latencies = [n.latency for n in nodes if n.latency > 0]
+        latencies = [n.latency for n in valid_nodes if n.latency > 0]
         avg_latency = sum(latencies) / len(latencies) if latencies else 0
 
         return {
-            "total_nodes": len(nodes),
+            "total_nodes": len(all_nodes),
+            "valid_nodes": len(valid_nodes),
+            "invalid_nodes": len(all_nodes) - len(valid_nodes),
             "avg_latency": int(avg_latency),
             "by_type": dict(by_type),
             "by_country": dict(by_country.most_common(20)),

@@ -251,21 +251,49 @@
 
                 <!-- 订阅地址 Tab -->
                 <div id="tab-subscriptions" class="section">
-                    <div class="subscription-links">
-                        <div class="link-card">
-                            <h3>Clash 订阅</h3>
-                            <input type="text" id="clash-url" readonly>
-                            <button class="copy-btn" onclick="copyUrl('clash-url')">复制链接</button>
+                    <!-- 校验通过的节点（推荐） -->
+                    <div style="margin-bottom:20px;">
+                        <h3 style="color:#28a745;margin-bottom:8px;">✅ 校验通过的订阅（推荐）</h3>
+                        <p style="color:#666;font-size:13px;margin-bottom:12px;">仅包含 TCP 校验通过的节点，延迟低、稳定性高</p>
+                        <div class="subscription-links">
+                            <div class="link-card">
+                                <h3>Clash 订阅</h3>
+                                <input type="text" id="clash-url" readonly>
+                                <button class="copy-btn" onclick="copyUrl('clash-url')">复制链接</button>
+                            </div>
+                            <div class="link-card">
+                                <h3>V2Ray 订阅</h3>
+                                <input type="text" id="v2ray-url" readonly>
+                                <button class="copy-btn" onclick="copyUrl('v2ray-url')">复制链接</button>
+                            </div>
+                            <div class="link-card">
+                                <h3>Sing-box 订阅</h3>
+                                <input type="text" id="singbox-url" readonly>
+                                <button class="copy-btn" onclick="copyUrl('singbox-url')">复制链接</button>
+                            </div>
                         </div>
-                        <div class="link-card">
-                            <h3>V2Ray 订阅</h3>
-                            <input type="text" id="v2ray-url" readonly>
-                            <button class="copy-btn" onclick="copyUrl('v2ray-url')">复制链接</button>
-                        </div>
-                        <div class="link-card">
-                            <h3>Sing-box 订阅</h3>
-                            <input type="text" id="singbox-url" readonly>
-                            <button class="copy-btn" onclick="copyUrl('singbox-url')">复制链接</button>
+                    </div>
+
+                    <!-- 全部节点 -->
+                    <div style="margin-bottom:20px;">
+                        <h3 style="color:#ffc107;margin-bottom:8px;">📋 全部节点订阅（未校验）</h3>
+                        <p style="color:#666;font-size:13px;margin-bottom:12px;">包含所有聚合节点，数量更多但可能包含不可用节点</p>
+                        <div class="subscription-links">
+                            <div class="link-card">
+                                <h3>Clash 全部</h3>
+                                <input type="text" id="clash-all-url" readonly>
+                                <button class="copy-btn" onclick="copyUrl('clash-all-url')">复制链接</button>
+                            </div>
+                            <div class="link-card">
+                                <h3>V2Ray 全部</h3>
+                                <input type="text" id="v2ray-all-url" readonly>
+                                <button class="copy-btn" onclick="copyUrl('v2ray-all-url')">复制链接</button>
+                            </div>
+                            <div class="link-card">
+                                <h3>Sing-box 全部</h3>
+                                <input type="text" id="singbox-all-url" readonly>
+                                <button class="copy-btn" onclick="copyUrl('singbox-all-url')">复制链接</button>
+                            </div>
                         </div>
                     </div>
                     <div class="section" style="margin-top:20px;">
@@ -443,6 +471,9 @@
             document.getElementById('clash-url').value = baseUrl + subPath + '/clash.yaml';
             document.getElementById('v2ray-url').value = baseUrl + subPath + '/v2ray.txt';
             document.getElementById('singbox-url').value = baseUrl + subPath + '/singbox.json';
+            document.getElementById('clash-all-url').value = baseUrl + subPath + '/all/clash.yaml';
+            document.getElementById('v2ray-all-url').value = baseUrl + subPath + '/all/v2ray.txt';
+            document.getElementById('singbox-all-url').value = baseUrl + subPath + '/all/singbox.json';
 
             let tokenResolve;
             ghTokenReady = new Promise(r => { tokenResolve = r; });
@@ -484,7 +515,9 @@
             let countryList = Object.entries(countries).sort((a,b) => b[1]-a[1]).slice(0,8).map(([k,v]) => `${k}: ${v}`).join(', ');
             document.getElementById('stats-container').innerHTML = `
                 <div class="stats-grid">
-                    <div class="stat-item"><div class="stat-value">${data.total_nodes || 0}</div><div class="stat-label">节点总数</div></div>
+                    <div class="stat-item"><div class="stat-value">${data.total_nodes || 0}</div><div class="stat-label">全部节点</div></div>
+                    <div class="stat-item"><div class="stat-value" style="color:#28a745;">${data.valid_nodes || 0}</div><div class="stat-label">校验通过</div></div>
+                    <div class="stat-item"><div class="stat-value" style="color:#dc3545;">${data.invalid_nodes || 0}</div><div class="stat-label">校验失败</div></div>
                     <div class="stat-item"><div class="stat-value">${data.avg_latency || 0}ms</div><div class="stat-label">平均延迟</div></div>
                     <div class="stat-item"><div class="stat-value">${Object.keys(countries).length}</div><div class="stat-label">国家/地区</div></div>
                     <div class="stat-item"><div class="stat-value">${Object.keys(types).length}</div><div class="stat-label">协议类型</div></div>

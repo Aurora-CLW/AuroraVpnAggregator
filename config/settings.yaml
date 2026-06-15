@@ -19,12 +19,16 @@ testing:
     enabled: true
     timeout: 15
     concurrent: 50
-    test_url: "http://www.gstatic.com/generate_204"
+    # 多个测试 URL, 依次尝试, 任一成功即视为有效
+    test_urls:
+      - "http://www.gstatic.com/generate_204"
+      - "http://www.cloudflare.com/cdn-cgi/trace"
+      - "http://cp.cloudflare.com/"
 
   # 速度测试
   speed:
     enabled: false
-    test_file: "https://speed.cloudflare.com/__down?bytes=10000000"
+    test_file: "https://proof.ovh.net/files/100Mb.dat"
     max_time: 30
 
 # 节点过滤

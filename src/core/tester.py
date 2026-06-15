@@ -26,10 +26,12 @@ class NodeTester:
         self.http_enabled = config.get("http", {}).get("enabled", True)
         self.http_timeout = config.get("http", {}).get("timeout", 10)
         self.http_concurrent = config.get("http", {}).get("concurrent", 20)
-        self.test_url = config.get("http", {}).get(
-            "test_url",
-            "http://www.gstatic.com/generate_204"
-        )
+        # 支持单个 test_url 或多个 test_urls
+        test_urls = config.get("http", {}).get("test_urls", [])
+        if not test_urls:
+            single_url = config.get("http", {}).get("test_url", "http://www.gstatic.com/generate_204")
+            test_urls = [single_url]
+        self.test_urls = test_urls
 
         self.max_latency = config.get("max_latency", 5000)
 
@@ -53,11 +55,13 @@ class NodeTester:
         else:
             http_valid = tcp_valid
 
-        for node in http_valid:
-            node.is_valid = True
+        # 标记有效/无效节点
+        valid_set = set(id(n) for n in http_valid)
+        for node in nodes:
+            node.is_valid = id(node) in valid_set
 
-        logger.info(f"测试完成: {len(http_valid)} 个有效节点")
-        return http_valid
+        logger.info(f"测试完成: {len(http_valid)} 个有效 / {len(nodes)} 个总计")
+        return nodes
 
     async def _tcp_batch_test(self, nodes: List[Node]) -> List[Node]:
         """批量 TCP 测试"""
