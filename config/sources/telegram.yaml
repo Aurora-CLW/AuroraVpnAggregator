@@ -10,6 +10,7 @@
 #   - 订阅链接: 消息含 https:// 订阅 URL, 自动递归 fetch 并解析
 #   - 置顶消息: 配置 pinned_url 直接抓取指定消息 (也可从 RSS 消息中的链接自动发现)
 #   - 消息链接: RSS 中的"点我传送"等超链接自动跟踪抓取
+#   - 已知订阅: 配置 sub_urls 直接指定已知订阅链接 (频道消息中不易提取时使用)
 #
 # format 字段 (可选):
 #   auto (默认) — 自动检测
@@ -55,6 +56,8 @@ channels:
   # freeyule — 免费娱乐资源频道
   - name: "FreeYule"
     username: "@freeyule"
+    sub_urls:
+      - "https://shz.al/rGdD"
     enabled: true
 
   # wxdy666 — 每日更新大量直接节点 (vless/vmess/ss)

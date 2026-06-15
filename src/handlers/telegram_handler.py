@@ -128,7 +128,17 @@ class TelegramHandler(BaseHandler):
         async with aiohttp.ClientSession() as session:
             pending_msg_links: List[str] = []  # 待抓取的消息链接
 
-            # 0. 如果配置了 pinned_url (置顶消息链接), 直接抓取该消息
+            # 0. 如果配置了已知订阅链接 (sub_urls), 直接加入
+            config_sub_urls = channel_config.get("sub_urls", [])
+            if config_sub_urls:
+                for u in config_sub_urls:
+                    if isinstance(u, dict):
+                        sub_urls.append(u)
+                    else:
+                        sub_urls.append({"url": u, "format_hint": channel_format if channel_format != "auto" else "auto"})
+                logger.info(f"[{self.name}] {channel_name}: 配置了 {len(config_sub_urls)} 个已知订阅链接")
+
+            # 0.5. 如果配置了 pinned_url (置顶消息链接), 直接抓取该消息
             if pinned_url:
                 logger.info(f"[{self.name}] {channel_name}: 抓取置顶消息 {pinned_url}")
                 html = await self._fetch_page(session, pinned_url)
