@@ -191,10 +191,14 @@ class Parser:
 
         try:
             cleaned = content.strip().replace("\n", "").replace("\r", "").replace(" ", "")
+            # 检查是否像 base64 (只包含 base64 字符集)
+            if not re.match(r'^[A-Za-z0-9+/=]+$', cleaned):
+                logger.debug("内容不是有效 Base64, 跳过")
+                return []
             padding = 4 - len(cleaned) % 4
             if padding != 4:
                 cleaned += "=" * padding
-            decoded = base64.b64decode(cleaned, validate=False).decode("utf-8")
+            decoded = base64.b64decode(cleaned, validate=True).decode("utf-8")
             lines = decoded.strip().split("\n")
 
             for line in lines:

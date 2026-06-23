@@ -187,14 +187,13 @@ class TelegramHandler(BaseHandler):
                             sub_urls.extend(older["sub_urls"])
                             break
 
-            # 3.5. 节点数较少或无结果, 尝试 HF Space TG Parser API 补充
-            if len(nodes) < 5 or (not nodes and not sub_urls):
-                hf_result = await self._fetch_via_hf_api(session, username, channel_name)
-                if hf_result["nodes"] or hf_result["sub_urls"]:
-                    nodes.extend(hf_result["nodes"])
-                    sub_urls.extend(hf_result["sub_urls"])
-                    pending_msg_links.extend(hf_result.get("msg_links", []))
-                    logger.info(f"[{self.name}] {channel_name}: HF API 补充 {len(hf_result['nodes'])} 个节点, {len(hf_result['sub_urls'])} 个订阅链接")
+            # 3.5. 始终尝试 HF Space TG Parser API 补充 (确保每频道有足够消息)
+            hf_result = await self._fetch_via_hf_api(session, username, channel_name)
+            if hf_result["nodes"] or hf_result["sub_urls"]:
+                nodes.extend(hf_result["nodes"])
+                sub_urls.extend(hf_result["sub_urls"])
+                pending_msg_links.extend(hf_result.get("msg_links", []))
+                logger.info(f"[{self.name}] {channel_name}: HF API 补充 {len(hf_result['nodes'])} 个节点, {len(hf_result['sub_urls'])} 个订阅链接")
 
             # 4. 抓取发现的消息链接 (如"点我传送"指向的置顶消息)
             seen_msg_ids = set()
@@ -396,10 +395,11 @@ class TelegramHandler(BaseHandler):
 
     async def _fetch_via_hf_api(self, session, username: str, channel_name: str) -> dict:
         """通过 HF Space TG Parser API 获取频道消息 (替代被屏蔽的 Web 镜像)
-        自动跳过纯广告消息, 只保留含有效订阅/节点内容的消息, 最多扫描到 10 条有效消息。
+        自动跳过纯广告消息, 只保留含有效订阅/节点内容的消息。
         """
-        max_valid = 10  # 最多保留的有效消息数
-        api_url = f"{HF_TG_PARSER_BASE}?channel={username}&limit=100&key={HF_TG_PARSER_KEY}"
+        max_valid = 50  # 最多保留的有效消息数 (确保每频道至少30条有效消息)
+        api_limit = 200  # API 返回的消息数上限
+        api_url = f"{HF_TG_PARSER_BASE}?channel={username}&limit={api_limit}&key={HF_TG_PARSER_KEY}"
         logger.info(f"[{self.name}] 尝试 HF TG API: {api_url}")
         try:
             async with session.get(api_url, proxy=self.proxy, timeout=aiohttp.ClientTimeout(total=30)) as resp:
