@@ -60,6 +60,9 @@ class TelegramHandler(BaseHandler):
         r'(trojan://[A-Za-z0-9\-._~:/?#\[\]@!$&\'()*+,;=%]+)',
         r'(ss://[A-Za-z0-9+/=\-._~:/?#\[\]@!$&\'()*+,;=%]+)',
         r'(ssr://[A-Za-z0-9+/=]+)',
+        r'(hysteria2?://[A-Za-z0-9\-._~:/?#\[\]@!$&\'()*+,;=%]+)',
+        r'(hy2://[A-Za-z0-9\-._~:/?#\[\]@!$&\'()*+,;=%]+)',
+        r'(anytls://[A-Za-z0-9\-._~:/?#\[\]@!$&\'()*+,;=%]+)',
     ]
 
     def __init__(self, config: dict):
@@ -731,9 +734,10 @@ class TelegramHandler(BaseHandler):
             # 排除 tg.i-c-a.su 媒体链接
             if "/media/" in url and "tg.i-c-a.su" in url:
                 continue
-            # 排除广告/注册/机场推广链接
-            url_lower = url.lower()
-            if any(kw in url_lower for kw in self._EXCLUDED_PATH_KEYWORDS):
+            # 排除广告/注册/机场推广链接 (检查路径+fragment, 不检查 query 参数, 避免 token 误匹配)
+            parsed_lower = urlparse(url)
+            url_check = (parsed_lower.path + "#" + parsed_lower.fragment).lower()
+            if any(kw in url_check for kw in self._EXCLUDED_PATH_KEYWORDS):
                 continue
             # 排除机场推广查询参数 (?ch=xxx, ?ref=xxx 等)
             parsed = urlparse(url)
@@ -765,8 +769,9 @@ class TelegramHandler(BaseHandler):
             return None
         if "/media/" in url and "tg.i-c-a.su" in url:
             return None
-        url_lower = url.lower()
-        if any(kw in url_lower for kw in self._EXCLUDED_PATH_KEYWORDS):
+        parsed_lower = urlparse(url)
+        url_check = (parsed_lower.path + "#" + parsed_lower.fragment).lower()
+        if any(kw in url_check for kw in self._EXCLUDED_PATH_KEYWORDS):
             return None
         # 排除机场推广查询参数
         parsed = urlparse(url)

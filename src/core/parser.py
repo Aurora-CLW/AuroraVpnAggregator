@@ -320,6 +320,10 @@ class Parser:
                 return self._parse_ss_url(url)
             elif url.startswith("ssr://"):
                 return self._parse_ssr_url(url)
+            elif url.startswith(("hysteria2://", "hysteria://", "hy2://")):
+                return self._parse_hysteria2_url(url)
+            elif url.startswith("anytls://"):
+                return self._parse_anytls_url(url)
             else:
                 return None
         except Exception as e:
@@ -432,7 +436,9 @@ class Parser:
             if "@" in url:
                 userinfo, server_part = url.rsplit("@", 1)
                 try:
-                    decoded = base64.b64decode(userinfo).decode("utf-8")
+                    # 补齐 base64 padding
+                    padded = userinfo + "=" * (-len(userinfo) % 4)
+                    decoded = base64.b64decode(padded).decode("utf-8")
                     cipher, password = decoded.split(":", 1)
                 except:
                     cipher, password = userinfo.split(":", 1)
@@ -447,7 +453,8 @@ class Parser:
 
             else:
                 # 纯 Base64
-                decoded = base64.b64decode(url).decode("utf-8")
+                padded = url + "=" * (-len(url) % 4)
+                decoded = base64.b64decode(padded).decode("utf-8")
                 # 格式: method:password@server:port
                 parts = decoded.rsplit("@", 1)
                 if len(parts) == 2:
@@ -517,5 +524,98 @@ class Parser:
             ssr_protocol=protocol,
             ssr_obfs=obfs,
         )
+        node.raw_url = url
+        return node
+
+    def _parse_hysteria2_url(self, url: str) -> Optional[Node]:
+        """解析 hysteria2:// / hy2:// URL
+
+        格式: hysteria2://password@server:port?params#name
+        """
+        from urllib.parse import urlparse
+
+        # hy2:// -> hysteria2:// 统一处理
+        if url.startswith("hy2://"):
+            url = "hysteria2://" + url[6:]
+
+        parsed = urlparse(url)
+        params = parse_qs(parsed.query)
+
+        password = unquote(parsed.username or "")
+        server = parsed.hostname or ""
+        port = parsed.port or 443
+
+        name = unquote(parsed.fragment) if parsed.fragment else "Hysteria2 Node"
+
+        node = Node(
+            name=name,
+            type="hysteria2",
+            server=server,
+            port=port,
+            hysteria2_password=password,
+        )
+
+        # peer / sni
+        peer = params.get("peer", [None])[0]
+        if peer:
+            node.sni = peer
+
+        # insecure
+        insecure = params.get("insecure", ["0"])[0]
+        if insecure in ("1", "true"):
+            node.skip_cert_verify = True
+
+        # obfs / obfs-password
+        obfs = params.get("obfs", [None])[0]
+        if obfs:
+            node.hysteria2_obfs = obfs
+
+        # alpn
+        alpn = params.get("alpn", [None])[0]
+        if alpn:
+            node.alpn = alpn.split(",")
+
+        node.raw_url = url
+        return node
+
+    def _parse_anytls_url(self, url: str) -> Optional[Node]:
+        """解析 anytls:// URL
+
+        格式: anytls://password@server:port?security=tls&sni=xxx&fp=chrome#name
+        """
+        from urllib.parse import urlparse
+
+        parsed = urlparse(url)
+        params = parse_qs(parsed.query)
+
+        password = unquote(parsed.username or "")
+        server = parsed.hostname or ""
+        port = parsed.port or 443
+
+        name = unquote(parsed.fragment) if parsed.fragment else "AnyTLS Node"
+
+        node = Node(
+            name=name,
+            type="anytls",
+            server=server,
+            port=port,
+            password=password,
+        )
+
+        # TLS 参数
+        node.security = params.get("security", ["tls"])[0]
+        node.sni = params.get("sni", [None])[0]
+        fp = params.get("fp", [None])[0]
+        if fp:
+            node.fingerprint = fp
+
+        insecure = params.get("allowInsecure", ["0"])[0]
+        if insecure in ("1", "true"):
+            node.skip_cert_verify = True
+
+        alpn = params.get("alpn", [None])[0]
+        if alpn:
+            node.alpn = alpn.split(",")
+
         node.raw_url = url
         return node

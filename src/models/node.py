@@ -72,6 +72,12 @@ class Node:
     ssr_obfs: Optional[str] = None
     ssr_obfs_param: Optional[str] = None
 
+    # 节点生命周期跟踪
+    missing_runs: int = 0  # 连续未在抓取中出现的轮次数
+    ssr_protocol_param: Optional[str] = None
+    ssr_obfs: Optional[str] = None
+    ssr_obfs_param: Optional[str] = None
+
     # 元信息
     country: Optional[str] = None  # 自动识别的国家代码
     country_name: Optional[str] = None  # 国家名称
@@ -191,6 +197,14 @@ class Node:
                 proxy["alpn"] = self.tuic_alpn
             if self.tuic_udp_relay_mode:
                 proxy["udp-relay-mode"] = self.tuic_udp_relay_mode
+
+        # AnyTLS
+        elif self.type == "anytls":
+            proxy["password"] = self.password
+            if self.sni:
+                proxy["servername"] = self.sni
+            if self.fingerprint:
+                proxy["client-fingerprint"] = self.fingerprint
 
         # TLS 配置
         if self.security == "tls" or self.type in ["trojan", "vless", "vmess"]:
@@ -353,6 +367,9 @@ class Node:
             outbound["password"] = self.hysteria2_password
             if self.hysteria2_obfs:
                 outbound["obfs"] = {"type": "salamander", "password": self.hysteria2_obfs}
+
+        elif self.type == "anytls":
+            outbound["password"] = self.password
 
         # TLS
         if self.security == "tls":

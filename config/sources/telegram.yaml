@@ -72,18 +72,10 @@ channels:
     v2clash: true
     enabled: true
 
-  # 以下频道需要加入才能查看消息 (Web 预览不可用)
-  # - name: "ZDYZ2Y"
-  #   username: "@ZDYZ2Y"
-  #   enabled: true
-
-  # - name: "DingyueJiedian8"
-  #   username: "@DingyueJiedian8"
-  #   enabled: true
-
-  # - name: "V2Queen"
-  #   username: "@v2queen"
-  #   enabled: true
+  # DingyueJiedian8 — 订阅节点频道, 消息含 https:// 订阅链接
+  - name: "DingyueJiedian8"
+    username: "@DingyueJiedian8"
+    enabled: true
 
   # 可添加更多频道
   # - name: "MyChannel"

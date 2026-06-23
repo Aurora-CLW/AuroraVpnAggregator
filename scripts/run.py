@@ -167,7 +167,18 @@ class AuroraAggregator:
             # 恢复之前保存的频道抓取结果
             self._restore_channel_results()
         else:
+            # 加载上次的节点 (用于合并保留)
+            old_nodes = self._load_existing_nodes()
+            old_map = {}
+            for n in old_nodes:
+                key = (n.server, n.port)
+                old_map[key] = n
+
             nodes = await self.load_sources()
+
+            # 合并: 本次抓到的节点 + 上次有效但本次没抓到的节点
+            if old_nodes:
+                nodes = self._merge_with_old(nodes, old_map)
 
         if not nodes:
             logger.warning("没有获取到任何节点")
@@ -305,6 +316,7 @@ class AuroraAggregator:
             )
             node.is_valid = n.get("is_valid", False)
             node.tcp_valid = n.get("tcp_valid", False)
+            node.missing_runs = n.get("missing_runs", 0)
             nodes.append(node)
 
         # 保留测试结果：is_valid=True 和 is_valid=False 的节点都保留
@@ -315,6 +327,48 @@ class AuroraAggregator:
         else:
             logger.info(f"无测试结果，加载全部 {len(nodes)} 个节点")
         return nodes
+
+    def _merge_with_old(self, new_nodes: List[Node], old_map: dict) -> List[Node]:
+        """合并本次抓取的节点与上次的节点
+
+        策略:
+        - 本次抓到的节点优先 (更新已有条目)
+        - 上次有效但本次没抓到的节点保留, missing_runs += 1
+        - 连续缺失超过 MAX_MISSING_RUNS 轮的节点自动清除
+        """
+        MAX_MISSING_RUNS = 3
+
+        # 本次抓到的节点 key 集合
+        new_keys = set()
+        for n in new_nodes:
+            key = (n.server, n.port)
+            new_keys.add(key)
+            # 如果旧节点有测试结果, 保留 is_valid 和 latency
+            if key in old_map:
+                old = old_map[key]
+                # 旧节点的测试结果比新节点更有价值
+                if old.is_valid and not n.is_valid:
+                    n.is_valid = True
+                    n.latency = old.latency
+                # 保留 missing_runs 计数 (重置为 0, 因为本次抓到了)
+                n.missing_runs = 0
+
+        # 保留上次有效但本次没抓到的节点
+        preserved = 0
+        pruned = 0
+        for key, old_node in old_map.items():
+            if key not in new_keys:
+                old_node.missing_runs = getattr(old_node, 'missing_runs', 0) + 1
+                if old_node.missing_runs <= MAX_MISSING_RUNS:
+                    new_nodes.append(old_node)
+                    preserved += 1
+                else:
+                    pruned += 1
+
+        if preserved or pruned:
+            logger.info(f"节点合并: 本次 {len(new_keys)} 个, 保留历史 {preserved} 个, 清除过期 {pruned} 个")
+
+        return new_nodes
 
     def _restore_channel_results(self):
         """从 output/channel_results.json 恢复频道抓取结果 (generate_only 模式使用)"""
