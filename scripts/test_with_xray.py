@@ -396,6 +396,18 @@ async def main():
 
     print(f"已更新 {nodes_file} (全部 {len(nodes)} 个节点，含测试状态)")
 
+    # 保存有效节点池 (累积保留, 只有测试失败的才被移除)
+    valid_pool_file = Path("output/valid_pool.json")
+    valid_pool_data = {
+        "version": "1.0.0",
+        "updated_at": data.get("updated_at", ""),
+        "total": len(valid_nodes),
+        "nodes": [node_to_dict(n) for n in valid_nodes],
+    }
+    with open(valid_pool_file, "w", encoding="utf-8") as f:
+        json.dump(valid_pool_data, f, indent=2, ensure_ascii=False)
+    print(f"已保存有效节点池: {len(valid_nodes)} 个节点 -> {valid_pool_file}")
+
 
 if __name__ == "__main__":
     asyncio.run(main())
