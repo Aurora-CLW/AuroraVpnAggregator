@@ -342,8 +342,16 @@ class AuroraAggregator:
             logger.info("有效节点池不存在, 首次运行")
             return []
 
-        with open(pool_file, "r", encoding="utf-8") as f:
-            data = json.load(f)
+        try:
+            with open(pool_file, "r", encoding="utf-8") as f:
+                content = f.read().strip()
+                if not content:
+                    logger.info("有效节点池文件为空, 跳过")
+                    return []
+                data = json.loads(content)
+        except (json.JSONDecodeError, ValueError) as e:
+            logger.warning(f"有效节点池 JSON 解析失败: {e}, 跳过")
+            return []
 
         nodes = []
         for n in data.get("nodes", []):

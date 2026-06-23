@@ -64,7 +64,7 @@ jobs:
         run: |
           mkdir -p output
           git fetch origin data --depth=1 2>/dev/null || true
-          git show origin/data:valid_pool.json > output/valid_pool.json 2>/dev/null || echo "No existing valid pool"
+          git show origin/data:valid_pool.json > output/valid_pool.json 2>/dev/null && echo "Restored valid_pool.json" || (rm -f output/valid_pool.json && echo "No existing valid pool")
         continue-on-error: true
 
       - name: Run aggregator (skip fake tests)
