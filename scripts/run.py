@@ -423,6 +423,10 @@ class AuroraAggregator:
         # 生成统计信息
         stats = self._generate_stats(valid_nodes, all_nodes)
 
+        # 嵌入源配置 (供 Web UI 源管理使用, 避免额外请求 GitHub API)
+        stats["tg_channels"] = self._load_tg_channel_config()
+        stats["github_sources"] = self._load_github_source_config()
+
         # 将 GitHub Token 嵌入受保护的 stats.json（已通过密码门保护）
         gh_token = os.environ.get("AURORA_GH_TOKEN", "")
         if not gh_token:
@@ -473,6 +477,57 @@ class AuroraAggregator:
 
         template_path.write_text(content, encoding="utf-8")
         logger.info(f"已注入安全验证 (hash: {token_hash[:16]}...)")
+
+    def _load_tg_channel_config(self) -> list:
+        """加载 Telegram 频道配置 (嵌入 stats.json 供 Web UI 使用)"""
+        config_path = Path("config/sources/telegram.yaml")
+        if not config_path.exists():
+            return []
+        try:
+            with open(config_path, "r", encoding="utf-8") as f:
+                config = yaml.safe_load(f) or {}
+            channels = []
+            for ch in config.get("channels", []):
+                if not ch.get("enabled", True):
+                    continue
+                entry = {
+                    "name": ch.get("name", ""),
+                    "username": ch.get("username", ""),
+                    "enabled": ch.get("enabled", True),
+                    "format": ch.get("format", "auto"),
+                }
+                if ch.get("website_url"):
+                    entry["website_url"] = ch["website_url"]
+                if ch.get("sub_urls"):
+                    entry["sub_urls"] = ch["sub_urls"]
+                channels.append(entry)
+            return channels
+        except Exception as e:
+            logger.warning(f"加载 TG 频道配置失败: {e}")
+            return []
+
+    def _load_github_source_config(self) -> list:
+        """加载 GitHub 源配置 (嵌入 stats.json 供 Web UI 使用)"""
+        config_path = Path("config/sources/github.yaml")
+        if not config_path.exists():
+            return []
+        try:
+            with open(config_path, "r", encoding="utf-8") as f:
+                config = yaml.safe_load(f) or {}
+            sources = []
+            for src in config.get("sources", []):
+                if not src.get("enabled", True):
+                    continue
+                sources.append({
+                    "name": src.get("name", ""),
+                    "url": src.get("url", ""),
+                    "format": src.get("format", "auto"),
+                    "enabled": src.get("enabled", True),
+                })
+            return sources
+        except Exception as e:
+            logger.warning(f"加载 GitHub 源配置失败: {e}")
+            return []
 
     def _generate_stats(self, valid_nodes: List[Node], all_nodes: List[Node] = None) -> dict:
         """生成统计信息"""

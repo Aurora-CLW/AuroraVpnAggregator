@@ -416,6 +416,8 @@
         let currentSources = [];
         let currentTgChannels = [];
         let channelResults = {};  // {channel_name: {nodes, sub_urls, status, updated_at}}
+        let embeddedTgChannels = [];  // stats.json 嵌入的 TG 频道配置
+        let embeddedGithubSources = [];  // stats.json 嵌入的 GitHub 源配置
         let editingIndex = -1; // 当前正在编辑的源索引, -1 = 无
         let editingType = '';  // 'github' | 'telegram'
         let ghTokenReady = null;
@@ -483,6 +485,8 @@
                 .then(data => {
                     renderStats(data);
                     if (data.channel_results) channelResults = data.channel_results;
+                    if (data.tg_channels) embeddedTgChannels = data.tg_channels;
+                    if (data.github_sources) embeddedGithubSources = data.github_sources;
                     if (data.gh_token) {
                         sessionStorage.setItem(GH_TOKEN_KEY, data.gh_token);
                         document.getElementById('github-token').value = data.gh_token;
@@ -561,6 +565,12 @@
         // ════════════════════════════════════════════
 
         async function loadSources() {
+            // 优先使用 stats.json 嵌入的配置 (避免请求 GitHub API)
+            if (embeddedGithubSources && embeddedGithubSources.length) {
+                currentSources = embeddedGithubSources;
+                renderSources();
+                return;
+            }
             const yaml = await fetchRepoFile('config/sources/github.yaml');
             currentSources = yaml ? parseYamlSources(yaml) : [];
             renderSources();
@@ -696,6 +706,12 @@
         // ════════════════════════════════════════════
 
         async function loadTgChannels() {
+            // 优先使用 stats.json 嵌入的配置 (避免请求 GitHub API)
+            if (embeddedTgChannels && embeddedTgChannels.length) {
+                currentTgChannels = embeddedTgChannels;
+                renderTgChannels();
+                return;
+            }
             const yaml = await fetchRepoFile('config/sources/telegram.yaml');
             currentTgChannels = yaml ? parseTgYaml(yaml) : [];
             renderTgChannels();
