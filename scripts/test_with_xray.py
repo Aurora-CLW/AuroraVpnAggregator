@@ -320,7 +320,6 @@ def node_to_dict(n: Node) -> dict:
         "hysteria2_password": n.hysteria2_password,
         "flow": n.flow,
         "alterId": n.alterId,
-        "missing_runs": getattr(n, 'missing_runs', 0),
     }
 
 
@@ -371,7 +370,6 @@ async def main():
             latency=n.get("latency", 0),
         )
         node.is_valid = n.get("is_valid", False)
-        node.missing_runs = n.get("missing_runs", 0)
         nodes.append(node)
 
     # 按类型统计

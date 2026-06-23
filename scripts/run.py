@@ -162,23 +162,27 @@ class AuroraAggregator:
         # Step 1: 加载订阅源
         if generate_only:
             logger.info("跳过订阅加载，直接生成订阅文件")
-            # 从现有节点数据加载
             nodes = self._load_existing_nodes()
-            # 恢复之前保存的频道抓取结果
             self._restore_channel_results()
         else:
-            # 加载上次的节点 (用于合并保留)
-            old_nodes = self._load_existing_nodes()
-            old_map = {}
-            for n in old_nodes:
-                key = (n.server, n.port)
-                old_map[key] = n
+            # 加载有效节点池 (累积保留, 只在测试失败时移除)
+            valid_pool = self._load_valid_pool()
+            valid_map = {(n.server, n.port): n for n in valid_pool}
 
-            nodes = await self.load_sources()
+            # 从频道抓取新节点
+            new_nodes = await self.load_sources()
 
-            # 合并: 本次抓到的节点 + 上次有效但本次没抓到的节点
-            if old_nodes:
-                nodes = self._merge_with_old(nodes, old_map)
+            # 合并: 新节点更新旧节点, 旧节点中未出现的保留
+            new_keys = {(n.server, n.port) for n in new_nodes}
+            merged = list(new_nodes)
+            preserved = 0
+            for key, old in valid_map.items():
+                if key not in new_keys:
+                    merged.append(old)
+                    preserved += 1
+            if preserved:
+                logger.info(f"有效池合并: 新增 {len(new_keys)} 个, 保留历史 {preserved} 个")
+            nodes = merged
 
         if not nodes:
             logger.warning("没有获取到任何节点")
@@ -202,15 +206,17 @@ class AuroraAggregator:
             tested_nodes = await tester.test_all(nodes)
 
         # 从节点列表分流: 全部节点 vs 仅有效节点
-        # generate_only 模式下，is_valid 标记来自 test_with_xray.py 的结果
         valid_nodes = [n for n in tested_nodes if n.is_valid]
         invalid_nodes = [n for n in tested_nodes if not n.is_valid]
 
         if len(valid_nodes) < len(tested_nodes):
             logger.info(f"节点校验: {len(valid_nodes)} 通过 / {len(invalid_nodes)} 失败 / {len(tested_nodes)} 总计")
         elif not valid_nodes and tested_nodes:
-            # 无测试结果时全部保留
             valid_nodes = tested_nodes
+
+        # 保存有效节点池 (累积保留, 只有测试失败的才被移除)
+        if not generate_only and not skip_test:
+            self._save_valid_pool(valid_nodes)
 
         # 按频道统计校验结果, 更新 channel_results
         if self.channel_results:
@@ -316,7 +322,6 @@ class AuroraAggregator:
             )
             node.is_valid = n.get("is_valid", False)
             node.tcp_valid = n.get("tcp_valid", False)
-            node.missing_runs = n.get("missing_runs", 0)
             nodes.append(node)
 
         # 保留测试结果：is_valid=True 和 is_valid=False 的节点都保留
@@ -328,47 +333,98 @@ class AuroraAggregator:
             logger.info(f"无测试结果，加载全部 {len(nodes)} 个节点")
         return nodes
 
-    def _merge_with_old(self, new_nodes: List[Node], old_map: dict) -> List[Node]:
-        """合并本次抓取的节点与上次的节点
+    def _load_valid_pool(self) -> List[Node]:
+        """加载有效节点池 (累积保留, 只有测试失败才移除)"""
+        import json
 
-        策略:
-        - 本次抓到的节点优先 (更新已有条目)
-        - 上次有效但本次没抓到的节点保留, missing_runs += 1
-        - 连续缺失超过 MAX_MISSING_RUNS 轮的节点自动清除
-        """
-        MAX_MISSING_RUNS = 3
+        pool_file = Path("output/valid_pool.json")
+        if not pool_file.exists():
+            logger.info("有效节点池不存在, 首次运行")
+            return []
 
-        # 本次抓到的节点 key 集合
-        new_keys = set()
-        for n in new_nodes:
-            key = (n.server, n.port)
-            new_keys.add(key)
-            # 如果旧节点有测试结果, 保留 is_valid 和 latency
-            if key in old_map:
-                old = old_map[key]
-                # 旧节点的测试结果比新节点更有价值
-                if old.is_valid and not n.is_valid:
-                    n.is_valid = True
-                    n.latency = old.latency
-                # 保留 missing_runs 计数 (重置为 0, 因为本次抓到了)
-                n.missing_runs = 0
+        with open(pool_file, "r", encoding="utf-8") as f:
+            data = json.load(f)
 
-        # 保留上次有效但本次没抓到的节点
-        preserved = 0
-        pruned = 0
-        for key, old_node in old_map.items():
-            if key not in new_keys:
-                old_node.missing_runs = getattr(old_node, 'missing_runs', 0) + 1
-                if old_node.missing_runs <= MAX_MISSING_RUNS:
-                    new_nodes.append(old_node)
-                    preserved += 1
-                else:
-                    pruned += 1
+        nodes = []
+        for n in data.get("nodes", []):
+            node = Node(
+                name=n.get("name", "Unknown"),
+                type=n.get("type", "vmess"),
+                server=n.get("server", ""),
+                port=n.get("port", 443),
+                uuid=n.get("uuid"),
+                password=n.get("password"),
+                cipher=n.get("cipher"),
+                network=n.get("network"),
+                security=n.get("security"),
+                sni=n.get("sni"),
+                skip_cert_verify=n.get("skip_cert_verify", False),
+                ws_path=n.get("ws_path"),
+                ws_headers=n.get("ws_headers"),
+                grpc_service_name=n.get("grpc_service_name"),
+                reality_public_key=n.get("reality_public_key"),
+                reality_short_id=n.get("reality_short_id"),
+                fingerprint=n.get("fingerprint"),
+                hysteria2_password=n.get("hysteria2_password"),
+                flow=n.get("flow"),
+                alterId=n.get("alterId", 0),
+                country=n.get("country"),
+                source=n.get("source"),
+                latency=n.get("latency", 0),
+            )
+            node.is_valid = True  # 池中节点默认有效, 测试失败才移除
+            nodes.append(node)
 
-        if preserved or pruned:
-            logger.info(f"节点合并: 本次 {len(new_keys)} 个, 保留历史 {preserved} 个, 清除过期 {pruned} 个")
+        logger.info(f"加载有效节点池: {len(nodes)} 个节点")
+        return nodes
 
-        return new_nodes
+    def _save_valid_pool(self, valid_nodes: List[Node]):
+        """保存有效节点池 (累积保留)"""
+        import json
+
+        pool_file = Path("output/valid_pool.json")
+        pool_file.parent.mkdir(parents=True, exist_ok=True)
+
+        nodes_data = []
+        for n in valid_nodes:
+            nodes_data.append({
+                "name": n.name,
+                "type": n.type,
+                "server": n.server,
+                "port": n.port,
+                "uuid": n.uuid,
+                "password": n.password,
+                "cipher": n.cipher,
+                "network": n.network,
+                "security": n.security,
+                "sni": n.sni,
+                "skip_cert_verify": n.skip_cert_verify,
+                "ws_path": n.ws_path,
+                "ws_headers": n.ws_headers,
+                "grpc_service_name": n.grpc_service_name,
+                "reality_public_key": n.reality_public_key,
+                "reality_short_id": n.reality_short_id,
+                "fingerprint": n.fingerprint,
+                "hysteria2_password": n.hysteria2_password,
+                "flow": n.flow,
+                "alterId": n.alterId,
+                "country": n.country,
+                "source": n.source,
+                "latency": n.latency,
+                "is_valid": True,
+            })
+
+        data = {
+            "version": "1.0.0",
+            "updated_at": datetime.now().isoformat(),
+            "total": len(nodes_data),
+            "nodes": nodes_data,
+        }
+
+        with open(pool_file, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+
+        logger.info(f"保存有效节点池: {len(nodes_data)} 个节点")
 
     def _restore_channel_results(self):
         """从 output/channel_results.json 恢复频道抓取结果 (generate_only 模式使用)"""

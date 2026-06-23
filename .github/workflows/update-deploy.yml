@@ -60,6 +60,13 @@ jobs:
           rm -f docs/clash.yaml docs/v2ray.txt docs/singbox.json docs/nodes.json docs/stats.json
           rm -rf docs/s
 
+      - name: Restore valid node pool
+        run: |
+          mkdir -p output
+          git fetch origin data --depth=1 2>/dev/null || true
+          git show origin/data:valid_pool.json > output/valid_pool.json 2>/dev/null || echo "No existing valid pool"
+        continue-on-error: true
+
       - name: Run aggregator (skip fake tests)
         env:
           TELEGRAM_API_ID: ${{ secrets.TELEGRAM_API_ID }}
@@ -87,6 +94,21 @@ jobs:
           test ! -f docs/clash.yaml && echo "✓ 根目录无 clash.yaml"
           test ! -f docs/nodes.json && echo "✓ 根目录无 nodes.json"
           test -f docs/index.html && echo "✓ index.html 存在"
+
+      - name: Persist valid node pool
+        run: |
+          if [ -f output/valid_pool.json ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git fetch origin data 2>/dev/null || true
+            git checkout origin/data -- valid_pool.json 2>/dev/null || true
+            cp output/valid_pool.json valid_pool.json
+            git add valid_pool.json
+            git commit -m "chore: update valid node pool" 2>/dev/null || echo "No changes to commit"
+            git push origin HEAD:data 2>/dev/null || echo "Push failed (branch may not exist yet)"
+            git checkout main
+          fi
+        continue-on-error: true
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
