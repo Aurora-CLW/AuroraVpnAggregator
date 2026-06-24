@@ -421,7 +421,9 @@ class TelegramHandler(BaseHandler):
                     return {"nodes": [], "sub_urls": [], "msg_links": []}
                 if not messages:
                     return {"nodes": [], "sub_urls": [], "msg_links": []}
-                # 解析消息, 跳过纯广告消息
+                # 解析消息, 跳过广告和无用消息
+                # 有效消息 = 包含 VPN 节点链接的消息
+                # 订阅链接和消息链接仍收集, 但不算作"有效消息"
                 all_nodes = []
                 all_sub_urls: List[dict] = []
                 all_msg_links: List[str] = []
@@ -433,15 +435,17 @@ class TelegramHandler(BaseHandler):
                     nodes = self._extract_nodes_from_text(text)
                     sub_urls = self._extract_sub_urls(text)
                     msg_links = self._extract_msg_links(text)
-                    # 跳过无有效内容的广告消息
+                    # 完全无内容的消息跳过 (广告/纯文字)
                     if not nodes and not sub_urls and not msg_links:
                         continue
                     all_nodes.extend(nodes)
                     all_sub_urls.extend(sub_urls)
                     all_msg_links.extend(msg_links)
-                    valid_count += 1
-                    if valid_count >= max_valid:
-                        break
+                    # 只有包含 VPN 节点的消息才算"有效消息"
+                    if nodes:
+                        valid_count += 1
+                        if valid_count >= max_valid:
+                            break
                 # 去重
                 seen = set()
                 unique_subs: List[dict] = []
