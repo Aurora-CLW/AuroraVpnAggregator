@@ -77,6 +77,26 @@ channels:
     username: "@DingyueJiedian8"
     enabled: true
 
+  # fqzw9 — 免费翻转资源
+  - name: "fqzw9"
+    username: "@fqzw9"
+    enabled: true
+
+  # xhjvpn — VPN 节点分享
+  - name: "xhjvpn"
+    username: "@xhjvpn"
+    enabled: true
+
+  # hanbaoyun666 — VPN 节点分享
+  - name: "hanbaoyun666"
+    username: "@hanbaoyun666"
+    enabled: true
+
+  # ZDYZ2Y — VPN 节点分享
+  - name: "ZDYZ2Y"
+    username: "@ZDYZ2Y"
+    enabled: true
+
   # 可添加更多频道
   # - name: "MyChannel"
   #   username: "@my_channel"

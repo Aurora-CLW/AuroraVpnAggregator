@@ -267,6 +267,7 @@ class TelegramHandler(BaseHandler):
                 logger.info(f"[{self.name}] {channel_name}: v2clash.blog 日期 {v2clash_dates[:2]}, 构造 {len(new_v2clash)} 个订阅链接 (优先抓取)")
 
             # 5. 递归 fetch 订阅链接
+            direct_nodes_count = len(nodes)
             sub_urls_valid: List[str] = []
             sub_urls_failed: List[str] = []
             sub_urls_dead: List[str] = []
@@ -307,6 +308,7 @@ class TelegramHandler(BaseHandler):
         all_urls = [u["url"] if isinstance(u, dict) else u for u in sub_urls]
         self.channel_results[channel_name] = {
             "nodes": len(nodes),
+            "direct_nodes": direct_nodes_count,
             "sub_urls": all_urls,
             "valid_sub_urls": sub_urls_valid,
             "failed_sub_urls": sub_urls_failed,
@@ -422,8 +424,8 @@ class TelegramHandler(BaseHandler):
                 if not messages:
                     return {"nodes": [], "sub_urls": [], "msg_links": []}
                 # 解析消息, 跳过广告和无用消息
-                # 有效消息 = 包含 VPN 节点链接的消息
-                # 订阅链接和消息链接仍收集, 但不算作"有效消息"
+                # 有效消息 = 包含直接 VPN 节点链接的消息
+                # 订阅链接仍收集, 但不算"有效消息" (订阅链接可能无效/获取不到节点)
                 all_nodes = []
                 all_sub_urls: List[dict] = []
                 all_msg_links: List[str] = []
@@ -441,8 +443,9 @@ class TelegramHandler(BaseHandler):
                     all_nodes.extend(nodes)
                     all_sub_urls.extend(sub_urls)
                     all_msg_links.extend(msg_links)
-                    # 只有包含 VPN 节点或订阅链接的消息才算"有效消息"
-                    if nodes or sub_urls:
+                    # 只有包含直接 VPN 节点的消息才算"有效消息"
+                    # 订阅链接不算 (可能无效或获取不到节点)
+                    if nodes:
                         valid_count += 1
                         if valid_count >= max_valid:
                             break

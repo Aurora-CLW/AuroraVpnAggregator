@@ -819,8 +819,12 @@
             const statusText = detail.status === 'success' ? '成功' : '无节点';
             const validCount = detail.valid_nodes ?? '-';
             const invalidCount = detail.invalid_nodes ?? '-';
+            const directNodes = detail.direct_nodes ?? detail.nodes ?? '-';
+            const subNodes = (detail.nodes && detail.direct_nodes != null) ? (detail.nodes - detail.direct_nodes) : '-';
             let html = `<h4>${esc(ch.name)} 抓取详情</h4>
                 <div class="detail-row"><span class="detail-label">抓取节点</span><span class="detail-value">${detail.nodes}</span></div>
+                <div class="detail-row"><span class="detail-label">直接节点</span><span class="detail-value" style="color:#17a2b8;">${directNodes}</span></div>
+                <div class="detail-row"><span class="detail-label">订阅节点</span><span class="detail-value" style="color:#6f42c1;">${subNodes}</span></div>
                 <div class="detail-row"><span class="detail-label">校验通过</span><span class="detail-value" style="color:#28a745;">${validCount}</span></div>
                 <div class="detail-row"><span class="detail-label">校验失败</span><span class="detail-value" style="color:${invalidCount > 0 ? '#dc3545' : '#999'};">${invalidCount}</span></div>
                 <div class="detail-row"><span class="detail-label">状态</span><span class="detail-value ${statusClass}">${statusText}</span></div>
