@@ -398,7 +398,7 @@ class TelegramHandler(BaseHandler):
         自动跳过纯广告消息, 只保留含有效订阅/节点内容的消息。
         """
         max_valid = 50  # 最多保留的有效消息数 (确保每频道至少30条有效消息)
-        api_limit = 200  # API 返回的消息数上限
+        api_limit = 100  # API 返回的消息数上限 (HF API 最大支持 100)
         api_url = f"{HF_TG_PARSER_BASE}?channel={username}&limit={api_limit}&key={HF_TG_PARSER_KEY}"
         logger.info(f"[{self.name}] 尝试 HF TG API: {api_url}")
         try:
@@ -406,7 +406,13 @@ class TelegramHandler(BaseHandler):
                 if resp.status != 200:
                     logger.debug(f"HF TG API HTTP {resp.status} for {username}")
                     return {"nodes": [], "sub_urls": [], "msg_links": []}
-                data = await resp.json()
+                import json as _json
+                raw_text = await resp.text()
+                try:
+                    data = _json.loads(raw_text)
+                except _json.JSONDecodeError as e:
+                    logger.warning(f"[{self.name}] HF TG API JSON 解析失败 {username}: {e}")
+                    return {"nodes": [], "sub_urls": [], "msg_links": []}
                 if isinstance(data, dict):
                     messages = data.get("messages", [])
                 elif isinstance(data, list):
