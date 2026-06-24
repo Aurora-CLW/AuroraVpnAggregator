@@ -731,8 +731,8 @@ class TelegramHandler(BaseHandler):
             # 清理 URL: 剥离黏附的中文/emoji/标点 (从第一个非 URL 合法字符处截断)
             # URL 合法字符: ASCII 可打印字符中排除空格和 <>"'
             url = re.sub(r'[^\x21-\x7E]+.*$', '', match)
-            # 剥离尾部不合法的 ASCII 标点 (如右括号、逗号等)
-            url = re.sub(r'[,;。，；）)》】]+$', '', url)
+            # 剥离尾部不合法的 ASCII 标点 (如右括号、逗号、反引号等)
+            url = re.sub(r'[,;。，；）)》】`]+$', '', url)
             if not url or len(url) < 10:
                 continue
             # 排除社交/广告域名
@@ -766,7 +766,7 @@ class TelegramHandler(BaseHandler):
     def _clean_sub_url(self, raw_url: str) -> Optional[dict]:
         """清理单个 URL 并返回 {"url": str, "format_hint": str} 或 None"""
         url = re.sub(r'[^\x21-\x7E]+.*$', '', raw_url)
-        url = re.sub(r'[),;。，；）》】]+$', '', url)
+        url = re.sub(r'[),;。，；）》】`]+$', '', url)
         # 只接受绝对 https:// URL (排除相对路径, //cdn 等)
         if not url or not url.startswith("https://"):
             return None
