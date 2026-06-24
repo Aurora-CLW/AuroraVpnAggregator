@@ -101,12 +101,15 @@ jobs:
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
             git fetch origin data
-            git checkout origin/data
-            cp output/valid_pool.json valid_pool.json
+            # 使用 worktree 避免影响主工作目录的 docs 产物
+            git worktree add /tmp/data-branch origin/data
+            cp output/valid_pool.json /tmp/data-branch/valid_pool.json
+            cd /tmp/data-branch
             git add valid_pool.json
             git commit -m "chore: update valid node pool" || echo "No changes to commit"
             git push origin HEAD:data
-            git checkout main
+            cd -
+            git worktree remove /tmp/data-branch
           fi
         continue-on-error: true
 
