@@ -440,16 +440,24 @@ class TelegramHandler(BaseHandler):
                 all_nodes = []
                 all_sub_urls: List[dict] = []
                 all_msg_links: List[str] = []
+                all_doc_ids: List[dict] = []
                 valid_count = 0
                 for msg in messages:
                     text = msg.get("text", "") if isinstance(msg, dict) else str(msg)
-                    if not text:
+                    # 检测文档附件 (节点文件)
+                    media = msg.get("media") if isinstance(msg, dict) else None
+                    if media and isinstance(media, dict) and media.get("type") == "document":
+                        file_id = media.get("id")
+                        filename = media.get("filename", "")
+                        if file_id:
+                            all_doc_ids.append({"file_id": file_id, "filename": filename})
+                    if not text and not media:
                         continue
-                    nodes = self._extract_nodes_from_text(text)
-                    sub_urls = self._extract_sub_urls(text)
-                    msg_links = self._extract_msg_links(text)
-                    # 完全无内容的消息跳过 (广告/纯文字)
-                    if not nodes and not sub_urls and not msg_links:
+                    nodes = self._extract_nodes_from_text(text) if text else []
+                    sub_urls = self._extract_sub_urls(text) if text else []
+                    msg_links = self._extract_msg_links(text) if text else []
+                    # 完全无内容的消息跳过 (广告/纯文字, 无文档)
+                    if not nodes and not sub_urls and not msg_links and not media:
                         continue
                     all_nodes.extend(nodes)
                     all_sub_urls.extend(sub_urls)
@@ -460,6 +468,12 @@ class TelegramHandler(BaseHandler):
                         valid_count += 1
                         if valid_count >= max_valid:
                             break
+                # 下载文档附件中的节点
+                if all_doc_ids:
+                    doc_nodes = await self._download_telegram_docs(session, all_doc_ids)
+                    if doc_nodes:
+                        logger.info(f"[{self.name}] {channel_name}: 从 {len(all_doc_ids)} 个文档中获取 {len(doc_nodes)} 个节点")
+                        all_nodes.extend(doc_nodes)
                 # 去重
                 seen = set()
                 unique_subs: List[dict] = []
@@ -478,6 +492,53 @@ class TelegramHandler(BaseHandler):
         except Exception as e:
             logger.debug(f"HF TG API 失败 {username}: {e}")
             return {"nodes": [], "sub_urls": [], "msg_links": []}
+
+    async def _download_telegram_docs(self, session, doc_ids: List[dict]) -> List:
+        """通过 Telegram Bot API 下载文档附件并解析节点"""
+        import os
+        bot_token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+        if not bot_token:
+            logger.debug("TELEGRAM_BOT_TOKEN 未设置, 跳过文档下载")
+            return []
+        all_nodes = []
+        seen_ids = set()
+        for doc in doc_ids[:5]:  # 最多下载5个文档
+            file_id = doc["file_id"]
+            if file_id in seen_ids:
+                continue
+            seen_ids.add(file_id)
+            filename = doc.get("filename", "")
+            try:
+                # Step 1: 获取文件路径
+                get_url = f"https://api.telegram.org/bot{bot_token}/getFile?file_id={file_id}"
+                async with session.get(get_url, proxy=self.proxy, timeout=aiohttp.ClientTimeout(total=15)) as resp:
+                    if resp.status != 200:
+                        logger.debug(f"getFile 失败 HTTP {resp.status}: {file_id}")
+                        continue
+                    result = await resp.json()
+                    if not result.get("ok"):
+                        logger.debug(f"getFile 返回失败: {result}")
+                        continue
+                    file_path = result["result"]["file_path"]
+                # Step 2: 下载文件内容
+                dl_url = f"https://api.telegram.org/file/bot{bot_token}/{file_path}"
+                async with session.get(dl_url, proxy=self.proxy, timeout=aiohttp.ClientTimeout(total=30)) as resp:
+                    if resp.status != 200:
+                        logger.debug(f"文件下载失败 HTTP {resp.status}: {file_path}")
+                        continue
+                    content = await resp.text()
+                    if not content or len(content) < 10:
+                        continue
+                    # 解析文件内容
+                    nodes = self.parser.parse(content, "auto")
+                    if nodes:
+                        logger.info(f"[{self.name}] 文档 {filename}: 解析 {len(nodes)} 个节点")
+                        all_nodes.extend(nodes)
+                    else:
+                        logger.debug(f"文档 {filename}: 无有效节点")
+            except Exception as e:
+                logger.debug(f"文档下载失败 {filename}: {e}")
+        return all_nodes
 
     async def _fetch_msg_via_hf_api(self, session, username: str, msg_id: str) -> Optional[dict]:
         """通过 HF Space TG Parser API 获取单条消息 (替代 Web 抓取消息链接)"""

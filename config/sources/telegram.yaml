@@ -97,6 +97,31 @@ channels:
     username: "@ZDYZ2Y"
     enabled: true
 
+  # changfengchannel — VPN 节点分享
+  - name: "changfengchannel"
+    username: "@changfengchannel"
+    enabled: true
+
+  # jiedian168 — 文件中包含节点
+  - name: "jiedian168"
+    username: "@jiedian168"
+    enabled: true
+
+  # fq521 — VPN 节点分享
+  - name: "fq521"
+    username: "@fq521"
+    enabled: true
+
+  # fq5211 — VPN 节点分享
+  - name: "fq5211"
+    username: "@fq5211"
+    enabled: true
+
+  # jiedian678 — VPN 节点分享
+  - name: "jiedian678"
+    username: "@jiedian678"
+    enabled: true
+
   # 可添加更多频道
   # - name: "MyChannel"
   #   username: "@my_channel"
