@@ -266,8 +266,19 @@ class TelegramHandler(BaseHandler):
                 sub_urls = new_v2clash + sub_urls
                 logger.info(f"[{self.name}] {channel_name}: v2clash.blog 日期 {v2clash_dates[:2]}, 构造 {len(new_v2clash)} 个订阅链接 (优先抓取)")
 
-            # 5. 递归 fetch 订阅链接
+            # 5. 先对直接节点去重, 记录 direct_nodes_count
+            if nodes:
+                seen_direct = set()
+                unique_direct = []
+                for node in nodes:
+                    key = (node.server, node.port) if hasattr(node, 'server') and hasattr(node, 'port') else id(node)
+                    if key not in seen_direct:
+                        seen_direct.add(key)
+                        unique_direct.append(node)
+                nodes = unique_direct
             direct_nodes_count = len(nodes)
+
+            # 6. 递归 fetch 订阅链接
             sub_urls_valid: List[str] = []
             sub_urls_failed: List[str] = []
             sub_urls_dead: List[str] = []
