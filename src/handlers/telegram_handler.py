@@ -498,7 +498,7 @@ class TelegramHandler(BaseHandler):
         import os
         bot_token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
         if not bot_token:
-            logger.debug("TELEGRAM_BOT_TOKEN 未设置, 跳过文档下载")
+            logger.warning("TELEGRAM_BOT_TOKEN 未设置, 跳过文档下载")
             return []
         all_nodes = []
         seen_ids = set()
@@ -513,21 +513,22 @@ class TelegramHandler(BaseHandler):
                 get_url = f"https://api.telegram.org/bot{bot_token}/getFile?file_id={file_id}"
                 async with session.get(get_url, proxy=self.proxy, timeout=aiohttp.ClientTimeout(total=15)) as resp:
                     if resp.status != 200:
-                        logger.debug(f"getFile 失败 HTTP {resp.status}: {file_id}")
+                        logger.warning(f"getFile 失败 HTTP {resp.status}: {file_id} ({filename})")
                         continue
                     result = await resp.json()
                     if not result.get("ok"):
-                        logger.debug(f"getFile 返回失败: {result}")
+                        logger.warning(f"getFile 返回失败: {result} ({filename})")
                         continue
                     file_path = result["result"]["file_path"]
                 # Step 2: 下载文件内容
                 dl_url = f"https://api.telegram.org/file/bot{bot_token}/{file_path}"
                 async with session.get(dl_url, proxy=self.proxy, timeout=aiohttp.ClientTimeout(total=30)) as resp:
                     if resp.status != 200:
-                        logger.debug(f"文件下载失败 HTTP {resp.status}: {file_path}")
+                        logger.warning(f"文件下载失败 HTTP {resp.status}: {file_path} ({filename})")
                         continue
                     content = await resp.text()
                     if not content or len(content) < 10:
+                        logger.warning(f"文档内容为空: {filename}")
                         continue
                     # 解析文件内容
                     nodes = self.parser.parse(content, "auto")
@@ -535,9 +536,9 @@ class TelegramHandler(BaseHandler):
                         logger.info(f"[{self.name}] 文档 {filename}: 解析 {len(nodes)} 个节点")
                         all_nodes.extend(nodes)
                     else:
-                        logger.debug(f"文档 {filename}: 无有效节点")
+                        logger.warning(f"文档 {filename}: 无有效节点 (内容长度: {len(content)})")
             except Exception as e:
-                logger.debug(f"文档下载失败 {filename}: {e}")
+                logger.warning(f"文档下载失败 {filename}: {e}")
         return all_nodes
 
     async def _fetch_msg_via_hf_api(self, session, username: str, msg_id: str) -> Optional[dict]:
