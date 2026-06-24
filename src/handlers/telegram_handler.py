@@ -441,8 +441,8 @@ class TelegramHandler(BaseHandler):
                     all_nodes.extend(nodes)
                     all_sub_urls.extend(sub_urls)
                     all_msg_links.extend(msg_links)
-                    # 只有包含 VPN 节点的消息才算"有效消息"
-                    if nodes:
+                    # 只有包含 VPN 节点或订阅链接的消息才算"有效消息"
+                    if nodes or sub_urls:
                         valid_count += 1
                         if valid_count >= max_valid:
                             break
