@@ -413,7 +413,6 @@
     <script>
     (function() {
         const TOKEN_KEY = 'aurora_token';
-        const GH_TOKEN_KEY = 'aurora_gh_token';
         const AUTH_HASH = 'a9dc4b423961031fc1c3527bf69d0430c9c3d27b9010a36aa49a3f9bfd7d75d8';
         const REPO = 'Aurora-CLW/AuroraVpnAggregator';
 
@@ -425,6 +424,7 @@
         let editingIndex = -1; // 当前正在编辑的源索引, -1 = 无
         let editingType = '';  // 'github' | 'telegram'
         let ghTokenReady = null;
+        let _ghToken = '';  // 闭包变量, 不存入 sessionStorage/DOM
 
         async function sha256(str) {
             const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
@@ -446,7 +446,9 @@
         }
 
         function getGhToken() {
-            return document.getElementById('github-token').value.trim() || sessionStorage.getItem(GH_TOKEN_KEY) || '';
+            const inputVal = document.getElementById('github-token').value.trim();
+            if (inputVal) { _ghToken = inputVal; document.getElementById('github-token').value = ''; }
+            return _ghToken;
         }
 
         // 从私有仓库读取文件
@@ -472,7 +474,8 @@
             document.getElementById('main-section').classList.remove('hidden');
 
             const baseUrl = window.location.origin + window.location.pathname.replace('/index.html', '');
-            const subPath = '/s/' + encodeURIComponent(token);
+            const tokenHash = await sha256(token);
+            const subPath = '/s/' + tokenHash.substring(0, 16);
 
             document.getElementById('clash-url').value = baseUrl + subPath + '/clash.yaml';
             document.getElementById('v2ray-url').value = baseUrl + subPath + '/v2ray.txt';
@@ -502,9 +505,6 @@
             await ghTokenReady;
             loadSources();
             loadTgChannels();
-
-            const ghToken = sessionStorage.getItem(GH_TOKEN_KEY);
-            if (ghToken) document.getElementById('github-token').value = ghToken;
         }
 
         function renderStats(data) {
@@ -520,8 +520,8 @@
                     <div class="stat-item"><div class="stat-value">${Object.keys(countries).length}</div><div class="stat-label">国家/地区</div></div>
                     <div class="stat-item"><div class="stat-value">${Object.keys(types).length}</div><div class="stat-label">协议类型</div></div>
                 </div>
-                ${countryList ? '<p style="margin-top:12px;color:#666;font-size:13px;">' + countryList + '</p>' : ''}
-                <p style="margin-top:8px;color:#999;font-size:12px;">更新时间: ${data.updated_at || '未知'}</p>`;
+                ${countryList ? '<p style="margin-top:12px;color:#666;font-size:13px;">' + esc(countryList) + '</p>' : ''}
+                <p style="margin-top:8px;color:#999;font-size:12px;">更新时间: ${esc(data.updated_at || '未知')}</p>`;
         }
 
         window.switchTab = function(name) {
@@ -544,6 +544,19 @@
             const div = document.createElement('div');
             div.textContent = str || '';
             return div.innerHTML;
+        }
+
+        function escAttr(str) {
+            return (str || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        }
+
+        function escJs(str) {
+            return (str || '').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'\\"').replace(/\n/g,'\\n').replace(/\r/g,'\\r');
+        }
+
+        function safeUrl(url) {
+            if (/^https?:\/\//i.test(url)) return url;
+            return '';
         }
 
         function getFormatTag(url) {
@@ -602,7 +615,7 @@
                         <div class="source-url">${esc(s.url)}</div>
                     </div>
                     <div class="source-actions">
-                        <button class="source-btn view" onclick="window.open('${esc(s.url)}','_blank')">访问</button>
+                        <button class="source-btn view" onclick="safeOpen('${escJs(s.url)}')">访问</button>
                         <button class="source-toggle ${s.enabled ? 'on' : 'off'}" onclick="toggleSource(${i})">${s.enabled ? '启用' : '禁用'}</button>
                         <button class="source-btn edit" onclick="editSource(${i})">编辑</button>
                         <button class="source-btn delete" onclick="deleteSource(${i})">删除</button>
@@ -615,8 +628,8 @@
             return `
             <div class="source-item editing">
                 <div class="source-info" style="width:100%">
-                    <div class="edit-row"><label>名称</label><input type="text" id="edit-gh-name" value="${esc(s.name)}"></div>
-                    <div class="edit-row"><label>URL</label><input type="text" id="edit-gh-url" value="${esc(s.url)}" style="font-size:12px;"></div>
+                    <div class="edit-row"><label>名称</label><input type="text" id="edit-gh-name" value="${escAttr(s.name)}"></div>
+                    <div class="edit-row"><label>URL</label><input type="text" id="edit-gh-url" value="${escAttr(s.url)}" style="font-size:12px;"></div>
                     <div class="edit-row"><label>格式</label>
                         <select id="edit-gh-format">
                             <option value="base64" ${s.format==='base64'?'selected':''}>Base64</option>
@@ -769,9 +782,9 @@
             return `
             <div class="source-item editing">
                 <div class="source-info" style="width:100%">
-                    <div class="edit-row"><label>名称</label><input type="text" id="edit-tg-name" value="${esc(ch.name)}"></div>
-                    <div class="edit-row"><label>用户名</label><input type="text" id="edit-tg-username" value="${esc(ch.username)}" placeholder="@channel_name"></div>
-                    <div class="edit-row"><label>网站</label><input type="text" id="edit-tg-website" value="${esc(ch.website_url||'')}" placeholder="https:// (关联网站)"></div>
+                    <div class="edit-row"><label>名称</label><input type="text" id="edit-tg-name" value="${escAttr(ch.name)}"></div>
+                    <div class="edit-row"><label>用户名</label><input type="text" id="edit-tg-username" value="${escAttr(ch.username)}" placeholder="@channel_name"></div>
+                    <div class="edit-row"><label>网站</label><input type="text" id="edit-tg-website" value="${escAttr(ch.website_url||'')}" placeholder="https:// (关联网站)"></div>
                     <div class="edit-row"><label>格式</label>
                         <select id="edit-tg-format">
                             <option value="auto" ${(ch.format||'auto')==='auto'?'selected':''}>自动检测</option>
@@ -834,19 +847,21 @@
                     html += `<h4 style="margin-top:12px;color:#28a745;">有效订阅 (${valid.length})</h4>`;
                     for (const url of valid) {
                         let formatTag = getFormatTag(url);
-                        html += `<div class="sub-url-item">${formatTag} <a href="${esc(url)}" target="_blank" title="${esc(url)}">${esc(url.length > 80 ? url.substring(0, 80) + '...' : url)}</a></div>`;
+                        const safeHref = safeUrl(url) ? escAttr(url) : '';
+                        html += `<div class="sub-url-item">${formatTag} ${safeHref ? `<a href="${safeHref}" target="_blank" rel="noopener noreferrer" title="${escAttr(url)}">${esc(url.length > 80 ? url.substring(0, 80) + '...' : url)}</a>` : `<span title="${escAttr(url)}">${esc(url.length > 80 ? url.substring(0, 80) + '...' : url)}</span>`}</div>`;
                     }
                 }
                 if (failed.length) {
                     html += `<h4 style="margin-top:12px;color:#ffc107;">失败订阅 (${failed.length})</h4>`;
                     for (const url of failed) {
-                        html += `<div class="sub-url-item" style="opacity:0.6;"><span class="format-tag" style="background:#ffc107;color:#333;">FAIL</span> <a href="${esc(url)}" target="_blank" title="${esc(url)}">${esc(url.length > 80 ? url.substring(0, 80) + '...' : url)}</a></div>`;
+                        const safeHref = safeUrl(url) ? escAttr(url) : '';
+                        html += `<div class="sub-url-item" style="opacity:0.6;"><span class="format-tag" style="background:#ffc107;color:#333;">FAIL</span> ${safeHref ? `<a href="${safeHref}" target="_blank" rel="noopener noreferrer" title="${escAttr(url)}">${esc(url.length > 80 ? url.substring(0, 80) + '...' : url)}</a>` : `<span title="${escAttr(url)}">${esc(url.length > 80 ? url.substring(0, 80) + '...' : url)}</span>`}</div>`;
                     }
                 }
                 if (dead.length) {
                     html += `<h4 style="margin-top:12px;color:#dc3545;">永久失效 (${dead.length})</h4>`;
                     for (const url of dead) {
-                        html += `<div class="sub-url-item" style="opacity:0.4;"><span class="format-tag" style="background:#dc3545;color:#fff;">DEAD</span> <span title="${esc(url)}">${esc(url.length > 80 ? url.substring(0, 80) + '...' : url)}</span></div>`;
+                        html += `<div class="sub-url-item" style="opacity:0.4;"><span class="format-tag" style="background:#dc3545;color:#fff;">DEAD</span> <span title="${escAttr(url)}">${esc(url.length > 80 ? url.substring(0, 80) + '...' : url)}</span></div>`;
                     }
                 }
                 html += `<p style="color:#999;font-size:12px;margin-top:4px;">总计 ${detail.sub_urls.length} 个订阅: ${valid.length} 有效, ${failed.length} 失败, ${dead.length} 永久失效</p>`;
@@ -924,14 +939,12 @@
         async function saveSourcesToGithub() {
             const ghToken = getGhToken();
             if (!ghToken) { showFeedback('请先输入 GitHub Token', true); return false; }
-            sessionStorage.setItem(GH_TOKEN_KEY, ghToken);
             return await saveFileToGithub('config/sources/github.yaml', generateSourcesYaml(), 'chore: update GitHub sources via web UI');
         }
 
         async function saveTgChannelsToGithub() {
             const ghToken = getGhToken();
             if (!ghToken) { showFeedback('请先输入 GitHub Token', true); return false; }
-            sessionStorage.setItem(GH_TOKEN_KEY, ghToken);
             return await saveFileToGithub('config/sources/telegram.yaml', generateTgYaml(), 'chore: update Telegram channels via web UI');
         }
 
@@ -1016,9 +1029,17 @@
                 setTimeout(() => { _authLocked = false; _authAttempts = 0; document.getElementById('auth-error').style.display = 'none'; }, 30000);
                 return;
             }
+            // 每次失败后增加延迟 (1s, 2s, 4s, 8s...) 增加暴力破解成本
+            const failDelay = Math.min(Math.pow(2, _authAttempts - 1) * 1000, 16000);
             const hash = await sha256(token);
             if (hash === AUTH_HASH) { _authAttempts = 0; sessionStorage.setItem(TOKEN_KEY, token); showContent(token); }
-            else { document.getElementById('auth-error').textContent = '访问码错误'; document.getElementById('auth-error').style.display = 'block'; input.value = ''; setTimeout(() => { document.getElementById('auth-error').style.display = 'none'; }, 3000); }
+            else {
+                await new Promise(r => setTimeout(r, failDelay));
+                document.getElementById('auth-error').textContent = '访问码错误';
+                document.getElementById('auth-error').style.display = 'block';
+                input.value = '';
+                setTimeout(() => { document.getElementById('auth-error').style.display = 'none'; }, 3000);
+            }
         };
 
         document.getElementById('token-input').addEventListener('keydown', function(e) { if (e.key === 'Enter') window.authenticate(); });
@@ -1031,6 +1052,12 @@
                 btn.textContent = '已复制!'; btn.style.background = '#28a745';
                 setTimeout(() => { btn.textContent = orig; btn.style.background = '#667eea'; }, 2000);
             });
+        };
+
+        window.safeOpen = function(url) {
+            if (/^https?:\/\//i.test(url)) {
+                window.open(url, '_blank', 'noopener,noreferrer');
+            }
         };
 
         checkSavedAuth();
