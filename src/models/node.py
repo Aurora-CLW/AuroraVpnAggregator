@@ -277,6 +277,14 @@ class Node:
                 "sni": self.sni or "",
                 "ps": self.name
             }
+            if self.security == "reality":
+                vmess_obj["tls"] = "reality"
+                if self.fingerprint:
+                    vmess_obj["fp"] = self.fingerprint
+                if self.reality_public_key:
+                    vmess_obj["pbk"] = self.reality_public_key
+                if self.reality_short_id:
+                    vmess_obj["sid"] = self.reality_short_id
             if self.ws_path:
                 vmess_obj["path"] = self.ws_path
             if self.ws_headers and "Host" in self.ws_headers:
@@ -298,8 +306,16 @@ class Node:
                 params.append(f"sni={self.sni}")
             if self.flow:
                 params.append(f"flow={self.flow}")
+            if self.fingerprint:
+                params.append(f"fp={self.fingerprint}")
+            if self.reality_public_key:
+                params.append(f"pbk={self.reality_public_key}")
+            if self.reality_short_id:
+                params.append(f"sid={self.reality_short_id}")
             if self.ws_path:
                 params.append(f"path={quote(self.ws_path)}")
+            if self.ws_headers and "Host" in self.ws_headers:
+                params.append(f"host={quote(self.ws_headers['Host'])}")
 
             param_str = "&".join(params)
             return f"vless://{self.uuid}@{self.server}:{self.port}?{param_str}#{quote(self.name)}"
@@ -307,10 +323,22 @@ class Node:
         elif self.type == "trojan":
             # trojan://password@server:port?params#name
             params = []
+            if self.network:
+                params.append(f"type={self.network}")
+            if self.security:
+                params.append(f"security={self.security}")
             if self.sni:
                 params.append(f"sni={self.sni}")
+            if self.fingerprint:
+                params.append(f"fp={self.fingerprint}")
             if self.skip_cert_verify:
                 params.append("allowInsecure=1")
+            if self.ws_path:
+                params.append(f"path={quote(self.ws_path)}")
+            if self.ws_headers and "Host" in self.ws_headers:
+                params.append(f"host={quote(self.ws_headers['Host'])}")
+            if self.grpc_service_name:
+                params.append(f"serviceName={quote(self.grpc_service_name)}")
 
             param_str = "&".join(params) if params else ""
             url = f"trojan://{self.password}@{self.server}:{self.port}"
@@ -369,13 +397,15 @@ class Node:
 
         # TLS
         if self.security == "tls":
-            tls = {}
+            tls = {"enabled": True}
             if self.sni:
                 tls["server_name"] = self.sni
             if self.alpn:
                 tls["alpn"] = self.alpn
             if self.skip_cert_verify:
                 tls["insecure"] = True
+            if self.fingerprint:
+                tls["utls"] = {"enabled": True, "fingerprint": self.fingerprint}
             outbound["tls"] = tls
 
         # Reality
@@ -385,11 +415,14 @@ class Node:
                 reality["public_key"] = self.reality_public_key
             if self.reality_short_id:
                 reality["short_id"] = self.reality_short_id
-            outbound["tls"] = {
+            tls_obj = {
                 "enabled": True,
-                "server_name": self.sni,
-                "reality": reality
+                "server_name": self.sni or "",
+                "reality": reality,
             }
+            if self.fingerprint:
+                tls_obj["utls"] = {"enabled": True, "fingerprint": self.fingerprint}
+            outbound["tls"] = tls_obj
 
         return outbound
 

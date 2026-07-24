@@ -143,12 +143,15 @@ class Parser:
             node.uuid = proxy.get("uuid")
             node.flow = proxy.get("flow")
             node.network = proxy.get("network", "tcp")
+            node.fingerprint = proxy.get("client-fingerprint")
 
         # Trojan
         elif proxy_type == "trojan":
             node.password = proxy.get("password")
             node.sni = proxy.get("sni")
             node.skip_cert_verify = proxy.get("skip-cert-verify", False)
+            node.network = proxy.get("network")
+            node.fingerprint = proxy.get("client-fingerprint")
 
         # Hysteria2
         elif proxy_type == "hysteria2":
@@ -308,6 +311,14 @@ class Parser:
             node.security = "tls"
             node.sni = tls.get("server_name")
             node.alpn = tls.get("alpn")
+            # Reality
+            reality = tls.get("reality", {})
+            if reality:
+                node.security = "reality"
+                node.reality_public_key = reality.get("public_key")
+                node.reality_short_id = reality.get("short_id")
+            if tls.get("utls"):
+                node.fingerprint = tls.get("utls", {}).get("fingerprint")
 
         return node
 
@@ -383,12 +394,18 @@ class Parser:
         node.security = params.get("security", ["none"])[0]
         node.flow = params.get("flow", [None])[0]
         node.sni = params.get("sni", [None])[0]
+        node.fingerprint = params.get("fp", [None])[0]
+        node.reality_public_key = params.get("pbk", [None])[0]
+        node.reality_short_id = params.get("sid", [None])[0]
 
         if node.network == "ws":
             node.ws_path = params.get("path", [None])[0]
             host = params.get("host", [None])[0]
             if host:
                 node.ws_headers = {"Host": host}
+
+        if node.network == "grpc":
+            node.grpc_service_name = params.get("serviceName", [None])[0]
 
         node.raw_url = url
         return node
@@ -408,6 +425,18 @@ class Parser:
 
         node.sni = params.get("sni", [parsed.hostname])[0]
         node.skip_cert_verify = params.get("allowInsecure", ["0"])[0] == "1"
+        node.network = params.get("type", [None])[0]
+        node.security = params.get("security", ["tls"])[0]
+        node.fingerprint = params.get("fp", [None])[0]
+
+        if node.network == "ws":
+            node.ws_path = params.get("path", [None])[0]
+            host = params.get("host", [None])[0]
+            if host:
+                node.ws_headers = {"Host": host}
+
+        if node.network == "grpc":
+            node.grpc_service_name = params.get("serviceName", [None])[0]
 
         node.raw_url = url
         return node
