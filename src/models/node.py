@@ -109,23 +109,23 @@ class Node:
     def generate_fingerprint(self) -> str:
         """生成节点指纹，用于去重"""
         # 核心特征：类型 + 服务器 + 端口 + UUID/密码
-        key_parts = [
-            self.type,
-            self.server,
-            str(self.port)
+        key_parts: list[str] = [
+            str(self.type),
+            str(self.server),
+            str(self.port),
         ]
 
         # 根据类型添加唯一标识
         if self.uuid:
-            key_parts.append(self.uuid)
+            key_parts.append(str(self.uuid))
         elif self.password:
-            key_parts.append(self.password)
+            key_parts.append(str(self.password))
 
         # 网络传输特征
         if self.network:
-            key_parts.append(self.network)
+            key_parts.append(str(self.network))
         if self.ws_path:
-            key_parts.append(self.ws_path)
+            key_parts.append(str(self.ws_path))
 
         key = ":".join(key_parts)
         return hashlib.sha256(key.encode()).hexdigest()
@@ -415,11 +415,17 @@ class Node:
     @classmethod
     def from_dict(cls, data: dict) -> "Node":
         """统一反序列化从 dict 创建 Node"""
+        raw_port = data.get("port", 443)
+        try:
+            port = int(raw_port) if raw_port is not None else 443
+        except (ValueError, TypeError):
+            port = 443
+
         node = cls(
             name=data.get("name", "Unknown"),
             type=data.get("type", "vmess"),
             server=data.get("server", ""),
-            port=data.get("port", 443),
+            port=port,
             uuid=data.get("uuid"),
             password=data.get("password"),
             cipher=data.get("cipher"),
@@ -440,7 +446,7 @@ class Node:
             hysteria2_up_mbps=data.get("hysteria2_up_mbps"),
             hysteria2_down_mbps=data.get("hysteria2_down_mbps"),
             flow=data.get("flow"),
-            alterId=data.get("alterId", 0),
+            alterId=int(data.get("alterId", 0)),
             ssr_protocol=data.get("ssr_protocol"),
             ssr_protocol_param=data.get("ssr_protocol_param"),
             ssr_obfs=data.get("ssr_obfs"),
