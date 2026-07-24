@@ -8,7 +8,7 @@ import base64
 import json
 import re
 from typing import List, Optional, Dict, Any
-from urllib.parse import parse_qs, unquote
+from urllib.parse import parse_qs, unquote, urlparse, quote
 import logging
 
 from ..models.node import Node
@@ -60,7 +60,7 @@ class Parser:
             try:
                 json.loads(content)
                 return "singbox"
-            except:
+            except json.JSONDecodeError:
                 pass
 
         # 检测 Base64
@@ -77,7 +77,7 @@ class Parser:
             decoded = base64.b64decode(cleaned, validate=False).decode("utf-8")
             if any(proto in decoded for proto in ["vmess://", "vless://", "trojan://", "ss://"]):
                 return True
-        except:
+        except Exception:
             pass
         return False
 
@@ -367,9 +367,6 @@ class Parser:
     def _parse_vless_url(self, url: str) -> Optional[Node]:
         """解析 vless:// URL"""
         # vless://uuid@server:port?params#name
-        import re
-        from urllib.parse import urlparse
-
         parsed = urlparse(url)
         params = parse_qs(parsed.query)
 
@@ -398,8 +395,6 @@ class Parser:
 
     def _parse_trojan_url(self, url: str) -> Optional[Node]:
         """解析 trojan:// URL"""
-        from urllib.parse import urlparse
-
         parsed = urlparse(url)
         params = parse_qs(parsed.query)
 
@@ -419,8 +414,6 @@ class Parser:
 
     def _parse_ss_url(self, url: str) -> Optional[Node]:
         """解析 ss:// URL"""
-        import re
-        from urllib.parse import urlparse
 
         # 格式1: ss://BASE64(method:password)@server:port#name
         # 格式2: ss://method:password@server:port#name
@@ -444,7 +437,7 @@ class Parser:
                     padded = userinfo + "=" * (-len(userinfo) % 4)
                     decoded = base64.b64decode(padded).decode("utf-8")
                     cipher, password = decoded.split(":", 1)
-                except:
+                except Exception:
                     cipher, password = userinfo.split(":", 1)
 
                 # 解析服务器和端口
@@ -587,8 +580,6 @@ class Parser:
 
         格式: anytls://password@server:port?security=tls&sni=xxx&fp=chrome#name
         """
-        from urllib.parse import urlparse
-
         parsed = urlparse(url)
         params = parse_qs(parsed.query)
 

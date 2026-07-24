@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' api.github.com raw.githubusercontent.com;">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta name="referrer" content="no-referrer">
     <title>Aurora VPN Aggregator</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -487,17 +491,7 @@
                     if (data.channel_results) channelResults = data.channel_results;
                     if (data.tg_channels) embeddedTgChannels = data.tg_channels;
                     if (data.github_sources) embeddedGithubSources = data.github_sources;
-                    if (data.gh_token) {
-                        sessionStorage.setItem(GH_TOKEN_KEY, data.gh_token);
-                        document.getElementById('github-token').value = data.gh_token;
-                        const form = document.getElementById('add-source-form');
-                        if (form) {
-                            const hint = form.querySelector('.token-hint');
-                            if (hint) hint.style.display = 'none';
-                            const input = form.querySelector('.token-input-row');
-                            if (input) input.style.display = 'none';
-                        }
-                    }
+                    // GitHub Token 不再嵌入 stats.json, 需要用户手动输入
                     tokenResolve();
                 })
                 .catch(() => {
@@ -1006,13 +1000,25 @@
         // 认证 & 工具
         // ════════════════════════════════════════════
 
+        let _authAttempts = 0;
+        let _authLocked = false;
+
         window.authenticate = async function() {
+            if (_authLocked) return;
             const input = document.getElementById('token-input');
             const token = input.value.trim();
             if (!token) return;
+            _authAttempts++;
+            if (_authAttempts > 5) {
+                _authLocked = true;
+                document.getElementById('auth-error').textContent = '尝试次数过多，请30秒后再试';
+                document.getElementById('auth-error').style.display = 'block';
+                setTimeout(() => { _authLocked = false; _authAttempts = 0; document.getElementById('auth-error').style.display = 'none'; }, 30000);
+                return;
+            }
             const hash = await sha256(token);
-            if (hash === AUTH_HASH) { sessionStorage.setItem(TOKEN_KEY, token); showContent(token); }
-            else { document.getElementById('auth-error').style.display = 'block'; input.value = ''; setTimeout(() => { document.getElementById('auth-error').style.display = 'none'; }, 3000); }
+            if (hash === AUTH_HASH) { _authAttempts = 0; sessionStorage.setItem(TOKEN_KEY, token); showContent(token); }
+            else { document.getElementById('auth-error').textContent = '访问码错误'; document.getElementById('auth-error').style.display = 'block'; input.value = ''; setTimeout(() => { document.getElementById('auth-error').style.display = 'none'; }, 3000); }
         };
 
         document.getElementById('token-input').addEventListener('keydown', function(e) { if (e.key === 'Enter') window.authenticate(); });

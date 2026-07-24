@@ -41,7 +41,7 @@ def setup_logger(
 
     # 控制台处理器
     console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setLevel(logging.DEBUG)
+    console_handler.setLevel(getattr(logging, level.upper(), logging.INFO))
 
     if use_color:
         console_format = colorlog.ColoredFormatter(

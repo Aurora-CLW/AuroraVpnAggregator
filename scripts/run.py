@@ -6,12 +6,16 @@ Aurora VPN Aggregator 主入口
 import sys
 import asyncio
 import argparse
+import hashlib
+import json
 import logging
+import os
+import shutil
+from collections import Counter, defaultdict
 from datetime import datetime
 from pathlib import Path
 from typing import List
 import yaml
-import os
 
 # 添加项目根目录到 Python 路径
 project_root = Path(__file__).parent.parent
@@ -28,6 +32,24 @@ from src.utils.logger import setup_logger
 from src.utils.geoip import GeoIPLookup
 
 logger = logging.getLogger(__name__)
+
+
+def _redact_url(url: str) -> str:
+    """脱敏 URL 中的 token/password 参数值"""
+    import re
+    return re.sub(r'([?&](?:token|password|key|secret|auth)=)[^&"\']+',
+                  r'\1***', url)
+
+
+def _redact_sub_urls(data: dict):
+    """递归脱敏 dict 中的订阅 URL 列表"""
+    for key in ("sub_urls", "valid_sub_urls", "failed_sub_urls", "dead_sub_urls"):
+        if key in data and isinstance(data[key], list):
+            data[key] = [_redact_url(u) if isinstance(u, str) else u for u in data[key]]
+    if "channel_results" in data and isinstance(data["channel_results"], dict):
+        for name, result in data["channel_results"].items():
+            if isinstance(result, dict):
+                _redact_sub_urls(result)
 
 
 class AuroraAggregator:
@@ -220,7 +242,6 @@ class AuroraAggregator:
 
         # 按频道统计校验结果, 更新 channel_results
         if self.channel_results:
-            from collections import defaultdict
             ch_valid = defaultdict(int)
             ch_invalid = defaultdict(int)
             for node in tested_nodes:
@@ -264,7 +285,6 @@ class AuroraAggregator:
 
         # 保存频道抓取结果到 output (供 generate_only 模式恢复)
         if self.channel_results:
-            import json
             cr_path = Path(output_dir) / "channel_results.json"
             with open(cr_path, "w", encoding="utf-8") as f:
                 json.dump(self.channel_results, f, indent=2, ensure_ascii=False)
@@ -283,8 +303,6 @@ class AuroraAggregator:
 
     def _load_existing_nodes(self) -> List[Node]:
         """加载现有节点数据"""
-        import json
-
         nodes_file = Path("output/nodes.json")
         if not nodes_file.exists():
             logger.warning("节点数据文件不存在")
@@ -293,38 +311,8 @@ class AuroraAggregator:
         with open(nodes_file, "r", encoding="utf-8") as f:
             data = json.load(f)
 
-        nodes = []
-        for n in data.get("nodes", []):
-            node = Node(
-                name=n.get("name", "Unknown"),
-                type=n.get("type", "vmess"),
-                server=n.get("server", ""),
-                port=n.get("port", 443),
-                uuid=n.get("uuid"),
-                password=n.get("password"),
-                cipher=n.get("cipher"),
-                network=n.get("network"),
-                security=n.get("security"),
-                sni=n.get("sni"),
-                skip_cert_verify=n.get("skip_cert_verify", False),
-                ws_path=n.get("ws_path"),
-                ws_headers=n.get("ws_headers"),
-                grpc_service_name=n.get("grpc_service_name"),
-                reality_public_key=n.get("reality_public_key"),
-                reality_short_id=n.get("reality_short_id"),
-                fingerprint=n.get("fingerprint"),
-                hysteria2_password=n.get("hysteria2_password"),
-                flow=n.get("flow"),
-                alterId=n.get("alterId", 0),
-                country=n.get("country"),
-                source=n.get("source"),
-                latency=n.get("latency", 0),
-            )
-            node.is_valid = n.get("is_valid", False)
-            node.tcp_valid = n.get("tcp_valid", False)
-            nodes.append(node)
+        nodes = [Node.from_dict(n) for n in data.get("nodes", [])]
 
-        # 保留测试结果：is_valid=True 和 is_valid=False 的节点都保留
         valid = [n for n in nodes if n.is_valid]
         invalid = [n for n in nodes if not n.is_valid]
         if valid:
@@ -335,8 +323,6 @@ class AuroraAggregator:
 
     def _load_valid_pool(self) -> List[Node]:
         """加载有效节点池 (累积保留, 只有测试失败才移除)"""
-        import json
-
         pool_file = Path("output/valid_pool.json")
         if not pool_file.exists():
             logger.info("有效节点池不存在, 首次运行")
@@ -353,74 +339,20 @@ class AuroraAggregator:
             logger.warning(f"有效节点池 JSON 解析失败: {e}, 跳过")
             return []
 
-        nodes = []
-        for n in data.get("nodes", []):
-            node = Node(
-                name=n.get("name", "Unknown"),
-                type=n.get("type", "vmess"),
-                server=n.get("server", ""),
-                port=n.get("port", 443),
-                uuid=n.get("uuid"),
-                password=n.get("password"),
-                cipher=n.get("cipher"),
-                network=n.get("network"),
-                security=n.get("security"),
-                sni=n.get("sni"),
-                skip_cert_verify=n.get("skip_cert_verify", False),
-                ws_path=n.get("ws_path"),
-                ws_headers=n.get("ws_headers"),
-                grpc_service_name=n.get("grpc_service_name"),
-                reality_public_key=n.get("reality_public_key"),
-                reality_short_id=n.get("reality_short_id"),
-                fingerprint=n.get("fingerprint"),
-                hysteria2_password=n.get("hysteria2_password"),
-                flow=n.get("flow"),
-                alterId=n.get("alterId", 0),
-                country=n.get("country"),
-                source=n.get("source"),
-                latency=n.get("latency", 0),
-            )
-            node.is_valid = True  # 池中节点默认有效, 测试失败才移除
-            nodes.append(node)
+        nodes = [Node.from_dict(n) for n in data.get("nodes", [])]
+        # 池中节点默认有效, 测试失败才移除
+        for node in nodes:
+            node.is_valid = True
 
         logger.info(f"加载有效节点池: {len(nodes)} 个节点")
         return nodes
 
     def _save_valid_pool(self, valid_nodes: List[Node]):
         """保存有效节点池 (累积保留)"""
-        import json
-
         pool_file = Path("output/valid_pool.json")
         pool_file.parent.mkdir(parents=True, exist_ok=True)
 
-        nodes_data = []
-        for n in valid_nodes:
-            nodes_data.append({
-                "name": n.name,
-                "type": n.type,
-                "server": n.server,
-                "port": n.port,
-                "uuid": n.uuid,
-                "password": n.password,
-                "cipher": n.cipher,
-                "network": n.network,
-                "security": n.security,
-                "sni": n.sni,
-                "skip_cert_verify": n.skip_cert_verify,
-                "ws_path": n.ws_path,
-                "ws_headers": n.ws_headers,
-                "grpc_service_name": n.grpc_service_name,
-                "reality_public_key": n.reality_public_key,
-                "reality_short_id": n.reality_short_id,
-                "fingerprint": n.fingerprint,
-                "hysteria2_password": n.hysteria2_password,
-                "flow": n.flow,
-                "alterId": n.alterId,
-                "country": n.country,
-                "source": n.source,
-                "latency": n.latency,
-                "is_valid": True,
-            })
+        nodes_data = [n.to_dict() for n in valid_nodes]
 
         data = {
             "version": "1.0.0",
@@ -436,7 +368,6 @@ class AuroraAggregator:
 
     def _restore_channel_results(self):
         """从 output/channel_results.json 恢复频道抓取结果 (generate_only 模式使用)"""
-        import json
         cr_path = Path("output/channel_results.json")
         if cr_path.exists() and not self.channel_results:
             with open(cr_path, "r", encoding="utf-8") as f:
@@ -445,29 +376,32 @@ class AuroraAggregator:
 
     def _copy_to_docs(self, valid_nodes: List[Node], all_nodes: List[Node]):
         """复制输出到 docs 目录（安全混淆路径）"""
-        import shutil
-        import hashlib
-        import json
-
         docs_dir = Path("docs")
         docs_dir.mkdir(parents=True, exist_ok=True)
 
         output_dir = Path("output")
 
-        # 获取访问 token（从环境变量或配置）
+        # 获取访问 token — 环境变量优先, 配置值中 ${...} 模板语法不算有效
         access_token = os.environ.get("AURORA_TOKEN", "")
         if not access_token:
-            access_token = self.config.get("security", {}).get("token", "aurora2026")
+            config_token = self.config.get("security", {}).get("token", "")
+            if config_token and not config_token.startswith("${"):
+                access_token = config_token
+        if not access_token:
+            raise RuntimeError("AURORA_TOKEN 未配置。请设置环境变量 AURORA_TOKEN 或在 settings.yaml 中配置 security.token")
 
-        # 混淆路径: docs/s/{token}/
-        sub_dir = docs_dir / "s" / access_token
+        # 用 token 的 SHA-256 哈希前 16 位作为目录名, 避免 token 明文暴露在路径中
+        token_hash_dir = hashlib.sha256(access_token.encode()).hexdigest()[:16]
+
+        # 混淆路径: docs/s/{hash}/
+        sub_dir = docs_dir / "s" / token_hash_dir
         sub_dir.mkdir(parents=True, exist_ok=True)
 
-        # 清理旧的混淆目录（保留当前 token）
+        # 清理旧的混淆目录（保留当前 hash）
         s_dir = docs_dir / "s"
         if s_dir.exists():
             for d in s_dir.iterdir():
-                if d.is_dir() and d.name != access_token:
+                if d.is_dir() and d.name != token_hash_dir:
                     shutil.rmtree(d, ignore_errors=True)
 
         # 复制全部节点订阅 (主路径)
@@ -491,20 +425,22 @@ class AuroraAggregator:
         stats["tg_channels"] = self._load_tg_channel_config()
         stats["github_sources"] = self._load_github_source_config()
 
-        # 将 GitHub Token 嵌入受保护的 stats.json（已通过密码门保护）
-        gh_token = os.environ.get("AURORA_GH_TOKEN", "")
-        if not gh_token:
-            gh_token = self.config.get("security", {}).get("github_token", "")
-        if gh_token:
-            stats["gh_token"] = gh_token
-
+        # 写入前脱敏: 隐藏订阅 URL 中的 token 参数值
+        _redact_sub_urls(stats)
         with open(sub_dir / "stats.json", "w", encoding="utf-8") as f:
             json.dump(stats, f, indent=2, ensure_ascii=False)
 
-        # 生成频道抓取详情 (供 Web UI "查看最新" 使用)
+        # 生成频道抓取详情 (供 Web UI "查看最新" 使用) — 同样脱敏
         if self.channel_results:
+            redacted_results = {}
+            for name, result in self.channel_results.items():
+                redacted = dict(result)
+                for key in ("sub_urls", "valid_sub_urls", "failed_sub_urls", "dead_sub_urls"):
+                    if key in redacted:
+                        redacted[key] = [_redact_url(u) for u in redacted[key]]
+                redacted_results[name] = redacted
             with open(sub_dir / "channel_results.json", "w", encoding="utf-8") as f:
-                json.dump(self.channel_results, f, indent=2, ensure_ascii=False)
+                json.dump(redacted_results, f, indent=2, ensure_ascii=False)
         elif not (sub_dir / "channel_results.json").exists():
             # generate_only 模式下 channel_results 为空, 保留之前的结果
             pass
@@ -524,8 +460,6 @@ class AuroraAggregator:
 
     def _build_secured_index(self, docs_dir: Path, token: str):
         """生成带密码验证的 index.html"""
-        import hashlib
-
         # 计算 token 的 SHA-256 hash
         token_hash = hashlib.sha256(token.encode()).hexdigest()
 
@@ -540,7 +474,7 @@ class AuroraAggregator:
         content = content.replace("__AUTH_HASH_PLACEHOLDER__", token_hash)
 
         template_path.write_text(content, encoding="utf-8")
-        logger.info(f"已注入安全验证 (hash: {token_hash[:16]}...)")
+        logger.info("已注入安全验证")
 
     def _load_tg_channel_config(self) -> list:
         """加载 Telegram 频道配置 (嵌入 stats.json 供 Web UI 使用)"""
@@ -595,8 +529,6 @@ class AuroraAggregator:
 
     def _generate_stats(self, valid_nodes: List[Node], all_nodes: List[Node] = None) -> dict:
         """生成统计信息"""
-        from collections import Counter
-
         if all_nodes is None:
             all_nodes = valid_nodes
 

@@ -52,7 +52,7 @@ jobs:
         run: |
           mkdir -p data/cache
           curl -L -o data/cache/GeoLite2-City.mmdb \
-            "https://git.io/GeoLite2-City.mmdb" || true
+            "https://github.com/P3TERX/GeoLite2/raw/release/GeoLite2-City.mmdb" || true
         continue-on-error: true
 
       - name: Clean public docs
@@ -74,6 +74,7 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           AURORA_TOKEN: ${{ secrets.AURORA_TOKEN }}
           AURORA_GH_TOKEN: ${{ secrets.AURORA_GH_TOKEN }}
+          HF_TG_PARSER_KEY: ${{ secrets.HF_TG_PARSER_KEY }}
         run: python scripts/run.py --no-test
 
       - name: Test nodes with xray

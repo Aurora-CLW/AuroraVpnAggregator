@@ -11,7 +11,7 @@ from typing import List, Dict, Optional
 from datetime import datetime
 
 from ..models.node import Node
-from ..utils.network import check_tcp_port, measure_latency
+from ..utils.network import check_tcp_port_and_latency
 
 logger = logging.getLogger(__name__)
 
@@ -59,16 +59,18 @@ class NodeTester:
         return nodes
 
     async def _tcp_batch_test(self, nodes: List[Node]) -> List[Node]:
-        """批量 TCP 测试 + 延迟测量"""
+        """批量 TCP 测试 + 延迟测量 (单次连接同时完成)"""
         semaphore = asyncio.Semaphore(self.tcp_concurrent)
         valid_nodes = []
 
         async def test_with_semaphore(node: Node):
             async with semaphore:
-                is_valid = await check_tcp_port(node.server, node.port, self.tcp_timeout)
+                is_valid, latency = await check_tcp_port_and_latency(
+                    node.server, node.port, self.tcp_timeout
+                )
                 node.tcp_valid = is_valid
                 if is_valid:
-                    node.latency = await measure_latency(node.server, node.port, self.tcp_timeout)
+                    node.latency = latency
                 return node, is_valid
 
         tasks = [test_with_semaphore(node) for node in nodes]

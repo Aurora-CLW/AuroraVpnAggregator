@@ -71,3 +71,9 @@ Thumbs.db
 # No longer needed (GitHub Actions deployment)
 docs/.nojekyll
 .nojekyll
+
+# Generated subscription files (deployed by CI, not tracked)
+docs/s/
+
+# Dead URL cache
+data/cache/dead_sub_urls.json

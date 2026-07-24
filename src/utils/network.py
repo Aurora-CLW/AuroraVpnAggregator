@@ -9,6 +9,36 @@ from typing import Tuple, Optional
 from concurrent.futures import ThreadPoolExecutor
 
 
+async def check_tcp_port_and_latency(
+    host: str, port: int, timeout: int = 5
+) -> Tuple[bool, int]:
+    """
+    单次 TCP 连接同时检测可达性和测量延迟
+
+    Args:
+        host: 主机地址
+        port: 端口号
+        timeout: 超时时间（秒）
+
+    Returns:
+        (是否可达, 延迟毫秒) — 不可达时延迟为 0
+    """
+    def _check():
+        try:
+            start = time.time()
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(timeout)
+            result = sock.connect_ex((host, port))
+            latency = int((time.time() - start) * 1000)
+            sock.close()
+            return result == 0, latency
+        except Exception:
+            return False, 0
+
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(None, _check)
+
+
 async def check_tcp_port(host: str, port: int, timeout: int = 3) -> bool:
     """
     检查 TCP 端口是否可达

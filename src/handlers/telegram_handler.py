@@ -14,13 +14,17 @@ import asyncio
 import logging
 import os
 import re
-import xml.etree.ElementTree as ET
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
 from urllib.parse import urlparse, parse_qs
 
 import aiohttp
+
+try:
+    import defusedxml.ElementTree as ET
+except ImportError:
+    import xml.etree.ElementTree as ET  # fallback, 不推荐
 
 from .base import BaseHandler
 from ..models.node import Node
@@ -36,7 +40,7 @@ WEB_MIRRORS = ["https://telegram.dog/s/", "https://t.me/s/"]
 
 # HF Space TG Parser API — 可访问频道的完整消息历史 (CI/本地均可用)
 HF_TG_PARSER_BASE = "https://aurora0722-tg-parser-api.hf.space/tg/history"
-HF_TG_PARSER_KEY = "v1d30p4r5er"
+HF_TG_PARSER_KEY = os.environ.get("HF_TG_PARSER_KEY", "")
 
 # 订阅 URL 匹配 — 匹配 https:// 链接, 但排除尾部黏附的中文/标点
 SUB_URL_PATTERN = re.compile(r'https?://[^\s<>"\']+')
@@ -77,6 +81,7 @@ class TelegramHandler(BaseHandler):
         self.parser = Parser()
         self.client = None
         self.channel_results: Dict[str, dict] = {}  # {channel_name: {nodes, sub_urls, status, updated_at}}
+        self._dead_urls = self._load_dead_urls()
 
     async def fetch(self) -> List[Node]:
         if not self.enabled:
@@ -110,6 +115,7 @@ class TelegramHandler(BaseHandler):
         if len(unique_nodes) < len(all_nodes):
             logger.info(f"[{self.name}] 跨频道去重: {len(all_nodes)} → {len(unique_nodes)} 个节点")
 
+        self._save_dead_urls(self._dead_urls)
         return unique_nodes
 
     async def _fetch_channel(self, channel_config: dict) -> List[Node]:
@@ -330,7 +336,7 @@ class TelegramHandler(BaseHandler):
 
         # 永久失效的 URL (404/HTML) 自动加入排除列表, 下次跳过
         for url in sub_urls_dead:
-            self._DEAD_SUB_URLS.add(url)
+            self._dead_urls.add(url)
 
         self.mark_source(nodes, f"tg:{channel_name}")
         return nodes
@@ -409,91 +415,121 @@ class TelegramHandler(BaseHandler):
     async def _fetch_via_hf_api(self, session, username: str, channel_name: str) -> dict:
         """通过 HF Space TG Parser API 获取频道消息 (替代被屏蔽的 Web 镜像)
         自动跳过纯广告消息, 只保留含有效订阅/节点内容的消息。
+        分页请求, 确保每个频道至少收集到 min_valid 条有效消息。
         """
-        max_valid = 50  # 最多保留的有效消息数 (确保每频道至少30条有效消息)
-        api_limit = 100  # API 返回的消息数上限 (HF API 最大支持 100)
-        api_url = f"{HF_TG_PARSER_BASE}?channel={username}&limit={api_limit}&key={HF_TG_PARSER_KEY}"
-        logger.info(f"[{self.name}] 尝试 HF TG API: {api_url}")
-        try:
-            async with session.get(api_url, proxy=self.proxy, timeout=aiohttp.ClientTimeout(total=30)) as resp:
-                if resp.status != 200:
-                    logger.debug(f"HF TG API HTTP {resp.status} for {username}")
-                    return {"nodes": [], "sub_urls": [], "msg_links": []}
-                import json as _json
-                raw_text = await resp.text()
-                try:
-                    data = _json.loads(raw_text)
-                except _json.JSONDecodeError as e:
-                    logger.warning(f"[{self.name}] HF TG API JSON 解析失败 {username}: {e}")
-                    return {"nodes": [], "sub_urls": [], "msg_links": []}
-                if isinstance(data, dict):
-                    messages = data.get("messages", [])
-                elif isinstance(data, list):
-                    messages = data
-                else:
-                    return {"nodes": [], "sub_urls": [], "msg_links": []}
-                if not messages:
-                    return {"nodes": [], "sub_urls": [], "msg_links": []}
-                # 解析消息, 跳过广告和无用消息
-                # 有效消息 = 包含直接 VPN 节点链接的消息
-                # 订阅链接仍收集, 但不算"有效消息" (订阅链接可能无效/获取不到节点)
-                all_nodes = []
-                all_sub_urls: List[dict] = []
-                all_msg_links: List[str] = []
-                all_doc_ids: List[dict] = []
-                valid_count = 0
-                for msg in messages:
-                    text = msg.get("text", "") if isinstance(msg, dict) else str(msg)
-                    # 检测文档附件 (节点文件, 只收集文本格式)
-                    media = msg.get("media") if isinstance(msg, dict) else None
-                    if media and isinstance(media, dict) and media.get("type") == "document":
-                        file_id = media.get("id")
-                        filename = media.get("filename", "")
-                        if file_id and filename:
-                            text_exts = (".txt", ".yaml", ".yml", ".json", ".base64", ".conf", ".list")
-                            if any(filename.lower().endswith(ext) for ext in text_exts):
-                                all_doc_ids.append({"file_id": file_id, "filename": filename})
-                    if not text and not media:
-                        continue
-                    nodes = self._extract_nodes_from_text(text) if text else []
-                    sub_urls = self._extract_sub_urls(text) if text else []
-                    msg_links = self._extract_msg_links(text) if text else []
-                    # 完全无内容的消息跳过 (广告/纯文字, 无文档)
-                    if not nodes and not sub_urls and not msg_links and not media:
-                        continue
-                    all_nodes.extend(nodes)
-                    all_sub_urls.extend(sub_urls)
-                    all_msg_links.extend(msg_links)
-                    # 只有包含直接 VPN 节点的消息才算"有效消息"
-                    # 订阅链接不算 (可能无效或获取不到节点)
-                    if nodes:
-                        valid_count += 1
-                        if valid_count >= max_valid:
-                            break
-                # 下载文档附件中的节点
-                if all_doc_ids:
-                    doc_nodes = await self._download_telegram_docs(session, all_doc_ids)
-                    if doc_nodes:
-                        logger.info(f"[{self.name}] {channel_name}: 从 {len(all_doc_ids)} 个文档中获取 {len(doc_nodes)} 个节点")
-                        all_nodes.extend(doc_nodes)
-                # 去重
-                seen = set()
-                unique_subs: List[dict] = []
-                for u in all_sub_urls:
-                    if u["url"] not in seen:
-                        seen.add(u["url"])
-                        unique_subs.append(u)
-                seen_links = set()
-                unique_msgs = []
-                for l in all_msg_links:
-                    if l not in seen_links:
-                        seen_links.add(l)
-                        unique_msgs.append(l)
-                logger.info(f"[{self.name}] HF TG API {channel_name}: {len(messages)} 条消息, {valid_count} 条有效, {len(all_nodes)} 节点, {len(unique_subs)} 订阅链接")
-                return {"nodes": all_nodes, "sub_urls": unique_subs, "msg_links": unique_msgs}
-        except Exception as e:
-            logger.debug(f"HF TG API 失败 {username}: {e}")
+        if not HF_TG_PARSER_KEY:
             return {"nodes": [], "sub_urls": [], "msg_links": []}
+        min_valid = 50   # 目标: 至少 50 条有效消息
+        page_size = 100  # 每页最多 100 条 (HF API 限制)
+        max_pages = 5    # 最多翻 5 页 (500 条消息)
+        logger.info(f"[{self.name}] 尝试 HF TG API: channel={username} (目标 {min_valid} 条有效消息)")
+
+        all_nodes = []
+        all_sub_urls: List[dict] = []
+        all_msg_links: List[str] = []
+        all_doc_ids: List[dict] = []
+        valid_count = 0
+        seen_msg_ids = set()
+
+        for page in range(max_pages):
+            # 计算偏移: 第二页起用 offset 参数
+            offset = page * page_size
+            params = f"channel={username}&limit={page_size}&key={HF_TG_PARSER_KEY}"
+            if offset > 0:
+                params += f"&offset={offset}"
+            real_url = f"{HF_TG_PARSER_BASE}?{params}"
+
+            try:
+                async with session.get(real_url, proxy=self.proxy, timeout=aiohttp.ClientTimeout(total=30)) as resp:
+                    if resp.status != 200:
+                        logger.debug(f"HF TG API HTTP {resp.status} for {username} page {page+1}")
+                        break
+                    import json as _json
+                    raw_text = await resp.text()
+                    try:
+                        data = _json.loads(raw_text)
+                    except _json.JSONDecodeError:
+                        break
+                    if isinstance(data, dict):
+                        messages = data.get("messages", [])
+                    elif isinstance(data, list):
+                        messages = data
+                    else:
+                        break
+                    if not messages:
+                        break
+            except Exception as e:
+                logger.debug(f"HF TG API 失败 {username} page {page+1}: {e}")
+                break
+
+            # 解析本页消息
+            page_nodes = 0
+            page_valid = 0
+            for msg in messages:
+                # 去重: 跳过已处理的消息
+                msg_id = msg.get("id") if isinstance(msg, dict) else None
+                if msg_id and msg_id in seen_msg_ids:
+                    continue
+                if msg_id:
+                    seen_msg_ids.add(msg_id)
+
+                text = msg.get("text", "") if isinstance(msg, dict) else str(msg)
+                # 检测文档附件 (节点文件, 只收集文本格式)
+                media = msg.get("media") if isinstance(msg, dict) else None
+                if media and isinstance(media, dict) and media.get("type") == "document":
+                    file_id = media.get("id")
+                    filename = media.get("filename", "")
+                    if file_id and filename:
+                        text_exts = (".txt", ".yaml", ".yml", ".json", ".base64", ".conf", ".list")
+                        if any(filename.lower().endswith(ext) for ext in text_exts):
+                            all_doc_ids.append({"file_id": file_id, "filename": filename})
+                if not text and not media:
+                    continue
+                nodes = self._extract_nodes_from_text(text) if text else []
+                sub_urls = self._extract_sub_urls(text) if text else []
+                msg_links = self._extract_msg_links(text) if text else []
+                # 完全无内容的消息跳过 (广告/纯文字, 无文档)
+                if not nodes and not sub_urls and not msg_links and not media:
+                    continue
+                all_nodes.extend(nodes)
+                all_sub_urls.extend(sub_urls)
+                all_msg_links.extend(msg_links)
+                page_nodes += len(nodes)
+                # 有效消息 = 包含直接节点 或 包含订阅链接
+                if nodes or sub_urls:
+                    valid_count += 1
+                    page_valid += 1
+
+            logger.info(f"[{self.name}] HF TG API {channel_name} page {page+1}: {len(messages)} 条消息, {page_valid} 条有效, {page_nodes} 个节点")
+
+            # 已达到目标有效消息数, 停止翻页
+            if valid_count >= min_valid:
+                break
+            # 本页无有效消息且已翻过至少 2 页, 停止
+            if page_valid == 0 and page >= 1:
+                break
+
+        # 下载文档附件中的节点
+        if all_doc_ids:
+            doc_nodes = await self._download_telegram_docs(session, all_doc_ids)
+            if doc_nodes:
+                logger.info(f"[{self.name}] {channel_name}: 从 {len(all_doc_ids)} 个文档中获取 {len(doc_nodes)} 个节点")
+                all_nodes.extend(doc_nodes)
+        # 去重
+        seen = set()
+        unique_subs: List[dict] = []
+        for u in all_sub_urls:
+            if u["url"] not in seen:
+                seen.add(u["url"])
+                unique_subs.append(u)
+        seen_links = set()
+        unique_msgs = []
+        for l in all_msg_links:
+            if l not in seen_links:
+                seen_links.add(l)
+                unique_msgs.append(l)
+        logger.info(f"[{self.name}] HF TG API {channel_name}: 共 {valid_count} 条有效消息, {len(all_nodes)} 节点, {len(unique_subs)} 订阅链接")
+        return {"nodes": all_nodes, "sub_urls": unique_subs, "msg_links": unique_msgs}
 
     async def _download_telegram_docs(self, session, doc_ids: List[dict]) -> List:
         """通过 Telegram Bot API 下载文档附件并解析节点
@@ -532,6 +568,10 @@ class TelegramHandler(BaseHandler):
                         logger.debug(f"getFile 返回失败: {result}")
                         continue
                     file_path = result["result"]["file_path"]
+                    # 验证 file_path 不含路径穿越
+                    if ".." in file_path or file_path.startswith("/"):
+                        logger.debug(f"file_path 可疑, 跳过: {file_path}")
+                        continue
                 # Step 2: 下载文件内容
                 dl_url = f"https://api.telegram.org/file/bot{bot_token}/{file_path}"
                 async with session.get(dl_url, proxy=self.proxy, timeout=aiohttp.ClientTimeout(total=30)) as resp:
@@ -554,6 +594,8 @@ class TelegramHandler(BaseHandler):
 
     async def _fetch_msg_via_hf_api(self, session, username: str, msg_id: str) -> Optional[dict]:
         """通过 HF Space TG Parser API 获取单条消息 (替代 Web 抓取消息链接)"""
+        if not HF_TG_PARSER_KEY:
+            return None
         api_url = f"https://aurora0722-tg-parser-api.hf.space/tg/message?channel={username}&msg_id={msg_id}&key={HF_TG_PARSER_KEY}"
         try:
             async with session.get(api_url, proxy=self.proxy, timeout=aiohttp.ClientTimeout(total=15)) as resp:
@@ -574,6 +616,8 @@ class TelegramHandler(BaseHandler):
 
     async def _extract_v2clash_date(self, session, username: str) -> Optional[List[str]]:
         """从频道最新消息中提取 v2clash.blog 日期, 返回 YYYYMMDD 格式列表 (最新2个)"""
+        if not HF_TG_PARSER_KEY:
+            return None
         api_url = f"{HF_TG_PARSER_BASE}?channel={username}&limit=10&key={HF_TG_PARSER_KEY}"
         try:
             async with session.get(api_url, proxy=self.proxy, timeout=aiohttp.ClientTimeout(total=15)) as resp:
@@ -631,6 +675,11 @@ class TelegramHandler(BaseHandler):
                 for href in re.findall(r'href=["\']([^"\'\s]+)["\']', text):
                     if self._TG_MSG_LINK_PATTERN.match(href):
                         msg_links.append(href)
+                    # 协议节点链接 (vmess://, vless://, trojan://, ss:// 等)
+                    elif any(href.startswith(proto) for proto in ("vmess://", "vless://", "trojan://", "ss://", "ssr://", "hysteria2://", "hy2://", "anytls://")):
+                        href_nodes = self._extract_nodes_from_text(href)
+                        if href_nodes:
+                            nodes.extend(href_nodes)
                     else:
                         href_item = self._clean_sub_url(href)
                         if href_item:
@@ -706,6 +755,11 @@ class TelegramHandler(BaseHandler):
             # t.me 消息链接
             if self._TG_MSG_LINK_PATTERN.match(href):
                 msg_links.append(href)
+            # 协议节点链接 (vmess://, vless://, trojan://, ss:// 等)
+            elif any(href.startswith(proto) for proto in ("vmess://", "vless://", "trojan://", "ss://", "ssr://", "hysteria2://", "hy2://", "anytls://")):
+                href_nodes = self._extract_nodes_from_text(href)
+                if href_nodes:
+                    nodes.extend(href_nodes)
             else:
                 item = self._clean_sub_url(href)
                 if item:
@@ -886,10 +940,31 @@ class TelegramHandler(BaseHandler):
         """从文本中提取 Telegram 频道内消息链接 (t.me/channel/12345)"""
         return [m.group(0) for m in self._TG_MSG_LINK_PATTERN.finditer(text)]
 
-    # 持续无节点的订阅 URL (直接跳过, 不再 fetch)
-    _DEAD_SUB_URLS: set = {
-        "https://go4sharing.github.io",
-    }
+    # 死链接缓存文件
+    _DEAD_URLS_FILE = Path("data/cache/dead_sub_urls.json")
+
+    def _load_dead_urls(self) -> set:
+        """从文件加载已知死链接"""
+        default = {"https://go4sharing.github.io"}
+        if not self._DEAD_URLS_FILE.exists():
+            return default
+        try:
+            import json as _json
+            with open(self._DEAD_URLS_FILE, "r", encoding="utf-8") as f:
+                saved = _json.load(f)
+            return default | set(saved)
+        except Exception:
+            return default
+
+    def _save_dead_urls(self, dead_urls: set):
+        """持久化死链接到文件"""
+        try:
+            import json as _json
+            self._DEAD_URLS_FILE.parent.mkdir(parents=True, exist_ok=True)
+            with open(self._DEAD_URLS_FILE, "w", encoding="utf-8") as f:
+                _json.dump(sorted(dead_urls), f, indent=2)
+        except Exception:
+            pass
 
     async def _fetch_sub_urls(
         self,
@@ -915,7 +990,7 @@ class TelegramHandler(BaseHandler):
         for item in sub_urls[:max_sub]:
             url = item["url"] if isinstance(item, dict) else item
             # 跳过已知死链接
-            if url in self._DEAD_SUB_URLS:
+            if url in self._dead_urls:
                 logger.debug(f"订阅链接在排除列表中, 跳过: {url}")
                 dead_urls.append(url)
                 continue

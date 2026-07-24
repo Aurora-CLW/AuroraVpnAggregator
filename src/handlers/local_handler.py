@@ -52,6 +52,13 @@ class LocalHandler(BaseHandler):
                 project_root = Path(__file__).parent.parent.parent
                 file_path = project_root / self.path
 
+            # 路径穿越防护: 确保解析后的路径在项目根目录内
+            resolved = file_path.resolve()
+            project_root_resolved = Path(__file__).parent.parent.parent.resolve()
+            if not str(resolved).startswith(str(project_root_resolved)):
+                logger.error(f"[{self.name}] 路径穿越拒绝: {resolved}")
+                return None
+
             if not file_path.exists():
                 logger.warning(f"[{self.name}] 文件不存在: {file_path}")
                 return None

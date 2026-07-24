@@ -6,6 +6,7 @@
 
 import asyncio
 import json
+import shutil
 import subprocess
 import tempfile
 import time
@@ -187,8 +188,24 @@ def _node_to_xray_outbound(node: Node) -> Optional[dict]:
     return outbound
 
 
+async def _wait_for_socks_port(port: int, max_wait: float = 3.0) -> bool:
+    """轮询等待 xray SOCKS 端口就绪，替代硬编码 sleep"""
+    start = time.time()
+    while time.time() - start < max_wait:
+        try:
+            reader, writer = await asyncio.wait_for(
+                asyncio.open_connection("127.0.0.1", port), timeout=0.3
+            )
+            writer.close()
+            await writer.wait_closed()
+            return True
+        except (ConnectionRefusedError, asyncio.TimeoutError, OSError):
+            await asyncio.sleep(0.1)
+    return False
+
+
 async def test_node_with_xray(
-    node: Node, xray_bin: str, socks_port: int, timeout: int = 5
+    node: Node, xray_bin: str, socks_port: int, timeout: int = 10
 ) -> bool:
     """用 xray 测试单个节点"""
     config = build_xray_config(node, socks_port)
@@ -202,6 +219,7 @@ async def test_node_with_xray(
         config_path = f.name
 
     process = None
+    curl_proc = None
     try:
         process = subprocess.Popen(
             [xray_bin, "run", "-c", config_path],
@@ -209,14 +227,15 @@ async def test_node_with_xray(
             stderr=subprocess.PIPE,
         )
 
-        await asyncio.sleep(1.0)
+        if not await _wait_for_socks_port(socks_port):
+            return False
 
         if process.poll() is not None:
             return False
 
         start = time.time()
         try:
-            proc = await asyncio.create_subprocess_exec(
+            curl_proc = await asyncio.create_subprocess_exec(
                 "curl", "-s", "-o", "/dev/null", "-w", "%{http_code}",
                 "--max-time", str(timeout),
                 "--socks5-hostname", f"127.0.0.1:{socks_port}",
@@ -224,7 +243,7 @@ async def test_node_with_xray(
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.DEVNULL,
             )
-            stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=timeout + 2)
+            stdout, _ = await asyncio.wait_for(curl_proc.communicate(), timeout=timeout + 2)
             elapsed = int((time.time() - start) * 1000)
 
             status = stdout.decode().strip() if stdout else ""
@@ -240,6 +259,8 @@ async def test_node_with_xray(
         return False
 
     finally:
+        if curl_proc and curl_proc.returncode is None:
+            curl_proc.terminate()
         if process and process.poll() is None:
             process.terminate()
             try:
@@ -247,7 +268,7 @@ async def test_node_with_xray(
             except subprocess.TimeoutExpired:
                 process.kill()
                 process.wait(timeout=1)
-        await asyncio.sleep(0.1)
+        await asyncio.sleep(0.05)
         try:
             os.unlink(config_path)
         except OSError:
@@ -255,7 +276,7 @@ async def test_node_with_xray(
 
 
 async def test_nodes_batch(
-    nodes: List[Node], xray_bin: str, concurrent: int = 20, timeout: int = 5
+    nodes: List[Node], xray_bin: str, concurrent: int = 50, timeout: int = 10
 ) -> List[Node]:
     """批量测试节点（并发执行，每个节点独占端口）"""
     # 先过滤可测试的节点
@@ -273,17 +294,18 @@ async def test_nodes_batch(
     valid_nodes = []
     tested = 0
     base_port = 20000
+    max_port = 65535
     semaphore = asyncio.Semaphore(concurrent)
 
     async def _test_one(idx: int, node: Node):
         nonlocal tested
-        port = base_port + idx
+        port = base_port + (idx % (max_port - base_port + 1))
         async with semaphore:
             is_valid = await test_node_with_xray(node, xray_bin, port, timeout)
             tested += 1
             if is_valid:
                 valid_nodes.append(node)
-            if tested % 50 == 0:
+            if tested % max(concurrent, 50) == 0:
                 print(f"  已测试 {tested}/{len(testable)}, 有效 {len(valid_nodes)}")
 
     tasks = [_test_one(i, n) for i, n in enumerate(testable)]
@@ -295,32 +317,7 @@ async def test_nodes_batch(
 
 def node_to_dict(n: Node) -> dict:
     """将节点转换为完整字典（保留所有协议参数）"""
-    return {
-        "name": n.name,
-        "type": n.type,
-        "server": n.server,
-        "port": n.port,
-        "country": n.country,
-        "latency": n.latency,
-        "is_valid": n.is_valid,
-        "source": n.source,
-        "uuid": n.uuid,
-        "password": n.password,
-        "cipher": n.cipher,
-        "network": n.network,
-        "security": n.security,
-        "sni": n.sni,
-        "skip_cert_verify": n.skip_cert_verify,
-        "ws_path": n.ws_path,
-        "ws_headers": n.ws_headers,
-        "grpc_service_name": n.grpc_service_name,
-        "reality_public_key": n.reality_public_key,
-        "reality_short_id": n.reality_short_id,
-        "fingerprint": n.fingerprint,
-        "hysteria2_password": n.hysteria2_password,
-        "flow": n.flow,
-        "alterId": n.alterId,
-    }
+    return n.to_dict()
 
 
 async def main():
@@ -330,6 +327,10 @@ async def main():
         sys.exit(1)
 
     print(f"使用 xray: {xray_bin}")
+
+    if not shutil.which("curl"):
+        print("错误: 未找到 curl，跳过代理测试")
+        sys.exit(1)
 
     nodes_file = Path("output/nodes.json")
     if not nodes_file.exists():
@@ -342,35 +343,7 @@ async def main():
     raw_nodes = data.get("nodes", [])
     print(f"加载 {len(raw_nodes)} 个节点待测试")
 
-    nodes = []
-    for n in raw_nodes:
-        node = Node(
-            name=n.get("name", "Unknown"),
-            type=n.get("type", "vmess"),
-            server=n.get("server", ""),
-            port=n.get("port", 443),
-            uuid=n.get("uuid"),
-            password=n.get("password"),
-            cipher=n.get("cipher"),
-            network=n.get("network"),
-            security=n.get("security"),
-            sni=n.get("sni"),
-            skip_cert_verify=n.get("skip_cert_verify", False),
-            ws_path=n.get("ws_path"),
-            ws_headers=n.get("ws_headers"),
-            grpc_service_name=n.get("grpc_service_name"),
-            reality_public_key=n.get("reality_public_key"),
-            reality_short_id=n.get("reality_short_id"),
-            fingerprint=n.get("fingerprint"),
-            hysteria2_password=n.get("hysteria2_password"),
-            flow=n.get("flow"),
-            alterId=n.get("alterId", 0),
-            country=n.get("country"),
-            source=n.get("source"),
-            latency=n.get("latency", 0),
-        )
-        node.is_valid = n.get("is_valid", False)
-        nodes.append(node)
+    nodes = [Node.from_dict(n) for n in raw_nodes]
 
     # 按类型统计
     from collections import Counter
@@ -378,7 +351,7 @@ async def main():
     print(f"类型分布: {dict(type_counts)}")
 
     # 并发测试所有节点
-    valid_nodes = await test_nodes_batch(nodes, xray_bin, concurrent=20, timeout=5)
+    valid_nodes = await test_nodes_batch(nodes, xray_bin, concurrent=50, timeout=10)
 
     print(f"\n测试完成: {len(valid_nodes)}/{len(nodes)} 有效")
 

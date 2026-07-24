@@ -5,6 +5,8 @@
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Optional, List, Dict
+from urllib.parse import quote
+import base64
 import hashlib
 
 
@@ -74,9 +76,6 @@ class Node:
 
     # 节点生命周期跟踪
     missing_runs: int = 0  # 连续未在抓取中出现的轮次数
-    ssr_protocol_param: Optional[str] = None
-    ssr_obfs: Optional[str] = None
-    ssr_obfs_param: Optional[str] = None
 
     # 元信息
     country: Optional[str] = None  # 自动识别的国家代码
@@ -129,7 +128,7 @@ class Node:
             key_parts.append(self.ws_path)
 
         key = ":".join(key_parts)
-        return hashlib.md5(key.encode()).hexdigest()
+        return hashlib.sha256(key.encode()).hexdigest()
 
     def to_clash(self) -> dict:
         """转换为 Clash 代理格式"""
@@ -255,9 +254,6 @@ class Node:
 
     def to_v2ray_url(self) -> str:
         """转换为 V2Ray URL 格式"""
-        import base64
-        from urllib.parse import urlencode, quote
-
         if self.type == "ss":
             # ss://BASE64(method:password)@server:port#name
             userinfo = base64.b64encode(
@@ -396,6 +392,69 @@ class Node:
             }
 
         return outbound
+
+    # 序列化字段列表 (所有协议参数 + 元信息 + 测试结果)
+    _SERIALIZE_FIELDS = [
+        "name", "type", "server", "port",
+        "uuid", "password", "cipher", "network", "security",
+        "sni", "skip_cert_verify", "ws_path", "ws_headers",
+        "grpc_service_name", "http_path", "http_host",
+        "reality_public_key", "reality_short_id", "fingerprint",
+        "hysteria2_password", "hysteria2_obfs",
+        "hysteria2_up_mbps", "hysteria2_down_mbps",
+        "flow", "alterId",
+        "ssr_protocol", "ssr_protocol_param", "ssr_obfs", "ssr_obfs_param",
+        "country", "source", "latency", "speed",
+        "tcp_valid", "is_valid", "node_fingerprint",
+    ]
+
+    def to_dict(self) -> dict:
+        """统一序列化为 dict (不含敏感字段 raw_url)"""
+        return {f: getattr(self, f) for f in self._SERIALIZE_FIELDS}
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "Node":
+        """统一反序列化从 dict 创建 Node"""
+        node = cls(
+            name=data.get("name", "Unknown"),
+            type=data.get("type", "vmess"),
+            server=data.get("server", ""),
+            port=data.get("port", 443),
+            uuid=data.get("uuid"),
+            password=data.get("password"),
+            cipher=data.get("cipher"),
+            network=data.get("network"),
+            security=data.get("security"),
+            sni=data.get("sni"),
+            skip_cert_verify=data.get("skip_cert_verify", False),
+            ws_path=data.get("ws_path"),
+            ws_headers=data.get("ws_headers"),
+            grpc_service_name=data.get("grpc_service_name"),
+            http_path=data.get("http_path"),
+            http_host=data.get("http_host"),
+            reality_public_key=data.get("reality_public_key"),
+            reality_short_id=data.get("reality_short_id"),
+            fingerprint=data.get("fingerprint"),
+            hysteria2_password=data.get("hysteria2_password"),
+            hysteria2_obfs=data.get("hysteria2_obfs"),
+            hysteria2_up_mbps=data.get("hysteria2_up_mbps"),
+            hysteria2_down_mbps=data.get("hysteria2_down_mbps"),
+            flow=data.get("flow"),
+            alterId=data.get("alterId", 0),
+            ssr_protocol=data.get("ssr_protocol"),
+            ssr_protocol_param=data.get("ssr_protocol_param"),
+            ssr_obfs=data.get("ssr_obfs"),
+            ssr_obfs_param=data.get("ssr_obfs_param"),
+            country=data.get("country"),
+            source=data.get("source"),
+            latency=data.get("latency", 0),
+            speed=data.get("speed", 0.0),
+        )
+        node.tcp_valid = data.get("tcp_valid", False)
+        node.is_valid = data.get("is_valid", False)
+        node.node_fingerprint = data.get("node_fingerprint", node.node_fingerprint)
+        node.raw_url = data.get("raw_url")
+        return node
 
     def __repr__(self):
         return f"<Node {self.name} ({self.type}) {self.server}:{self.port}>"

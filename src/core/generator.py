@@ -255,36 +255,7 @@ class Generator:
             "version": "1.0.0",
             "updated_at": datetime.now().isoformat(),
             "total": len(nodes),
-            "nodes": [
-                {
-                    "name": n.name,
-                    "type": n.type,
-                    "server": n.server,
-                    "port": n.port,
-                    "country": n.country,
-                    "latency": n.latency,
-                    "tcp_valid": n.tcp_valid,
-                    "is_valid": n.is_valid,
-                    "source": n.source,
-                    "uuid": n.uuid,
-                    "password": n.password,
-                    "cipher": n.cipher,
-                    "network": n.network,
-                    "security": n.security,
-                    "sni": n.sni,
-                    "skip_cert_verify": n.skip_cert_verify,
-                    "ws_path": n.ws_path,
-                    "ws_headers": n.ws_headers,
-                    "grpc_service_name": n.grpc_service_name,
-                    "reality_public_key": n.reality_public_key,
-                    "reality_short_id": n.reality_short_id,
-                    "fingerprint": n.fingerprint,
-                    "hysteria2_password": n.hysteria2_password,
-                    "flow": n.flow,
-                    "alterId": n.alterId,
-                }
-                for n in nodes
-            ],
+            "nodes": [n.to_dict() for n in nodes],
         }
         return json.dumps(data, indent=2, ensure_ascii=False)
 
