@@ -207,7 +207,7 @@ async def _wait_for_socks_port(port: int, max_wait: float = 3.0) -> bool:
 async def test_node_with_xray(
     node: Node, xray_bin: str, socks_port: int, timeout: int = 10
 ) -> bool:
-    """用 xray 测试单个节点"""
+    """用 xray 测试单个节点: cloudflare trace 测延迟, proof.ovh 测速度"""
     config = build_xray_config(node, socks_port)
     if not config:
         return False
@@ -219,7 +219,6 @@ async def test_node_with_xray(
         config_path = f.name
 
     process = None
-    curl_proc = None
     try:
         process = subprocess.Popen(
             [xray_bin, "run", "-c", config_path],
@@ -233,34 +232,24 @@ async def test_node_with_xray(
         if process.poll() is not None:
             return False
 
-        start = time.time()
-        try:
-            curl_proc = await asyncio.create_subprocess_exec(
-                "curl", "-s", "-o", "/dev/null", "-w", "%{http_code}",
-                "--max-time", str(timeout),
-                "--socks5-hostname", f"127.0.0.1:{socks_port}",
-                "http://www.gstatic.com/generate_204",
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.DEVNULL,
-            )
-            stdout, _ = await asyncio.wait_for(curl_proc.communicate(), timeout=timeout + 2)
-            elapsed = int((time.time() - start) * 1000)
+        proxy = f"127.0.0.1:{socks_port}"
 
-            status = stdout.decode().strip() if stdout else ""
+        # Step 1: cloudflare trace 测延迟
+        latency = await _measure_latency(proxy, timeout)
+        if latency is None:
+            return False
 
-            if status in ("200", "204", "301", "302"):
-                node.latency = elapsed
-                node.is_valid = True
-                return True
+        node.latency = latency
+        node.is_valid = True
 
-        except (asyncio.TimeoutError, Exception):
-            pass
+        # Step 2: proof.ovh 100Mb 文件测下载速度
+        speed = await _measure_speed(proxy, timeout=15)
+        if speed is not None:
+            node.speed = speed
 
-        return False
+        return True
 
     finally:
-        if curl_proc and curl_proc.returncode is None:
-            curl_proc.terminate()
         if process and process.poll() is None:
             process.terminate()
             try:
@@ -273,6 +262,55 @@ async def test_node_with_xray(
             os.unlink(config_path)
         except OSError:
             pass
+
+
+async def _measure_latency(proxy: str, timeout: int) -> Optional[int]:
+    """通过 cloudflare trace 测延迟 (ms)"""
+    try:
+        start = time.time()
+        proc = await asyncio.create_subprocess_exec(
+            "curl", "-s", "-o", "/dev/null", "-w", "%{http_code}",
+            "--max-time", str(timeout),
+            "--socks5-hostname", proxy,
+            "http://www.cloudflare.com/cdn-cgi/trace",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.DEVNULL,
+        )
+        stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=timeout + 2)
+        elapsed = int((time.time() - start) * 1000)
+        status = stdout.decode().strip() if stdout else ""
+        if status in ("200", "204", "301", "302"):
+            return elapsed
+    except (asyncio.TimeoutError, Exception):
+        pass
+    return None
+
+
+async def _measure_speed(proxy: str, timeout: int = 15) -> Optional[float]:
+    """通过下载 proof.ovh 100Mb 文件测速度 (MB/s)"""
+    try:
+        start = time.time()
+        proc = await asyncio.create_subprocess_exec(
+            "curl", "-s", "-o", "/dev/null", "-w", "%{size_download} %{http_code}",
+            "--max-time", str(timeout),
+            "--socks5-hostname", proxy,
+            "https://proof.ovh.net/files/100Mb.dat",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.DEVNULL,
+        )
+        stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=timeout + 2)
+        elapsed = time.time() - start
+        if elapsed <= 0:
+            return None
+        output = stdout.decode().strip() if stdout else ""
+        parts = output.rsplit(" ", 1)
+        if len(parts) == 2 and parts[1] in ("200", "206"):
+            size_bytes = int(parts[0])
+            speed_mbs = size_bytes / elapsed / 1024 / 1024
+            return round(speed_mbs, 1)
+    except (asyncio.TimeoutError, Exception):
+        pass
+    return None
 
 
 async def test_nodes_batch(
@@ -351,7 +389,7 @@ async def main():
     print(f"类型分布: {dict(type_counts)}")
 
     # 并发测试所有节点
-    valid_nodes = await test_nodes_batch(nodes, xray_bin, concurrent=50, timeout=10)
+    valid_nodes = await test_nodes_batch(nodes, xray_bin, concurrent=30, timeout=10)
 
     print(f"\n测试完成: {len(valid_nodes)}/{len(nodes)} 有效")
 
