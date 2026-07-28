@@ -52,7 +52,15 @@ jobs:
         run: |
           mkdir -p data/cache
           curl -L -o data/cache/GeoLite2-City.mmdb \
-            "https://github.com/P3TERX/GeoLite2/raw/release/GeoLite2-City.mmdb" || true
+            "https://github.com/P3TERX/GeoLite2/releases/download/release/GeoLite2-City.mmdb" || true
+          # 验证文件大小 (正常 >50MB, LFS 指针 <1MB)
+          SIZE=$(stat -c%s data/cache/GeoLite2-City.mmdb 2>/dev/null || echo 0)
+          if [ "$SIZE" -lt 10485760 ]; then
+            echo "警告: GeoLite2-City.mmdb 只有 ${SIZE} 字节 (<10MB), 可能是 LFS 指针, 删除"
+            rm -f data/cache/GeoLite2-City.mmdb
+          else
+            echo "GeoIP 数据库: $SIZE 字节"
+          fi
         continue-on-error: true
 
       - name: Clean public docs
