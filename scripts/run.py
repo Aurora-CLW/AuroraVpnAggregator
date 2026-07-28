@@ -146,7 +146,7 @@ class AuroraAggregator:
         return all_nodes
 
     def enrich_nodes(self, nodes: List[Node]) -> List[Node]:
-        """丰富节点信息（地理位置等）"""
+        """丰富节点信息（地理位置等）— 使用批量查询优化"""
         if not self.config.get("geoip", {}).get("enabled", True):
             return nodes
 
@@ -154,9 +154,20 @@ class AuroraAggregator:
             self.geoip = GeoIPLookup()
             logger.info("开始识别节点地理位置...")
 
+            # 收集所有唯一 IP
+            unique_ips = list({n.server for n in nodes if n.server})
+            logger.info(f"共 {len(unique_ips)} 个唯一 IP 待查询")
+
+            # 批量查询
+            geo_map = self.geoip.batch_lookup(unique_ips)
+
+            # 应用结果
+            resolved = sum(1 for v in geo_map.values() if v.get("country"))
+            logger.info(f"GeoIP 解析: {resolved}/{len(unique_ips)} 个 IP 成功")
+
             for node in nodes:
-                if node.server:
-                    geo = self.geoip.lookup(node.server)
+                if node.server and node.server in geo_map:
+                    geo = geo_map[node.server]
                     node.country = geo.get("country")
                     node.country_name = geo.get("country_name")
                     node.city = geo.get("city")
