@@ -159,31 +159,38 @@ class GeoIPLookup:
         return results
 
     def _batch_lookup_online(self, ips: List[str]) -> Dict[str, Dict[str, Optional[str]]]:
-        """在线批量查询: 先用 ipwho.is (无速率限制), 失败再用 ip-api.com"""
+        """在线批量查询: 并发 ipwho.is → 降级 ip-api.com"""
+        import concurrent.futures
         results: Dict[str, Dict[str, Optional[str]]] = {}
 
-        # 阶段 1: ipwho.is 逐个查询 (无速率限制, ~1.5s/IP with 3s timeout)
-        logger.info(f"GeoIP 在线查询: 使用 ipwho.is 查询 {len(ips)} 个 IP...")
+        # 阶段 1: ipwho.is 并发查询 (无速率限制, 20 线程)
+        logger.info(f"GeoIP 在线查询: 并发查询 {len(ips)} 个 IP (ipwho.is)...")
         failed = []
-        for i, ip in enumerate(ips):
-            r = self._lookup_ipwhois(ip)
-            if r and r.get("country"):
-                results[ip] = r
-            else:
-                failed.append(ip)
-            # 进度
-            if (i + 1) % 100 == 0:
-                logger.info(f"GeoIP 进度: {i + 1}/{len(ips)} (成功 {len(results)})")
+        with concurrent.futures.ThreadPoolExecutor(max_workers=20) as pool:
+            future_to_ip = {pool.submit(self._lookup_ipwhois, ip): ip for ip in ips}
+            done = 0
+            for future in concurrent.futures.as_completed(future_to_ip):
+                ip = future_to_ip[future]
+                done += 1
+                try:
+                    r = future.result()
+                    if r and r.get("country"):
+                        results[ip] = r
+                    else:
+                        failed.append(ip)
+                except Exception:
+                    failed.append(ip)
+                if done % 100 == 0:
+                    logger.info(f"GeoIP 进度: {done}/{len(ips)} (成功 {len(results)})")
         logger.info(f"GeoIP ipwho.is 完成: {len(results)}/{len(ips)} 成功, {len(failed)} 失败")
 
-        # 阶段 2: ip-api.com 降级 (45 req/min 速率限制)
+        # 阶段 2: ip-api.com 降级 (45 req/min 速率限制, 逐个)
         if failed:
-            logger.info(f"GeoIP 降级: 使用 ip-api.com 查询剩余 {len(failed)} 个 IP...")
+            logger.info(f"GeoIP 降级: ip-api.com 查询剩余 {len(failed)} 个 IP...")
             for i, ip in enumerate(failed):
                 r = self._lookup_ipapi(ip)
                 if r and r.get("country"):
                     results[ip] = r
-                # ip-api.com 限制: 45 req/min → 每次请求间隔 ~1.4s
                 if (i + 1) % 45 == 0 and i < len(failed) - 1:
                     time.sleep(60)
             logger.info(f"GeoIP ip-api.com 完成: {len(results)}/{len(ips)} 总成功")
