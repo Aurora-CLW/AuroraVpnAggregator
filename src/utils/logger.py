@@ -15,33 +15,33 @@ def setup_logger(
     log_file: Optional[str] = None,
     rotation: str = "1 day",
 ) -> logging.Logger:
-    """
-    配置日志器
-
-    Args:
-        name: 日志器名称
-        level: 日志级别 (DEBUG/INFO/WARNING/ERROR)
-        log_file: 日志文件路径
-        rotation: 日志轮转周期
-
-    Returns:
-        配置好的日志器
-    """
     try:
         import colorlog
         use_color = True
     except ImportError:
         use_color = False
 
-    logger = logging.getLogger(name)
-    logger.setLevel(getattr(logging, level.upper(), logging.INFO))
+    log_level = getattr(logging, level.upper(), logging.INFO)
 
-    # 清除现有处理器
+    # 配置根 logger 使所有模块 (src.* 等) 的日志都能输出
+    root = logging.getLogger()
+    root.setLevel(log_level)
+    root.handlers.clear()
+
+    # 配置 aurora 命名空间
+    logger = logging.getLogger(name)
+    logger.setLevel(log_level)
     logger.handlers.clear()
+
+    # 同时配置 src 命名空间 (项目内所有模块)
+    src_logger = logging.getLogger("src")
+    src_logger.setLevel(log_level)
+    src_logger.handlers.clear()
+    src_logger.propagate = True
 
     # 控制台处理器
     console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setLevel(getattr(logging, level.upper(), logging.INFO))
+    console_handler.setLevel(log_level)
 
     if use_color:
         console_format = colorlog.ColoredFormatter(
@@ -61,7 +61,7 @@ def setup_logger(
             datefmt="%Y-%m-%d %H:%M:%S",
         )
     console_handler.setFormatter(console_format)
-    logger.addHandler(console_handler)
+    root.addHandler(console_handler)
 
     # 文件处理器
     if log_file:
@@ -75,7 +75,7 @@ def setup_logger(
             datefmt="%Y-%m-%d %H:%M:%S",
         )
         file_handler.setFormatter(file_format)
-        logger.addHandler(file_handler)
+        root.addHandler(file_handler)
 
     return logger
 
