@@ -4,6 +4,7 @@
 
 import logging
 import json
+import time
 import urllib.request
 from typing import Optional, Dict, List
 from pathlib import Path
@@ -45,11 +46,9 @@ class GeoIPLookup:
         if not ip:
             return result
 
-        # 缓存命中
         if ip in self._cache:
             return {**result, **self._cache[ip]}
 
-        # 优先使用本地数据库
         if self.reader:
             try:
                 response = self.reader.city(ip)
@@ -64,7 +63,6 @@ class GeoIPLookup:
             except Exception:
                 pass
 
-        # 回退到在线 API (单个查询)
         online_result = self._lookup_online(ip)
         if online_result:
             result.update(online_result)
@@ -72,7 +70,36 @@ class GeoIPLookup:
         return result
 
     def _lookup_online(self, ip: str) -> Dict[str, Optional[str]]:
-        """通过 ip-api.com 在线查询 (免费, 无需 key)"""
+        """在线查询: ipwho.is → ip-api.com 降级"""
+        # 源 1: ipwho.is (免费, 无速率限制)
+        r = self._lookup_ipwhois(ip)
+        if r:
+            return r
+        # 源 2: ip-api.com (免费, 45 req/min)
+        r = self._lookup_ipapi(ip)
+        if r:
+            return r
+        return {}
+
+    def _lookup_ipwhois(self, ip: str) -> Dict[str, Optional[str]]:
+        try:
+            url = f"https://ipwho.is/{ip}"
+            req = urllib.request.Request(url, headers={"User-Agent": "AuroraVPN/1.0"})
+            with urllib.request.urlopen(req, timeout=3) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                if data.get("success", False) and data.get("country_code"):
+                    return {
+                        "country": data.get("country_code"),
+                        "country_name": data.get("country"),
+                        "city": data.get("city"),
+                        "region": data.get("region"),
+                        "isp": data.get("connection", {}).get("isp"),
+                    }
+        except Exception:
+            pass
+        return {}
+
+    def _lookup_ipapi(self, ip: str) -> Dict[str, Optional[str]]:
         try:
             url = f"http://ip-api.com/json/{ip}?fields=country,countryCode,city,regionName,isp&lang=en"
             req = urllib.request.Request(url, headers={"User-Agent": "AuroraVPN/1.0"})
@@ -86,12 +113,12 @@ class GeoIPLookup:
                         "region": data.get("regionName"),
                         "isp": data.get("isp"),
                     }
-        except Exception as e:
-            logger.debug(f"在线 GeoIP 查询失败 ({ip}): {e}")
+        except Exception:
+            pass
         return {}
 
     def batch_lookup(self, ips: List[str]) -> Dict[str, Dict[str, Optional[str]]]:
-        """批量查询 IP 地理位置 (ip-api.com 批量 API, 一次最多 100 个)"""
+        """批量查询 IP 地理位置 — 去重 + 多源 API"""
         results: Dict[str, Dict[str, Optional[str]]] = {}
         uncached = [ip for ip in ips if ip and ip not in self._cache]
 
@@ -117,14 +144,14 @@ class GeoIPLookup:
                 still_uncached.append(ip)
             uncached = still_uncached
 
-        # 在线批量查询 (每批 100 个)
+        # 在线查询: ipwho.is 批量 → ip-api.com 降级
         if uncached:
-            batch_results = self._batch_lookup_online(uncached)
-            results.update(batch_results)
-            for ip, r in batch_results.items():
+            online_results = self._batch_lookup_online(uncached)
+            results.update(online_results)
+            for ip, r in online_results.items():
                 self._cache[ip] = r
 
-        # 填充缓存结果
+        # 填充缓存
         for ip in ips:
             if ip and ip not in results and ip in self._cache:
                 results[ip] = self._cache[ip]
@@ -132,41 +159,34 @@ class GeoIPLookup:
         return results
 
     def _batch_lookup_online(self, ips: List[str]) -> Dict[str, Dict[str, Optional[str]]]:
-        """通过 ip-api.com 批量 API 查询 (POST, 一次最多 100 个)"""
+        """在线批量查询: 先用 ipwho.is (无速率限制), 失败再用 ip-api.com"""
         results: Dict[str, Dict[str, Optional[str]]] = {}
-        batch_size = 100
 
-        for i in range(0, len(ips), batch_size):
-            batch = ips[i:i + batch_size]
-            try:
-                payload = json.dumps(batch).encode("utf-8")
-                req = urllib.request.Request(
-                    "http://ip-api.com/batch?fields=country,countryCode,city,regionName,isp&lang=en",
-                    data=payload,
-                    headers={"Content-Type": "application/json", "User-Agent": "AuroraVPN/1.0"},
-                    method="POST",
-                )
-                with urllib.request.urlopen(req, timeout=10) as resp:
-                    data = json.loads(resp.read().decode("utf-8"))
-                    if isinstance(data, list):
-                        for j, item in enumerate(data):
-                            if j < len(batch) and item.get("status") == "success":
-                                r = {
-                                    "country": item.get("countryCode"),
-                                    "country_name": item.get("country"),
-                                    "city": item.get("city"),
-                                    "region": item.get("regionName"),
-                                    "isp": item.get("isp"),
-                                }
-                                results[batch[j]] = r
-                logger.info(f"GeoIP 批量查询: {len(batch)} 个 IP, 成功 {len([k for k in results if k in batch])} 个")
-            except Exception as e:
-                logger.warning(f"GeoIP 批量查询失败 (batch {i // batch_size + 1}): {e}")
-                # 降级为逐个查询
-                for ip in batch:
-                    r = self._lookup_online(ip)
-                    if r:
-                        results[ip] = r
+        # 阶段 1: ipwho.is 逐个查询 (无速率限制, ~1.5s/IP with 3s timeout)
+        logger.info(f"GeoIP 在线查询: 使用 ipwho.is 查询 {len(ips)} 个 IP...")
+        failed = []
+        for i, ip in enumerate(ips):
+            r = self._lookup_ipwhois(ip)
+            if r and r.get("country"):
+                results[ip] = r
+            else:
+                failed.append(ip)
+            # 进度
+            if (i + 1) % 100 == 0:
+                logger.info(f"GeoIP 进度: {i + 1}/{len(ips)} (成功 {len(results)})")
+        logger.info(f"GeoIP ipwho.is 完成: {len(results)}/{len(ips)} 成功, {len(failed)} 失败")
+
+        # 阶段 2: ip-api.com 降级 (45 req/min 速率限制)
+        if failed:
+            logger.info(f"GeoIP 降级: 使用 ip-api.com 查询剩余 {len(failed)} 个 IP...")
+            for i, ip in enumerate(failed):
+                r = self._lookup_ipapi(ip)
+                if r and r.get("country"):
+                    results[ip] = r
+                # ip-api.com 限制: 45 req/min → 每次请求间隔 ~1.4s
+                if (i + 1) % 45 == 0 and i < len(failed) - 1:
+                    time.sleep(60)
+            logger.info(f"GeoIP ip-api.com 完成: {len(results)}/{len(ips)} 总成功")
 
         return results
 
