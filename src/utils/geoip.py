@@ -2,8 +2,11 @@
 地理位置识别
 """
 
+import logging
 from typing import Optional, Dict
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 class GeoIPLookup:
@@ -24,12 +27,15 @@ class GeoIPLookup:
         """初始化数据库读取器"""
         try:
             import geoip2.database
-            if self.db_path.exists():
+            if self.db_path.exists() and self.db_path.stat().st_size > 1024 * 1024:
                 self.reader = geoip2.database.Reader(str(self.db_path))
+                logger.info(f"GeoIP 数据库加载成功: {self.db_path}")
+            else:
+                logger.warning(f"GeoIP 数据库不存在或过小, 将使用在线 API 作为回退")
         except ImportError:
-            pass
+            logger.warning("geoip2 未安装, 将使用在线 API 作为回退")
         except Exception as e:
-            print(f"GeoIP 初始化失败: {e}")
+            logger.warning(f"GeoIP 初始化失败: {e}, 将使用在线 API 作为回退")
 
     def lookup(self, ip: str) -> Dict[str, Optional[str]]:
         """
@@ -55,23 +61,50 @@ class GeoIPLookup:
             "isp": None,
         }
 
-        if not self.reader:
+        if not ip:
             return result
 
-        try:
-            import geoip2.database
-            response = self.reader.city(ip)
+        # 优先使用本地数据库
+        if self.reader:
+            try:
+                response = self.reader.city(ip)
+                result["country"] = response.country.iso_code
+                result["country_name"] = response.country.name
+                result["city"] = response.city.name
+                result["region"] = response.subdivisions.most_specific.name if response.subdivisions else None
+                result["isp"] = response.traits.isp
+                if result["country"]:
+                    return result
+            except Exception:
+                pass
 
-            result["country"] = response.country.iso_code
-            result["country_name"] = response.country.name
-            result["city"] = response.city.name
-            result["region"] = response.subdivisions.most_specific.name if response.subdivisions else None
-            result["isp"] = response.traits.isp
-
-        except Exception:
-            pass
+        # 回退到在线 API
+        online_result = self._lookup_online(ip)
+        if online_result:
+            result.update(online_result)
 
         return result
+
+    def _lookup_online(self, ip: str) -> Dict[str, Optional[str]]:
+        """通过 ip-api.com 在线查询 (免费, 无需 key)"""
+        try:
+            import urllib.request
+            import json
+            url = f"http://ip-api.com/json/{ip}?fields=country,countryCode,city,regionName,isp&lang=en"
+            req = urllib.request.Request(url, headers={"User-Agent": "AuroraVPN/1.0"})
+            with urllib.request.urlopen(req, timeout=3) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                if data.get("status") == "success":
+                    return {
+                        "country": data.get("countryCode"),
+                        "country_name": data.get("country"),
+                        "city": data.get("city"),
+                        "region": data.get("regionName"),
+                        "isp": data.get("isp"),
+                    }
+        except Exception as e:
+            logger.debug(f"在线 GeoIP 查询失败 ({ip}): {e}")
+        return {}
 
     def get_country(self, ip: str) -> Optional[str]:
         """
