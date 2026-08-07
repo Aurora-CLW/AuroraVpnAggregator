@@ -75,7 +75,7 @@ class Parser:
         try:
             cleaned = content.strip().replace("\n", "").replace("\r", "").replace(" ", "")
             decoded = base64.b64decode(cleaned, validate=False).decode("utf-8")
-            if any(proto in decoded for proto in ["vmess://", "vless://", "trojan://", "ss://"]):
+            if any(proto in decoded for proto in ["vmess://", "vless://", "trojan://", "ss://", "socks://", "socks5://", "anytls://", "hysteria2://", "hy2://"]):
                 return True
         except Exception:
             pass
@@ -339,11 +339,76 @@ class Parser:
                 return self._parse_hysteria2_url(url)
             elif url.startswith("anytls://"):
                 return self._parse_anytls_url(url)
+            elif url.startswith(("socks://", "socks5://")):
+                return self._parse_socks_url(url)
             else:
                 return None
         except Exception as e:
             logger.debug(f"解析 URL 失败: {e}")
             return None
+
+    def _parse_socks_url(self, url: str) -> Optional[Node]:
+        """解析 socks:// / socks5:// URL
+
+        格式: socks://[USERINFO@]HOST:PORT#NAME   (USERINFO 可为 user 或 user:pass)
+        userinfo 可能是 Base64 编码 (与 ss:// 相同)
+        """
+        raw = url
+        # 去掉协议前缀
+        url = re.sub(r'^socks5?://', '', url)
+
+        # 提取名称
+        name = "SOCKS Node"
+        if "#" in url:
+            url, name = url.rsplit("#", 1)
+            name = unquote(name)
+
+        server = ""
+        port = 1080
+        username = None
+        password = None
+
+        if "@" in url:
+            userinfo, server_part = url.rsplit("@", 1)
+            try:
+                # 尝试 Base64 解码 userinfo (ss:// 风格)
+                padded = userinfo + "=" * (-len(userinfo) % 4)
+                decoded = base64.b64decode(padded).decode("utf-8")
+                if ":" in decoded:
+                    username, password = decoded.split(":", 1)
+                elif decoded:
+                    username = decoded
+            except Exception:
+                # 明文 user:pass 或 user
+                if ":" in userinfo:
+                    username, password = userinfo.split(":", 1)
+                else:
+                    username = userinfo or None
+
+            server_match = re.match(r"([^:]+):(\d+)", server_part)
+            if server_match:
+                server = server_match.group(1)
+                port = int(server_match.group(2))
+        else:
+            server_match = re.match(r"([^:]+):(\d+)", url)
+            if server_match:
+                server = server_match.group(1)
+                port = int(server_match.group(2))
+
+        if not server:
+            return None
+
+        node = Node(
+            name=name,
+            type="socks",
+            server=server,
+            port=port,
+            password=password,
+        )
+        if username:
+            node.username = username
+        node.raw_url = raw
+        return node
 
     def _parse_vmess_url(self, url: str) -> Optional[Node]:
         """解析 vmess:// URL"""

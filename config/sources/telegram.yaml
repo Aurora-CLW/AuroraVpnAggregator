@@ -24,6 +24,12 @@ type: telegram
 enabled: true
 mode: web
 
+# 每个频道至少收集的有效消息数 (含节点或订阅链接的消息)
+# RSS/Web 翻页/HF API 会持续抓取直到达到该数量
+min_valid: 50
+# Web 预览页翻页最大页数 (每页约 20 条消息)
+max_web_pages: 6
+
 # Telethon 模式配置 (可选, RSS 和 Web 模式不需要)
 api_id: ${TELEGRAM_API_ID}
 api_hash: ${TELEGRAM_API_HASH}
@@ -87,15 +93,15 @@ channels:
     username: "@xhjvpn"
     enabled: true
 
-  # hanbaoyun666 — VPN 节点分享
+  # hanbaoyun666 — VPN 节点分享 (多次测试确认: 最近消息纯广告/机场推广, 无节点, 已停用)
   - name: "hanbaoyun666"
     username: "@hanbaoyun666"
-    enabled: true
+    enabled: false
 
-  # ZDYZ2Y — VPN 节点分享
+  # ZDYZ2Y — VPN 节点分享 (多次测试确认: 最近消息纯广告/超搜推广, 无节点, 已停用)
   - name: "ZDYZ2Y"
     username: "@ZDYZ2Y"
-    enabled: true
+    enabled: false
 
   # changfengchannel — VPN 节点分享
   - name: "changfengchannel"
@@ -120,6 +126,11 @@ channels:
   # jiedian678 — VPN 节点分享
   - name: "jiedian678"
     username: "@jiedian678"
+    enabled: true
+
+  # xlyv2ray — VPN 节点分享
+  - name: "xlyv2ray"
+    username: "@xlyv2ray"
     enabled: true
 
   # 可添加更多频道

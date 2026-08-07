@@ -62,7 +62,10 @@ data/cache/telegram_session*
 output/*.yaml
 output/*.json
 output/*.txt
+output/all/
+output/pass/
 !output/.gitkeep
+artifact.tar
 
 # OS
 .DS_Store

@@ -67,6 +67,7 @@ class TelegramHandler(BaseHandler):
         r'(hysteria2?://[A-Za-z0-9\-._~:/?#\[\]@!$&\'()*+,;=%]+)',
         r'(hy2://[A-Za-z0-9\-._~:/?#\[\]@!$&\'()*+,;=%]+)',
         r'(anytls://[A-Za-z0-9\-._~:/?#\[\]@!$&\'()*+,;=%]+)',
+        r'(socks5?://[A-Za-z0-9\-._~:/?#\[\]@!$&\'()*+,;=%]+)',
     ]
 
     def __init__(self, config: dict):
@@ -76,6 +77,11 @@ class TelegramHandler(BaseHandler):
         self.api_hash = config.get("api_hash")
         self.channels = config.get("channels", [])
         self.max_messages = config.get("max_messages", 100)
+        # 每个频道至少收集的有效消息数 (含节点或订阅链接的消息)
+        # RSS/Web 翻页/HF API 会一直抓取直到达到该数量
+        self.min_valid = int(config.get("min_valid", 50))
+        # Web 预览页翻页最大页数 (每页约 20 条消息)
+        self.max_web_pages = int(config.get("max_web_pages", 6))
         self.mode = config.get("mode", "web")
         self.proxy = config.get("proxy") or os.environ.get("HTTPS_PROXY") or os.environ.get("HTTP_PROXY")
         self.parser = Parser()
@@ -134,7 +140,7 @@ class TelegramHandler(BaseHandler):
         nodes = []
         sub_urls: List[dict] = []
 
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(max_field_size=65536) as session:
             pending_msg_links: List[str] = []  # 待抓取的消息链接
 
             # 0. 如果配置了已知订阅链接 (sub_urls), 直接加入
@@ -167,39 +173,33 @@ class TelegramHandler(BaseHandler):
             if rss_result["sub_urls"]:
                 sub_urls.extend(rss_result["sub_urls"])
             pending_msg_links.extend(rss_result.get("msg_links", []))
+            # 累计有效消息数 (含节点或订阅链接的消息)
+            total_valid = rss_result.get("valid_count", 0)
+            logger.info(f"[{self.name}] {channel_name}: RSS {total_valid} 条有效消息")
 
-            # 2. RSS 无节点且无订阅链接, 尝试翻页抓取更多历史消息
-            if not nodes and not sub_urls:
-                sub_urls = await self._fetch_older_messages(session, username, channel_name)
-
-            # 3. 仍无结果, 尝试 Web 镜像 (首页 + 翻页)
-            if not nodes and not sub_urls:
-                for mirror in WEB_MIRRORS:
-                    url = f"{mirror}{username}"
-                    logger.info(f"[{self.name}] 尝试 Web: {url}")
-                    html = await self._fetch_page(session, url)
-                    if html:
-                        web_result = self._extract_from_html(html, channel_name)
-                        nodes.extend(web_result["nodes"])
-                        sub_urls.extend(web_result["sub_urls"])
-                        pending_msg_links.extend(web_result.get("msg_links", []))
-                        if web_result["nodes"] or web_result["sub_urls"]:
-                            logger.info(f"[{self.name}] {channel_name}: Web 获取 {len(web_result['nodes'])} 个节点, {len(web_result['sub_urls'])} 个订阅链接")
-                            break
-                        # Web 首页无结果, 尝试翻页
-                        older = await self._web_paginate(session, mirror, username, html, channel_name)
-                        if older:
-                            nodes.extend(older["nodes"])
-                            sub_urls.extend(older["sub_urls"])
-                            break
-
-            # 3.5. 始终尝试 HF Space TG Parser API 补充 (确保每频道有足够消息)
+            # 2. HF Space TG Parser API 补充 (CI 配置密钥时有效, 深翻页高效)
             hf_result = await self._fetch_via_hf_api(session, username, channel_name)
             if hf_result["nodes"] or hf_result["sub_urls"]:
                 nodes.extend(hf_result["nodes"])
                 sub_urls.extend(hf_result["sub_urls"])
                 pending_msg_links.extend(hf_result.get("msg_links", []))
-                logger.info(f"[{self.name}] {channel_name}: HF API 补充 {len(hf_result['nodes'])} 个节点, {len(hf_result['sub_urls'])} 个订阅链接")
+                total_valid += hf_result.get("valid_count", 0)
+                logger.info(f"[{self.name}] {channel_name}: HF API 补充 {len(hf_result['nodes'])} 个节点, {len(hf_result['sub_urls'])} 个订阅链接, 累计 {total_valid} 条有效消息")
+
+            # 3. 仍不足 min_valid 时, Web 翻页补充历史消息 (无 HF 密钥时的本地深抓取)
+            if total_valid < self.min_valid:
+                older = await self._fetch_older_messages(session, username, channel_name, self.min_valid)
+                if older.get("nodes"):
+                    nodes.extend(older["nodes"])
+                if older.get("sub_urls"):
+                    sub_urls.extend(older["sub_urls"])
+                total_valid += older.get("valid_count", 0)
+                pending_msg_links.extend(older.get("msg_links", []))
+                logger.info(f"[{self.name}] {channel_name}: Web 翻页补充后累计 {total_valid} 条有效消息")
+
+            # 有效消息不足时记录警告
+            if total_valid < self.min_valid:
+                logger.warning(f"[{self.name}] 频道 {channel_name} 仅 {total_valid} 条有效消息 (目标 {self.min_valid})")
 
             # 4. 抓取发现的消息链接 (如"点我传送"指向的置顶消息)
             seen_msg_ids = set()
@@ -341,27 +341,36 @@ class TelegramHandler(BaseHandler):
         self.mark_source(nodes, f"tg:{channel_name}")
         return nodes
 
-    async def _fetch_older_messages(self, session, username: str, channel_name: str) -> List[dict]:
-        """RSS 无结果时, 尝试 Web 预览页翻页获取更多历史消息"""
+    async def _fetch_older_messages(self, session, username: str, channel_name: str, min_valid: int = None) -> dict:
+        """RSS 结果不足时, 通过 Web 预览页翻页获取更多历史消息。
+        返回 {"nodes", "sub_urls", "valid_count"}, 与 _fetch_via_rss 一致。
+        """
+        if min_valid is None:
+            min_valid = self.min_valid
         for mirror in WEB_MIRRORS:
             try:
                 url = f"{mirror}{username}"
-                html = await self._fetch_page(session, url)
+                html = await self._fetch_page(session, url, timeout=10)
                 if not html:
                     continue
-                result = await self._web_paginate(session, mirror, username, html, channel_name)
+                result = await self._web_paginate(session, mirror, username, html, channel_name, min_valid)
                 if result and (result["nodes"] or result["sub_urls"]):
-                    return result["sub_urls"]
+                    return result
             except Exception:
                 continue
-        return []
+        return {"nodes": [], "sub_urls": [], "valid_count": 0, "msg_links": []}
 
-    async def _web_paginate(self, session, mirror: str, username: str, first_html: str, channel_name: str) -> Optional[dict]:
-        """Web 预览页翻页 — 通过 ?before= 消息 ID 加载更早的消息"""
+    async def _web_paginate(self, session, mirror: str, username: str, first_html: str, channel_name: str, min_valid: int = None) -> Optional[dict]:
+        """Web 预览页翻页 — 通过 ?before= 消息 ID 加载更早的消息。
+        持续翻页直到收集到 min_valid 条有效消息 (含节点或订阅链接), 或翻完 max_web_pages 页。
+        """
+        if min_valid is None:
+            min_valid = self.min_valid
         all_nodes = []
         all_sub_urls = []
+        valid_count = 0
         html = first_html
-        max_pages = 5
+        max_pages = self.max_web_pages
 
         for page in range(max_pages):
             # 从页面提取消息 ID (data-post="channel/12345")
@@ -373,44 +382,70 @@ class TelegramHandler(BaseHandler):
             result = self._extract_from_html(html, channel_name)
             all_nodes.extend(result["nodes"])
             all_sub_urls.extend(result["sub_urls"])
+            valid_count += result.get("valid_count", 0)
 
-            # 如果已经找到节点或订阅链接, 停止翻页
-            if all_nodes or all_sub_urls:
+            logger.info(f"[{self.name}] {channel_name}: Web 翻页 {page+1} 累计 {valid_count} 条有效消息")
+            # 达到目标有效消息数, 停止翻页
+            if valid_count >= min_valid:
                 break
 
             # 用最早的消息 ID 翻页
             oldest_id = min(int(mid) for mid in msg_ids)
             next_url = f"{mirror}{username}?before={oldest_id}"
-            logger.info(f"[{self.name}] {channel_name}: Web 翻页 {page+1}, before={oldest_id}")
-            html = await self._fetch_page(session, next_url)
+            html = await self._fetch_page(session, next_url, timeout=10)
             if not html:
                 break
             await asyncio.sleep(1)
 
         if not all_nodes and not all_sub_urls:
             return None
-        return {"nodes": all_nodes, "sub_urls": all_sub_urls}
+        return {"nodes": all_nodes, "sub_urls": all_sub_urls, "valid_count": valid_count}
 
     async def _fetch_via_rss(self, session, username: str, channel_name: str) -> dict:
-        """通过 RSS API 获取频道消息并提取节点和订阅链接"""
+        """通过 RSS API 获取频道消息并提取节点和订阅链接
+        带重试: tg.i-c-a.su 批量请求时可能 FLOOD_WAIT 限流/响应非 XML, 重试几次
+        """
         rss_url = f"{RSS_API_BASE}{username}"
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
             "Accept": "application/rss+xml, application/xml, text/xml, text/html",
         }
-        try:
-            async with session.get(rss_url, headers=headers, proxy=self.proxy, timeout=aiohttp.ClientTimeout(total=45)) as resp:
-                if resp.status != 200:
-                    logger.debug(f"RSS HTTP {resp.status} for {rss_url}")
-                    return {"nodes": [], "sub_urls": [], "msg_links": []}
-                xml_content = await resp.text()
-                if not xml_content or "<rss" not in xml_content:
-                    logger.debug(f"RSS 响应非 XML for {rss_url}")
-                    return {"nodes": [], "sub_urls": [], "msg_links": []}
-                return self._extract_from_rss(xml_content, channel_name)
-        except Exception as e:
-            logger.debug(f"RSS 抓取 {rss_url} 失败: {e}")
-            return {"nodes": [], "sub_urls": [], "msg_links": []}
+        # 限流/失败时重试 (FLOOD_WAIT 通常需要等待 10-30 秒)
+        max_retries = 3
+        backoff = [3, 8, 15]
+        for attempt in range(max_retries):
+            try:
+                async with session.get(rss_url, headers=headers, proxy=self.proxy, timeout=aiohttp.ClientTimeout(total=45)) as resp:
+                    body = await resp.text()
+                    if resp.status != 200:
+                        logger.debug(f"RSS HTTP {resp.status} for {rss_url} (attempt {attempt + 1})")
+                        if resp.status == 429 or "FLOOD_WAIT" in body:
+                            wait = self._flood_wait_seconds(body, backoff, attempt)
+                            await asyncio.sleep(wait)
+                            continue
+                        return {"nodes": [], "sub_urls": [], "msg_links": [], "valid_count": 0}
+                    if not body or "<rss" not in body:
+                        # 非 XML (限流 JSON/FLOOD_WAIT), 等待后重试
+                        logger.debug(f"RSS 响应非 XML for {rss_url} (attempt {attempt + 1}): {body[:100]}")
+                        if "FLOOD_WAIT" in body:
+                            wait = self._flood_wait_seconds(body, backoff, attempt)
+                            await asyncio.sleep(wait)
+                            continue
+                        return {"nodes": [], "sub_urls": [], "msg_links": [], "valid_count": 0}
+                    return self._extract_from_rss(body, channel_name)
+            except (asyncio.TimeoutError, aiohttp.ClientError) as e:
+                logger.debug(f"RSS 抓取 {rss_url} 失败 (attempt {attempt + 1}): {e}")
+                if attempt < max_retries - 1:
+                    await asyncio.sleep(backoff[attempt] if attempt < len(backoff) else 20)
+        logger.debug(f"RSS 多次重试仍失败: {rss_url}")
+        return {"nodes": [], "sub_urls": [], "msg_links": [], "valid_count": 0}
+
+    def _flood_wait_seconds(self, body: str, backoff: list, attempt: int) -> int:
+        """解析 FLOOD_WAIT_N 中的等待秒数, 不足时取退避值"""
+        m = re.search(r"FLOOD_WAIT_(\d+)", body)
+        if m:
+            return int(m.group(1))
+        return backoff[attempt] if attempt < len(backoff) else 20
 
     async def _fetch_via_hf_api(self, session, username: str, channel_name: str) -> dict:
         """通过 HF Space TG Parser API 获取频道消息 (替代被屏蔽的 Web 镜像)
@@ -418,10 +453,10 @@ class TelegramHandler(BaseHandler):
         分页请求, 确保每个频道至少收集到 min_valid 条有效消息。
         """
         if not HF_TG_PARSER_KEY:
-            return {"nodes": [], "sub_urls": [], "msg_links": []}
-        min_valid = 50   # 目标: 至少 50 条有效消息
+            return {"nodes": [], "sub_urls": [], "msg_links": [], "valid_count": 0}
+        min_valid = self.min_valid  # 目标: 至少 N 条有效消息 (默认 50)
         page_size = 100  # 每页最多 100 条 (HF API 限制)
-        max_pages = 5    # 最多翻 5 页 (500 条消息)
+        max_pages = max(5, (min_valid * 2) // page_size + 1)  # 足够翻页到 min_valid
         logger.info(f"[{self.name}] 尝试 HF TG API: channel={username} (目标 {min_valid} 条有效消息)")
 
         all_nodes = []
@@ -529,7 +564,7 @@ class TelegramHandler(BaseHandler):
                 seen_links.add(l)
                 unique_msgs.append(l)
         logger.info(f"[{self.name}] HF TG API {channel_name}: 共 {valid_count} 条有效消息, {len(all_nodes)} 节点, {len(unique_subs)} 订阅链接")
-        return {"nodes": all_nodes, "sub_urls": unique_subs, "msg_links": unique_msgs}
+        return {"nodes": all_nodes, "sub_urls": unique_subs, "msg_links": unique_msgs, "valid_count": valid_count}
 
     async def _download_telegram_docs(self, session, doc_ids: List[dict]) -> List:
         """通过 Telegram Bot API 下载文档附件并解析节点
@@ -649,13 +684,17 @@ class TelegramHandler(BaseHandler):
         nodes = []
         sub_urls: List[dict] = []
         msg_links: List[str] = []  # t.me 频道内消息链接
+        valid_count = 0  # 含节点或订阅链接的有效消息数
         try:
             root = ET.fromstring(xml_content)
         except ET.ParseError as e:
             logger.debug(f"RSS XML 解析失败: {e}")
-            return {"nodes": [], "sub_urls": [], "msg_links": []}
+            return {"nodes": [], "sub_urls": [], "msg_links": [], "valid_count": 0}
 
         for item in root.iter("item"):
+            item_start_nodes = len(nodes)
+            item_start_subs = len(sub_urls)
+
             # 从 <title> 提取
             title_elem = item.find("title")
             if title_elem is not None and title_elem.text:
@@ -704,6 +743,10 @@ class TelegramHandler(BaseHandler):
                             sub_urls.insert(0, url_item)
                             seen_urls.add(url_item["url"])
 
+            # 该条消息含节点或订阅链接 → 记为有效消息
+            if len(nodes) > item_start_nodes or len(sub_urls) > item_start_subs:
+                valid_count += 1
+
         # 去重, 保持顺序
         seen = set()
         unique_sub_urls: List[dict] = []
@@ -720,16 +763,16 @@ class TelegramHandler(BaseHandler):
                 seen_links.add(link)
                 unique_msg_links.append(link)
 
-        return {"nodes": nodes, "sub_urls": unique_sub_urls, "msg_links": unique_msg_links}
+        return {"nodes": nodes, "sub_urls": unique_sub_urls, "msg_links": unique_msg_links, "valid_count": valid_count}
 
-    async def _fetch_page(self, session, url: str) -> Optional[str]:
+    async def _fetch_page(self, session, url: str, timeout: int = 30) -> Optional[str]:
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
             "Accept": "text/html,application/xhtml+xml",
             "Accept-Language": "en-US,en;q=0.9",
         }
         try:
-            async with session.get(url, headers=headers, proxy=self.proxy, timeout=aiohttp.ClientTimeout(total=30)) as resp:
+            async with session.get(url, headers=headers, proxy=self.proxy, timeout=aiohttp.ClientTimeout(total=timeout)) as resp:
                 if resp.status == 200:
                     return await resp.text()
                 logger.warning(f"HTTP {resp.status} for {url}")
@@ -742,13 +785,18 @@ class TelegramHandler(BaseHandler):
         nodes = []
         sub_urls: List[dict] = []
         msg_links: List[str] = []
+        valid_count = 0  # 含节点或订阅链接的有效消息数
 
         # <meta> 标签 (og:description / twitter:description 包含消息摘要)
         for meta_match in re.finditer(r'<meta\s+(?:property|name)="(?:og:|twitter:)description"\s+content="([^"]*)"', html):
             text = meta_match.group(1)
             text = text.replace("&lt;", "<").replace("&gt;", ">").replace("&amp;", "&").replace("&quot;", '"')
-            nodes.extend(self._extract_nodes_from_text(text))
-            sub_urls.extend(self._extract_sub_urls(text))
+            n = self._extract_nodes_from_text(text)
+            s = self._extract_sub_urls(text)
+            if n or s:
+                valid_count += 1
+            nodes.extend(n)
+            sub_urls.extend(s)
 
         # <a href> 超链接 (消息文本中的链接 + inline link buttons)
         for href in re.findall(r'href="([^"]+)"', html):
@@ -767,34 +815,46 @@ class TelegramHandler(BaseHandler):
                     if item["url"] not in seen:
                         sub_urls.append(item)
 
-        # 消息文本
+        # 消息文本 (每条消息一个 div, 含节点或订阅链接即计为有效消息)
         for msg_html in re.compile(r'<div class="tgme_widget_message_text[^"]*"[^>]*>(.*?)</div>', re.DOTALL).findall(html):
             text = re.sub(r'<[^>]+>', '', msg_html)
             text = text.replace("&lt;", "<").replace("&gt;", ">").replace("&amp;", "&").replace("&quot;", '"')
-            nodes.extend(self._extract_nodes_from_text(text))
-            sub_urls.extend(self._extract_sub_urls(text))
+            n = self._extract_nodes_from_text(text)
+            s = self._extract_sub_urls(text)
+            if n or s:
+                valid_count += 1
+            nodes.extend(n)
+            sub_urls.extend(s)
 
         # <pre> 标签 (Base64 订阅内容 或 订阅链接)
         for pre_html in re.compile(r'<pre[^>]*>(.*?)</pre>', re.DOTALL).findall(html):
             text = re.sub(r'<[^>]+>', '', pre_html)
             text = text.replace("&lt;", "<").replace("&gt;", ">").replace("&amp;", "&")
             # 先尝试解析为 Base64/Clash 等格式
+            pre_yielded = False
             try:
                 pre_nodes = self.parser.parse(text, "auto")
                 if pre_nodes:
                     nodes.extend(pre_nodes)
-                    continue
+                    pre_yielded = True
             except Exception:
                 pass
-            # 不是节点格式, 尝试提取订阅链接
-            pre_urls = self._extract_sub_urls(text)
-            seen_urls = {u["url"] if isinstance(u, dict) else u for u in sub_urls}
-            for url_item in pre_urls:
-                url_key = url_item["url"] if isinstance(url_item, dict) else url_item
-                if url_key not in seen_urls:
-                    sub_urls.insert(0, url_item)
-                    seen_urls.add(url_key)
-            nodes.extend(self._extract_nodes_from_text(text))
+            if not pre_yielded:
+                # 不是节点格式, 尝试提取订阅链接
+                pre_urls = self._extract_sub_urls(text)
+                seen_urls = {u["url"] if isinstance(u, dict) else u for u in sub_urls}
+                for url_item in pre_urls:
+                    url_key = url_item["url"] if isinstance(url_item, dict) else url_item
+                    if url_key not in seen_urls:
+                        sub_urls.insert(0, url_item)
+                        seen_urls.add(url_key)
+                        pre_yielded = True
+                n = self._extract_nodes_from_text(text)
+                if n:
+                    nodes.extend(n)
+                    pre_yielded = True
+            if pre_yielded:
+                valid_count += 1
 
         # 去重
         seen = set()
@@ -812,7 +872,7 @@ class TelegramHandler(BaseHandler):
                 seen_links.add(link)
                 unique_msg_links.append(link)
 
-        return {"nodes": nodes, "sub_urls": unique_sub_urls, "msg_links": unique_msg_links}
+        return {"nodes": nodes, "sub_urls": unique_sub_urls, "msg_links": unique_msg_links, "valid_count": valid_count}
 
     def _extract_nodes_from_text(self, text: str) -> List[Node]:
         nodes = []
@@ -846,8 +906,12 @@ class TelegramHandler(BaseHandler):
     }
 
     # 排除的 URL 路径关键词 (广告/机场注册/非订阅)
+    # 注意: 只用具体片段, 避免 "ad"/"ads" 这类子串误伤合法 URL
+    # (如 .../download 中含 "ad", .../read/ 中含 "ad")
     _EXCLUDED_PATH_KEYWORDS = {
-        "ad", "ads", "invite", "register", "signup",
+        "/ad/", "/ads/", "advert", "adserver", "adservice",
+        "adclick", "doubleclick", "googlesyndication",
+        "invite", "register", "signup",
         "download/app", "store", "play.google",
         # 机场注册/推广路径
         "/#/register", "/#/login", "/#/signup",

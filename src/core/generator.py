@@ -198,10 +198,12 @@ class Generator:
             return nodes
 
     def _format_node_names(self, nodes: List[Node]) -> List[Node]:
-        """格式化节点名称 — 统一格式: 🇺🇸 US | VLESS | 120ms | 5.2MB/s | 001"""
+        """格式化节点名称 — 统一格式: 🇺🇸 US | VLESS | 120ms | 5.2MB/s | @频道 | 001
+        频道标注来源 (source 如 tg:FreeV2rays), 截断控制名称长度。
+        """
         from ..utils.geoip import get_country_flag
 
-        # 按 (country, type) 分组计数, 用于生成序号
+        # 按 (country, type, channel) 分组计数, 用于生成序号
         counters: dict = {}
 
         for node in nodes:
@@ -216,6 +218,14 @@ class Generator:
             # 速度
             if node.speed and node.speed > 0:
                 parts.append(f"{node.speed}MB/s")
+            # 来源频道标注 (截断, 控制名称长度)
+            if node.source:
+                src = node.source
+                if ":" in src:
+                    src = src.split(":", 1)[1]
+                src = src.strip()
+                if src:
+                    parts.append(f"@{src[:10]}")
 
             base_name = " | ".join(parts) if parts else "Unknown"
             # 同名节点加序号

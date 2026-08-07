@@ -23,6 +23,7 @@ class Node:
     # 协议参数 - SS/SSR
     cipher: Optional[str] = None
     password: Optional[str] = None
+    username: Optional[str] = None  # socks:// 认证用户
 
     # 协议参数 - VMess/VLess
     uuid: Optional[str] = None
@@ -205,6 +206,14 @@ class Node:
             if self.fingerprint:
                 proxy["client-fingerprint"] = self.fingerprint
 
+        # SOCKS (Clash 类型为 socks5)
+        elif self.type == "socks":
+            proxy["type"] = "socks5"
+            if self.username:
+                proxy["username"] = self.username
+            if self.password:
+                proxy["password"] = self.password
+
         # TLS 配置
         if self.security == "tls" or self.type in ["trojan", "vless", "vmess"]:
             if self.type not in ["ss", "ssr", "tuic"]:  # 这些类型不需要额外 TLS
@@ -347,6 +356,16 @@ class Node:
             url += f"#{quote(self.name)}"
             return url
 
+        elif self.type == "socks":
+            # socks://[USERINFO@]HOST:PORT#NAME   (USERINFO 可为 user 或 user:pass)
+            userinfo = ""
+            if self.username:
+                userinfo = quote(self.username, safe="")
+                if self.password:
+                    userinfo += f":{quote(self.password, safe='')}"
+                userinfo += "@"
+            return f"socks://{userinfo}{self.server}:{self.port}#{quote(self.name)}"
+
         return ""
 
     def to_singbox(self) -> dict:
@@ -395,6 +414,13 @@ class Node:
         elif self.type == "anytls":
             outbound["password"] = self.password
 
+        elif self.type == "socks":
+            outbound["type"] = "socks"
+            if self.username:
+                outbound["username"] = self.username
+            if self.password:
+                outbound["password"] = self.password
+
         # TLS
         if self.security == "tls":
             tls = {"enabled": True}
@@ -429,7 +455,7 @@ class Node:
     # 序列化字段列表 (所有协议参数 + 元信息 + 测试结果)
     _SERIALIZE_FIELDS = [
         "name", "type", "server", "port",
-        "uuid", "password", "cipher", "network", "security",
+        "uuid", "password", "cipher", "username", "network", "security",
         "sni", "skip_cert_verify", "ws_path", "ws_headers",
         "grpc_service_name", "http_path", "http_host",
         "reality_public_key", "reality_short_id", "fingerprint",
@@ -462,6 +488,7 @@ class Node:
             uuid=data.get("uuid"),
             password=data.get("password"),
             cipher=data.get("cipher"),
+            username=data.get("username"),
             network=data.get("network"),
             security=data.get("security"),
             sni=data.get("sni"),
