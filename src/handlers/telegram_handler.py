@@ -11,6 +11,7 @@ Telegram 频道处理器
 """
 
 import asyncio
+import json as _json
 import logging
 import os
 import re
@@ -67,6 +68,7 @@ class TelegramHandler(BaseHandler):
         r'(hysteria2?://[A-Za-z0-9\-._~:/?#\[\]@!$&\'()*+,;=%]+)',
         r'(hy2://[A-Za-z0-9\-._~:/?#\[\]@!$&\'()*+,;=%]+)',
         r'(anytls://[A-Za-z0-9\-._~:/?#\[\]@!$&\'()*+,;=%]+)',
+        r'(tuic://[A-Za-z0-9\-._~:/?#\[\]\x40!$&\'()*+,;=%]+)',  # \x40 = @
         r'(socks5?://[A-Za-z0-9\-._~:/?#\[\]@!$&\'()*+,;=%]+)',
     ]
 
@@ -82,6 +84,8 @@ class TelegramHandler(BaseHandler):
         self.min_valid = int(config.get("min_valid", 50))
         # Web 预览页翻页最大页数 (每页约 20 条消息)
         self.max_web_pages = int(config.get("max_web_pages", 6))
+        # RSS 缓存有效期 (秒), 减少重复请求降低限流触发率
+        self.rss_cache_ttl = int(config.get("rss_cache_ttl", 1800))
         self.mode = config.get("mode", "web")
         self.proxy = config.get("proxy") or os.environ.get("HTTPS_PROXY") or os.environ.get("HTTP_PROXY")
         self.parser = Parser()
@@ -89,23 +93,30 @@ class TelegramHandler(BaseHandler):
         self.channel_results: Dict[str, dict] = {}  # {channel_name: {nodes, sub_urls, status, updated_at}}
         self._dead_urls = self._load_dead_urls()
 
+        # 合并配置中的排除域名 (机场推广/纯广告域名), 不影响默认集
+        extra_domains = config.get("exclude_domains", []) or []
+        if extra_domains:
+            self._EXCLUDED_SUB_DOMAINS = set(self._EXCLUDED_SUB_DOMAINS) | {str(d).strip().lower() for d in extra_domains if str(d).strip()}
+
     async def fetch(self) -> List[Node]:
         if not self.enabled:
             return []
 
-        all_nodes = []
+        channels = [ch for ch in self.channels if ch.get("enabled", True)]
+        # 频道级并发 (限制并发数避免 RSS API 限流)
+        max_concurrent = int(self.config.get("max_concurrent_channels", 3))
+        sem = asyncio.Semaphore(max_concurrent)
 
-        for i, ch in enumerate(self.channels):
-            if not ch.get("enabled", True):
-                continue
-            try:
-                nodes = await self._fetch_channel(ch)
-                all_nodes.extend(nodes)
-            except Exception as e:
-                logger.error(f"[{self.name}] 抓取频道 {ch.get('name')} 失败: {e}")
-            # 频道间延迟, 避免 RSS API 限流
-            if i < len(self.channels) - 1:
-                await asyncio.sleep(2)
+        async def _worker(ch: dict) -> List[Node]:
+            async with sem:
+                try:
+                    return await self._fetch_channel(ch)
+                except Exception as e:
+                    logger.error(f"[{self.name}] 抓取频道 {ch.get('name')} 失败: {e}")
+                    return []
+
+        results = await asyncio.gather(*[_worker(ch) for ch in channels])
+        all_nodes = [n for res in results for n in res]
 
         logger.info(f"[{self.name}] Telegram 抓取完成: {len(all_nodes)} 个节点")
 
@@ -368,6 +379,7 @@ class TelegramHandler(BaseHandler):
             min_valid = self.min_valid
         all_nodes = []
         all_sub_urls = []
+        all_msg_links = []
         valid_count = 0
         html = first_html
         max_pages = self.max_web_pages
@@ -382,6 +394,7 @@ class TelegramHandler(BaseHandler):
             result = self._extract_from_html(html, channel_name)
             all_nodes.extend(result["nodes"])
             all_sub_urls.extend(result["sub_urls"])
+            all_msg_links.extend(result.get("msg_links", []))
             valid_count += result.get("valid_count", 0)
 
             logger.info(f"[{self.name}] {channel_name}: Web 翻页 {page+1} 累计 {valid_count} 条有效消息")
@@ -399,13 +412,28 @@ class TelegramHandler(BaseHandler):
 
         if not all_nodes and not all_sub_urls:
             return None
-        return {"nodes": all_nodes, "sub_urls": all_sub_urls, "valid_count": valid_count}
+        # 去重消息链接
+        seen_links = set()
+        unique_msg_links = []
+        for link in all_msg_links:
+            if link not in seen_links:
+                seen_links.add(link)
+                unique_msg_links.append(link)
+        return {"nodes": all_nodes, "sub_urls": all_sub_urls, "valid_count": valid_count, "msg_links": unique_msg_links}
 
     async def _fetch_via_rss(self, session, username: str, channel_name: str) -> dict:
         """通过 RSS API 获取频道消息并提取节点和订阅链接
-        带重试: tg.i-c-a.su 批量请求时可能 FLOOD_WAIT 限流/响应非 XML, 重试几次
+        带重试: tg.i-c-a.su 批量请求时可能 FLOOD_WAIT 限流/响应非 XML, 重试几次。
+        带本地缓存: 短时间内的重复请求 (本地调试/多次运行) 直接读缓存, 降低限流触发率。
         """
         rss_url = f"{RSS_API_BASE}{username}"
+
+        # 尝试读缓存 (TTL 内直接复用)
+        cached = self._rss_cache_get(username)
+        if cached is not None:
+            logger.debug(f"[{self.name}] {channel_name}: RSS 命中缓存 (TTL={self.rss_cache_ttl}s)")
+            return self._extract_from_rss(cached, channel_name)
+
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
             "Accept": "application/rss+xml, application/xml, text/xml, text/html",
@@ -432,6 +460,8 @@ class TelegramHandler(BaseHandler):
                             await asyncio.sleep(wait)
                             continue
                         return {"nodes": [], "sub_urls": [], "msg_links": [], "valid_count": 0}
+                    # 成功后写入缓存
+                    self._rss_cache_put(username, body)
                     return self._extract_from_rss(body, channel_name)
             except (asyncio.TimeoutError, aiohttp.ClientError) as e:
                 logger.debug(f"RSS 抓取 {rss_url} 失败 (attempt {attempt + 1}): {e}")
@@ -440,11 +470,41 @@ class TelegramHandler(BaseHandler):
         logger.debug(f"RSS 多次重试仍失败: {rss_url}")
         return {"nodes": [], "sub_urls": [], "msg_links": [], "valid_count": 0}
 
+    # ── RSS 本地缓存 ──
+    _RSS_CACHE_DIR = Path("data/cache/rss_cache")
+
+    def _rss_cache_get(self, username: str) -> Optional[str]:
+        """读 RSS 缓存, 未命中或过期返回 None"""
+        try:
+            cache_file = self._RSS_CACHE_DIR / f"{re.sub(r'[^A-Za-z0-9_]', '', username)}.json"
+            if not cache_file.exists():
+                return None
+            with open(cache_file, "r", encoding="utf-8") as f:
+                data = _json.load(f)
+            age = (datetime.now() - datetime.fromisoformat(data["ts"])).total_seconds()
+            if age > self.rss_cache_ttl:
+                return None
+            return data["xml"]
+        except Exception:
+            return None
+
+    def _rss_cache_put(self, username: str, xml: str):
+        """写 RSS 缓存"""
+        try:
+            self._RSS_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+            cache_file = self._RSS_CACHE_DIR / f"{re.sub(r'[^A-Za-z0-9_]', '', username)}.json"
+            with open(cache_file, "w", encoding="utf-8") as f:
+                _json.dump({"ts": datetime.now().isoformat(), "xml": xml}, f)
+        except Exception:
+            pass
+
     def _flood_wait_seconds(self, body: str, backoff: list, attempt: int) -> int:
-        """解析 FLOOD_WAIT_N 中的等待秒数, 不足时取退避值"""
+        """解析 FLOOD_WAIT_N 中的等待秒数, 不足时取退避值。
+        等待时间封顶 60 秒, 防止第三方 RSS API 返回异常大值拖垮整个管道。
+        """
         m = re.search(r"FLOOD_WAIT_(\d+)", body)
         if m:
-            return int(m.group(1))
+            return min(int(m.group(1)), 60)
         return backoff[attempt] if attempt < len(backoff) else 20
 
     async def _fetch_via_hf_api(self, session, username: str, channel_name: str) -> dict:
@@ -788,15 +848,12 @@ class TelegramHandler(BaseHandler):
         valid_count = 0  # 含节点或订阅链接的有效消息数
 
         # <meta> 标签 (og:description / twitter:description 包含消息摘要)
+        # 注意: meta 描述的是页面第一条消息, 与下方消息 div 重复, 只提取不计数
         for meta_match in re.finditer(r'<meta\s+(?:property|name)="(?:og:|twitter:)description"\s+content="([^"]*)"', html):
             text = meta_match.group(1)
             text = text.replace("&lt;", "<").replace("&gt;", ">").replace("&amp;", "&").replace("&quot;", '"')
-            n = self._extract_nodes_from_text(text)
-            s = self._extract_sub_urls(text)
-            if n or s:
-                valid_count += 1
-            nodes.extend(n)
-            sub_urls.extend(s)
+            nodes.extend(self._extract_nodes_from_text(text))
+            sub_urls.extend(self._extract_sub_urls(text))
 
         # <a href> 超链接 (消息文本中的链接 + inline link buttons)
         for href in re.findall(r'href="([^"]+)"', html):
@@ -943,6 +1000,10 @@ class TelegramHandler(BaseHandler):
             # 排除社交/广告域名
             if any(url.startswith(f"https://{d}") for d in self._EXCLUDED_SUB_DOMAINS):
                 continue
+            # 排除广告域名前缀 (ad.example.com / ads.xxx / adserver.xxx / 统计/追踪域名)
+            hostname = urlparse(url).hostname or ""
+            if hostname.startswith(("ad.", "ads.", "adserver.", "adservice.", "adtrack.", "tracking.", "analytics.", "googletagmanager.", "doubleclick.")):
+                continue
             # 排除图片/文件等非订阅链接
             if any(url.endswith(ext) for ext in (".jpg", ".png", ".gif", ".svg", ".mp4", ".pdf", ".apk", ".exe")):
                 continue
@@ -979,6 +1040,10 @@ class TelegramHandler(BaseHandler):
             return None
         # 排除非订阅链接
         if any(url.startswith(f"https://{d}") for d in self._EXCLUDED_SUB_DOMAINS):
+            return None
+        # 排除广告域名前缀
+        hostname = urlparse(url).hostname or ""
+        if hostname.startswith(("ad.", "ads.", "adserver.", "adservice.", "adtrack.", "tracking.", "analytics.", "googletagmanager.", "doubleclick.")):
             return None
         if any(url.endswith(ext) for ext in (".jpg", ".png", ".gif", ".svg", ".mp4", ".pdf", ".apk", ".exe")):
             return None
@@ -1051,13 +1116,15 @@ class TelegramHandler(BaseHandler):
         failed_urls: List[str] = []
         dead_urls: List[str] = []
         max_sub = 10
-        for item in sub_urls[:max_sub]:
+        max_conc = int(self.config.get("max_concurrent_subs", 5))
+
+        async def _fetch_one(item) -> tuple:
+            """返回 (nodes, status), status: valid/failed/dead"""
             url = item["url"] if isinstance(item, dict) else item
             # 跳过已知死链接
             if url in self._dead_urls:
                 logger.debug(f"订阅链接在排除列表中, 跳过: {url}")
-                dead_urls.append(url)
-                continue
+                return [], "dead"
             hint = item.get("format_hint", "auto") if isinstance(item, dict) else "auto"
             parse_format = hint if hint != "auto" else channel_format
             try:
@@ -1065,30 +1132,42 @@ class TelegramHandler(BaseHandler):
                 async with session.get(url, proxy=self.proxy, timeout=aiohttp.ClientTimeout(total=30)) as resp:
                     if resp.status != 200:
                         logger.debug(f"订阅链接 HTTP {resp.status}: {url}")
-                        if resp.status == 404:
-                            dead_urls.append(url)
-                        else:
-                            failed_urls.append(url)
-                        continue
+                        return [], "dead" if resp.status == 404 else "failed"
                     content = await resp.text()
                     if not content or len(content) < 20:
-                        failed_urls.append(url)
-                        continue
+                        return [], "failed"
                     content_stripped = content.strip()
                     if content_stripped.startswith("<!DOCTYPE") or content_stripped.startswith("<html"):
-                        logger.debug(f"订阅链接返回 HTML 页面 (机场推广/404), 跳过: {url}")
-                        dead_urls.append(url)
-                        continue
+                        # HTML 可能是 JS 挑战/限流页, 也可能是 404 页。不永久拉黑,
+                        # 标记为临时失败, 下次运行重试 (避免误伤合法的文件型订阅源)
+                        logger.debug(f"订阅链接返回 HTML 页面 (JS挑战/404), 暂记失败: {url}")
+                        return [], "failed"
                     nodes = self.parser.parse(content, parse_format)
                     if nodes:
                         logger.info(f"[{self.name}] {channel_name}: 订阅链接解析 {len(nodes)} 个节点: {url}")
-                        all_nodes.extend(nodes)
-                        valid_urls.append(url)
-                    else:
-                        logger.debug(f"订阅链接无有效节点: {url}")
-                        failed_urls.append(url)
+                        return nodes, "valid"
+                    logger.debug(f"订阅链接无有效节点: {url}")
+                    return [], "failed"
             except Exception as e:
                 logger.debug(f"订阅链接 fetch 失败 {url}: {e}")
+                return [], "failed"
+
+        sem = asyncio.Semaphore(max_conc)
+
+        async def _worker(item) -> tuple:
+            async with sem:
+                nodes, status = await _fetch_one(item)
+                url = item["url"] if isinstance(item, dict) else item
+                return nodes, status, url
+
+        results = await asyncio.gather(*[_worker(item) for item in sub_urls[:max_sub]])
+        for nodes, status, url in results:
+            all_nodes.extend(nodes)
+            if status == "valid":
+                valid_urls.append(url)
+            elif status == "dead":
+                dead_urls.append(url)
+            else:
                 failed_urls.append(url)
         return all_nodes, valid_urls, failed_urls, dead_urls
 

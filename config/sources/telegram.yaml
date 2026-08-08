@@ -29,6 +29,18 @@ mode: web
 min_valid: 50
 # Web 预览页翻页最大页数 (每页约 20 条消息)
 max_web_pages: 6
+# 频道级并发抓取数 (限制并发避免 RSS API 限流)
+max_concurrent_channels: 3
+# 单个频道内订阅链接 fetch 并发数
+max_concurrent_subs: 5
+# RSS 响应缓存有效期 (秒), 减少重复请求降低限流触发率
+rss_cache_ttl: 1800
+# 额外排除的域名 (机场推广/纯广告域名, 检测到节点后仍算有效订阅则不要加)
+exclude_domains:
+  - "matcha.ltd"
+  - "kuaivpn.app"
+  - "louwangzhiyu.org"
+  - "52pokemon66.cc"
 
 # Telethon 模式配置 (可选, RSS 和 Web 模式不需要)
 api_id: ${TELEGRAM_API_ID}
@@ -59,12 +71,12 @@ channels:
     username: "@go4sharing"
     enabled: true
 
-  # freeyule — 免费娱乐资源频道
+  # freeyule — 免费娱乐资源频道 (订阅链接 shz.al/rGdD 已失效, 暂时停用)
   - name: "FreeYule"
     username: "@freeyule"
     sub_urls:
       - "https://shz.al/rGdD"
-    enabled: true
+    enabled: false
 
   # wxdy666 — 每日更新大量直接节点 (vless/vmess/ss)
   - name: "Wxdy666"
@@ -108,10 +120,10 @@ channels:
     username: "@changfengchannel"
     enabled: true
 
-  # jiedian168 — 文件中包含节点
+  # jiedian168 — 文件中包含节点 (订阅链接 tgz.heidong.cyou 已失效, 暂时停用)
   - name: "jiedian168"
     username: "@jiedian168"
-    enabled: true
+    enabled: false
 
   # fq521 — VPN 节点分享
   - name: "fq521"

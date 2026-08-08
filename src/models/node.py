@@ -366,6 +366,27 @@ class Node:
                 userinfo += "@"
             return f"socks://{userinfo}{self.server}:{self.port}#{quote(self.name)}"
 
+        elif self.type == "tuic":
+            # tuic:// UUID : PASSWORD @ HOST : PORT ?params#NAME
+            params = []
+            if self.sni:
+                params.append(f"sni={quote(self.sni)}")
+            if self.tuic_congestion_control:
+                params.append(f"congestion_control={self.tuic_congestion_control}")
+            if self.tuic_udp_relay_mode:
+                params.append(f"udp_relay_mode={self.tuic_udp_relay_mode}")
+            if self.tuic_alpn:
+                params.append(f"alpn={','.join(self.tuic_alpn)}")
+            if self.skip_cert_verify:
+                params.append("allow_insecure=1")
+            param_str = "&".join(params)
+            userinfo = f"{quote(self.uuid, safe='')}:{quote(self.password or '', safe='')}"
+            url = f"tuic://{userinfo}@{self.server}:{self.port}"
+            if param_str:
+                url += f"?{param_str}"
+            url += f"#{quote(self.name)}"
+            return url
+
         return ""
 
     def to_singbox(self) -> dict:
@@ -414,6 +435,13 @@ class Node:
         elif self.type == "anytls":
             outbound["password"] = self.password
 
+        elif self.type == "tuic":
+            outbound["uuid"] = self.uuid
+            outbound["password"] = self.password
+            outbound["congestion_control"] = self.tuic_congestion_control or "bbr"
+            if self.tuic_udp_relay_mode:
+                outbound["udp_relay_mode"] = self.tuic_udp_relay_mode
+
         elif self.type == "socks":
             outbound["type"] = "socks"
             if self.username:
@@ -421,13 +449,13 @@ class Node:
             if self.password:
                 outbound["password"] = self.password
 
-        # TLS
-        if self.security == "tls":
+        # TLS (tuic/hysteria2/anytls 固定走 TLS)
+        if self.security == "tls" or self.type in ["tuic", "hysteria2", "anytls"]:
             tls = {"enabled": True}
             if self.sni:
                 tls["server_name"] = self.sni
-            if self.alpn:
-                tls["alpn"] = self.alpn
+            if self.alpn or (self.type == "tuic" and self.tuic_alpn):
+                tls["alpn"] = self.alpn or self.tuic_alpn
             if self.skip_cert_verify:
                 tls["insecure"] = True
             if self.fingerprint:
@@ -461,6 +489,7 @@ class Node:
         "reality_public_key", "reality_short_id", "fingerprint",
         "hysteria2_password", "hysteria2_obfs",
         "hysteria2_up_mbps", "hysteria2_down_mbps",
+        "tuic_congestion_control", "tuic_alpn", "tuic_udp_relay_mode",
         "flow", "alterId",
         "ssr_protocol", "ssr_protocol_param", "ssr_obfs", "ssr_obfs_param",
         "country", "source", "latency", "speed",
@@ -505,6 +534,9 @@ class Node:
             hysteria2_obfs=data.get("hysteria2_obfs"),
             hysteria2_up_mbps=data.get("hysteria2_up_mbps"),
             hysteria2_down_mbps=data.get("hysteria2_down_mbps"),
+            tuic_congestion_control=data.get("tuic_congestion_control"),
+            tuic_alpn=data.get("tuic_alpn"),
+            tuic_udp_relay_mode=data.get("tuic_udp_relay_mode"),
             flow=data.get("flow"),
             alterId=int(data.get("alterId", 0)),
             ssr_protocol=data.get("ssr_protocol"),

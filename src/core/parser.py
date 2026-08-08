@@ -75,7 +75,7 @@ class Parser:
         try:
             cleaned = content.strip().replace("\n", "").replace("\r", "").replace(" ", "")
             decoded = base64.b64decode(cleaned, validate=False).decode("utf-8")
-            if any(proto in decoded for proto in ["vmess://", "vless://", "trojan://", "ss://", "socks://", "socks5://", "anytls://", "hysteria2://", "hy2://"]):
+            if any(proto in decoded for proto in ["vmess://", "vless://", "trojan://", "ss://", "ssr://", "socks://", "socks5://", "anytls://", "tuic://", "hysteria2://", "hy2://"]):
                 return True
         except Exception:
             pass
@@ -157,6 +157,14 @@ class Parser:
         elif proxy_type == "hysteria2":
             node.hysteria2_password = proxy.get("password")
             node.hysteria2_obfs = proxy.get("obfs")
+
+        # TUIC
+        elif proxy_type == "tuic":
+            node.uuid = proxy.get("uuid")
+            node.password = proxy.get("password")
+            node.tuic_congestion_control = proxy.get("congestion-controller") or "bbr"
+            node.tuic_udp_relay_mode = proxy.get("udp-relay-mode")
+            node.tuic_alpn = proxy.get("alpn")
 
         # TLS
         if proxy.get("tls"):
@@ -294,6 +302,14 @@ class Parser:
         elif outbound_type == "hysteria2":
             node.hysteria2_password = outbound.get("password")
 
+        # TUIC
+        elif outbound_type == "tuic":
+            node.uuid = outbound.get("uuid")
+            node.password = outbound.get("password")
+            node.tuic_congestion_control = outbound.get("congestion_control") or "bbr"
+            node.tuic_udp_relay_mode = outbound.get("udp_relay_mode")
+            node.tuic_alpn = outbound.get("tls", {}).get("alpn") if outbound.get("tls") else None
+
         # Transport
         transport = outbound.get("transport", {})
         if transport:
@@ -339,6 +355,8 @@ class Parser:
                 return self._parse_hysteria2_url(url)
             elif url.startswith("anytls://"):
                 return self._parse_anytls_url(url)
+            elif url.startswith("tuic://"):
+                return self._parse_tuic_url(url)
             elif url.startswith(("socks://", "socks5://")):
                 return self._parse_socks_url(url)
             else:
@@ -347,11 +365,56 @@ class Parser:
             logger.debug(f"解析 URL 失败: {e}")
             return None
 
+    def _parse_tuic_url(self, url: str) -> Optional[Node]:
+        """解析 tuic:// URL
+
+        格式: tuic:// UUID : PASSWORD @ HOST : PORT ?sni=...&congestion_control=bbr&alpn=h3#NAME
+        (UUID 与 PASSWORD 用冒号分隔)
+        """
+        parsed = urlparse(url)
+        params = parse_qs(parsed.query)
+
+        uuid = unquote(parsed.username or "")
+        password = unquote(parsed.password or "")
+        server = parsed.hostname or ""
+        port = parsed.port or 443
+
+        name = unquote(parsed.fragment) if parsed.fragment else "Tuic Node"
+
+        node = Node(
+            name=name,
+            type="tuic",
+            server=server,
+            port=port,
+            uuid=uuid,
+            password=password,
+        )
+
+        # 参数
+        node.tuic_congestion_control = params.get("congestion_control", ["bbr"])[0]
+        node.tuic_udp_relay_mode = params.get("udp_relay_mode", [None])[0]
+        sni = params.get("sni", [None])[0]
+        if sni:
+            node.sni = sni
+        alpn = params.get("alpn", [None])[0]
+        if alpn:
+            node.tuic_alpn = [a for a in alpn.split(",") if a]
+            node.alpn = node.tuic_alpn
+        allow_insecure = params.get("allow_insecure", ["0"])[0]
+        if allow_insecure in ("1", "true"):
+            node.skip_cert_verify = True
+
+        node.raw_url = url
+        return node
+
     def _parse_socks_url(self, url: str) -> Optional[Node]:
         """解析 socks:// / socks5:// URL
 
         格式: socks://[USERINFO@]HOST:PORT#NAME   (USERINFO 可为 user 或 user:pass)
-        userinfo 可能是 Base64 编码 (与 ss:// 相同)
+        userinfo 可能是 Base64 编码 (与 ss:// 相同)。
+        注意: 明文 userinfo 与 Base64 易混淆, 仅当严格匹配 Base64 字符集
+        且解码结果含 ":" (user:pass) 时才按 Base64 解码, 否则按明文处理,
+        避免 "dXNl" 这类纯字母明文用户名被误解码为 "use"。
         """
         raw = url
         # 去掉协议前缀
@@ -368,32 +431,39 @@ class Parser:
         username = None
         password = None
 
+        # 服务器部分: 支持 [IPv6]:port 和 host:port
+        server_re = re.compile(r'^(?:\[([0-9a-fA-F:.]+)\]|([^:]+)):(\d+)$')
+
         if "@" in url:
             userinfo, server_part = url.rsplit("@", 1)
-            try:
-                # 尝试 Base64 解码 userinfo (ss:// 风格)
-                padded = userinfo + "=" * (-len(userinfo) % 4)
-                decoded = base64.b64decode(padded).decode("utf-8")
-                if ":" in decoded:
+            # 先按明文处理 (含 : 就是明文 user:pass)
+            if ":" in userinfo:
+                username, password = userinfo.split(":", 1)
+            else:
+                # 无冒号: 可能是 Base64(method:pass) 或纯明文用户名
+                decoded = None
+                if re.fullmatch(r'[A-Za-z0-9+/]+={0,2}', userinfo):
+                    try:
+                        padded = userinfo + "=" * (-len(userinfo) % 4)
+                        candidate = base64.b64decode(padded).decode("utf-8")
+                        if ":" in candidate:
+                            decoded = candidate
+                    except Exception:
+                        pass
+                if decoded:
                     username, password = decoded.split(":", 1)
-                elif decoded:
-                    username = decoded
-            except Exception:
-                # 明文 user:pass 或 user
-                if ":" in userinfo:
-                    username, password = userinfo.split(":", 1)
                 else:
                     username = userinfo or None
 
-            server_match = re.match(r"([^:]+):(\d+)", server_part)
-            if server_match:
-                server = server_match.group(1)
-                port = int(server_match.group(2))
+            m = server_re.match(server_part)
+            if m:
+                server = m.group(1) or m.group(2)
+                port = int(m.group(3))
         else:
-            server_match = re.match(r"([^:]+):(\d+)", url)
-            if server_match:
-                server = server_match.group(1)
-                port = int(server_match.group(2))
+            m = server_re.match(url)
+            if m:
+                server = m.group(1) or m.group(2)
+                port = int(m.group(3))
 
         if not server:
             return None
@@ -406,7 +476,9 @@ class Parser:
             password=password,
         )
         if username:
-            node.username = username
+            node.username = unquote(username)
+        if password:
+            node.password = unquote(password)
         node.raw_url = raw
         return node
 
