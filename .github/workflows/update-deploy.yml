@@ -40,14 +40,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Install xray-core
-        run: |
-          curl -L -o /tmp/xray.zip "https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-64.zip"
-          unzip -o /tmp/xray.zip -d /tmp/xray
-          chmod +x /tmp/xray/xray
-          sudo mv /tmp/xray/xray /usr/local/bin/
-          xray version
-
       - name: Download GeoIP database
         run: |
           mkdir -p data/cache
@@ -73,14 +65,7 @@ jobs:
           rm -f docs/clash.yaml docs/v2ray.txt docs/singbox.json docs/nodes.json docs/stats.json
           rm -rf docs/s
 
-      - name: Restore valid node pool
-        run: |
-          mkdir -p output
-          git fetch origin data --depth=1 2>/dev/null || true
-          git show origin/data:valid_pool.json > output/valid_pool.json 2>/dev/null && echo "Restored valid_pool.json" || (rm -f output/valid_pool.json && echo "No existing valid pool")
-        continue-on-error: true
-
-      - name: Run aggregator (skip fake tests)
+      - name: Run aggregator
         env:
           TELEGRAM_API_ID: ${{ secrets.TELEGRAM_API_ID }}
           TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
@@ -90,16 +75,6 @@ jobs:
           HF_TG_PARSER_KEY: ${{ secrets.HF_TG_PARSER_KEY }}
         run: python scripts/run.py --no-test
 
-      - name: Test nodes with xray
-        run: python scripts/test_with_xray.py
-        timeout-minutes: 60
-
-      - name: Regenerate subscriptions from tested nodes
-        env:
-          AURORA_TOKEN: ${{ secrets.AURORA_TOKEN }}
-          AURORA_GH_TOKEN: ${{ secrets.AURORA_GH_TOKEN }}
-        run: python scripts/run.py --generate-only
-
       - name: Verify output
         run: |
           echo "=== docs 目录结构 ==="
@@ -108,24 +83,6 @@ jobs:
           test ! -f docs/clash.yaml && echo "✓ 根目录无 clash.yaml"
           test ! -f docs/nodes.json && echo "✓ 根目录无 nodes.json"
           test -f docs/index.html && echo "✓ index.html 存在"
-
-      - name: Persist valid node pool
-        run: |
-          if [ -f output/valid_pool.json ]; then
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git fetch origin data
-            # 使用 worktree 避免影响主工作目录的 docs 产物
-            git worktree add /tmp/data-branch origin/data
-            cp output/valid_pool.json /tmp/data-branch/valid_pool.json
-            cd /tmp/data-branch
-            git add valid_pool.json
-            git commit -m "chore: update valid node pool" || echo "No changes to commit"
-            git push origin HEAD:data
-            cd -
-            git worktree remove /tmp/data-branch
-          fi
-        continue-on-error: true
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

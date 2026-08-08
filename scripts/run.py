@@ -197,6 +197,10 @@ class AuroraAggregator:
             logger.info("跳过订阅加载，直接生成订阅文件")
             nodes = self._load_existing_nodes()
             self._restore_channel_results()
+        elif skip_test:
+            # --no-test 模式: 不测试, 不合并有效节点池, 直接用本次抓取的节点
+            nodes = await self.load_sources()
+            logger.info(f"跳过节点测试与有效池合并, 直接用本次抓取 {len(nodes)} 个节点")
         else:
             # 加载有效节点池 (累积保留, 只在测试失败时移除)
             valid_pool = self._load_valid_pool()
@@ -239,13 +243,15 @@ class AuroraAggregator:
             tested_nodes = await tester.test_all(nodes)
 
         # 从节点列表分流: 全部节点 vs 仅有效节点
-        valid_nodes = [n for n in tested_nodes if n.is_valid]
-        invalid_nodes = [n for n in tested_nodes if not n.is_valid]
-
-        if len(valid_nodes) < len(tested_nodes):
-            logger.info(f"节点校验: {len(valid_nodes)} 通过 / {len(invalid_nodes)} 失败 / {len(tested_nodes)} 总计")
-        elif not valid_nodes and tested_nodes:
+        # 跳过测试时 (--no-test) 不区分有效/无效, 全部作为订阅内容
+        if skip_test:
             valid_nodes = tested_nodes
+        else:
+            valid_nodes = [n for n in tested_nodes if n.is_valid]
+        invalid_nodes = [n for n in tested_nodes if n not in valid_nodes]
+
+        if not skip_test:
+            logger.info(f"节点校验: {len(valid_nodes)} 通过 / {len(invalid_nodes)} 失败 / {len(tested_nodes)} 总计")
 
         # 保存有效节点池 (累积保留, 只有测试失败的才被移除)
         if not generate_only and not skip_test:
@@ -258,7 +264,7 @@ class AuroraAggregator:
             for node in tested_nodes:
                 src = node.source or ""
                 ch_name = src.split(":", 1)[1] if ":" in src else src
-                if node.is_valid:
+                if node in valid_nodes:
                     ch_valid[ch_name] += 1
                 else:
                     ch_invalid[ch_name] += 1
@@ -285,14 +291,9 @@ class AuroraAggregator:
 
         logger.info(f"全部节点: {len(tested_nodes)} | 有效节点: {len(valid_nodes)}")
 
-        # Step 7: 生成订阅 — 两套: 全部节点(主路径) + 校验通过的(pass/)
+        # Step 7: 生成订阅 (全量节点, 不再生成校验通过的 pass/ 子目录)
         output_dir = "output"
         self.generator.generate_all(tested_nodes, output_dir)
-
-        # 校验通过的节点订阅 (pass/ 子目录)
-        pass_output_dir = Path(output_dir) / "pass"
-        pass_output_dir.mkdir(parents=True, exist_ok=True)
-        self.generator.generate_all(valid_nodes, str(pass_output_dir))
 
         # 保存频道抓取结果到 output (供 generate_only 模式恢复)
         if self.channel_results:
@@ -420,14 +421,6 @@ class AuroraAggregator:
             src = output_dir / filename
             if src.exists():
                 shutil.copy(src, sub_dir / filename)
-
-        # 复制校验通过的节点订阅 (pass/ 子目录)
-        pass_dir = sub_dir / "pass"
-        pass_dir.mkdir(parents=True, exist_ok=True)
-        for filename in ["clash.yaml", "v2ray.txt", "singbox.json", "nodes.json"]:
-            src = output_dir / "pass" / filename
-            if src.exists():
-                shutil.copy(src, pass_dir / filename)
 
         # 生成统计信息
         stats = self._generate_stats(valid_nodes, all_nodes)
