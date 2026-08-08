@@ -92,7 +92,7 @@ jobs:
 
       - name: Test nodes with xray
         run: python scripts/test_with_xray.py
-        timeout-minutes: 40
+        timeout-minutes: 60
 
       - name: Regenerate subscriptions from tested nodes
         env:

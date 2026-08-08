@@ -145,6 +145,16 @@ channels:
     username: "@xlyv2ray"
     enabled: true
 
+  # V2RayFree — 免费节点分享 (2026-08-08 验证有效)
+  - name: "V2RayFree"
+    username: "@V2RayFree"
+    enabled: true
+
+  # V2rayNodes — 免费节点分享 (2026-08-08 验证有效)
+  - name: "V2rayNodes"
+    username: "@V2rayNodes"
+    enabled: true
+
   # 可添加更多频道
   # - name: "MyChannel"
   #   username: "@my_channel"

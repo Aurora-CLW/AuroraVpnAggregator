@@ -1,5 +1,6 @@
 # GitHub 订阅源配置
 # 公共免费节点，由各仓库 GitHub Actions 自动更新
+# 2026-08-08 新增多源: mahdibland 聚合 5164 节点 + 独立备份源
 
 type: github
 enabled: true
@@ -8,5 +9,37 @@ sources:
   # 自定义订阅源
   - name: "peige_dapei"
     url: "https://peige.dpkj.qzz.io/dapei"
+    format: base64
+    enabled: true
+
+  # 大型聚合源 (79 个上游子源, GitHub Actions 每小时更新) — 主力
+  - name: "mahdibland_agg"
+    url: "https://raw.githubusercontent.com/mahdibland/V2RayAggregator/master/sub/sub_merge_base64.txt"
+    format: base64
+    enabled: true
+
+  # 独立备份源 (不依赖 mahdibland, 防单点失效)
+  - name: "xiyaowong_freeFQ"
+    url: "https://raw.githubusercontent.com/xiyaowong/freeFQ/main/v2ray"
+    format: base64
+    enabled: true
+
+  - name: "mfuu_v2ray"
+    url: "https://raw.githubusercontent.com/mfuu/v2ray/master/v2ray"
+    format: base64
+    enabled: true
+
+  - name: "ermaozi_subscribe"
+    url: "https://raw.githubusercontent.com/ermaozi/get_subscribe/main/subscribe/v2ray.txt"
+    format: auto
+    enabled: true
+
+  - name: "freebaipiao_nodes"
+    url: "https://raw.githubusercontent.com/freebaipiao/freebaipiao/main/GfwserveV2ray.txt"
+    format: base64
+    enabled: true
+
+  - name: "Pawdroid_free"
+    url: "https://raw.githubusercontent.com/Pawdroid/Free-servers/main/sub"
     format: base64
     enabled: true
