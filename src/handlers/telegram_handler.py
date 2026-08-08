@@ -522,16 +522,16 @@ class TelegramHandler(BaseHandler):
         all_nodes = []
         all_sub_urls: List[dict] = []
         all_msg_links: List[str] = []
-        all_doc_ids: List[dict] = []
+        all_doc_msgs: List[dict] = []  # {"channel", "msg_id", "filename"}
         valid_count = 0
         seen_msg_ids = set()
+        last_msg_id = 0  # 翻页游标 (offset_id)
 
         for page in range(max_pages):
-            # 计算偏移: 第二页起用 offset 参数
-            offset = page * page_size
+            # HF API 分页: 用 offset_id (消息 id 游标), 非页码偏移
             params = f"channel={username}&limit={page_size}&key={HF_TG_PARSER_KEY}"
-            if offset > 0:
-                params += f"&offset={offset}"
+            if last_msg_id > 0:
+                params += f"&offset_id={last_msg_id}"
             real_url = f"{HF_TG_PARSER_BASE}?{params}"
 
             try:
@@ -569,15 +569,13 @@ class TelegramHandler(BaseHandler):
                     seen_msg_ids.add(msg_id)
 
                 text = msg.get("text", "") if isinstance(msg, dict) else str(msg)
-                # 检测文档附件 (节点文件, 只收集文本格式)
+                # 检测文档附件 (节点文件, 只收集文本格式; 用 msg_id 走 HF download 端点下载)
                 media = msg.get("media") if isinstance(msg, dict) else None
                 if media and isinstance(media, dict) and media.get("type") == "document":
-                    file_id = media.get("id")
                     filename = media.get("filename", "")
-                    if file_id and filename:
-                        text_exts = (".txt", ".yaml", ".yml", ".json", ".base64", ".conf", ".list")
-                        if any(filename.lower().endswith(ext) for ext in text_exts):
-                            all_doc_ids.append({"file_id": file_id, "filename": filename})
+                    text_exts = (".txt", ".yaml", ".yml", ".json", ".base64", ".conf", ".list", ".md")
+                    if filename and any(filename.lower().endswith(ext) for ext in text_exts):
+                        all_doc_msgs.append({"channel": username, "msg_id": msg_id, "filename": filename})
                 if not text and not media:
                     continue
                 nodes = self._extract_nodes_from_text(text) if text else []
@@ -597,6 +595,11 @@ class TelegramHandler(BaseHandler):
 
             logger.info(f"[{self.name}] HF TG API {channel_name} page {page+1}: {len(messages)} 条消息, {page_valid} 条有效, {page_nodes} 个节点")
 
+            # 更新翻页游标 (本页最早的消息 id)
+            page_ids = [m.get("id") for m in messages if isinstance(m, dict) and m.get("id")]
+            if page_ids:
+                last_msg_id = min(page_ids)
+
             # 已达到目标有效消息数, 停止翻页
             if valid_count >= min_valid:
                 break
@@ -604,12 +607,13 @@ class TelegramHandler(BaseHandler):
             if page_valid == 0 and page >= 1:
                 break
 
-        # 下载文档附件中的节点
-        if all_doc_ids:
-            doc_nodes = await self._download_telegram_docs(session, all_doc_ids)
+        # 下载文档附件中的节点 (通过 HF download 端点, 无需自己的 Bot)
+        if all_doc_msgs:
+            doc_nodes = await self._download_telegram_docs(session, all_doc_msgs)
             if doc_nodes:
-                logger.info(f"[{self.name}] {channel_name}: 从 {len(all_doc_ids)} 个文档中获取 {len(doc_nodes)} 个节点")
+                logger.info(f"[{self.name}] {channel_name}: 从 {len(all_doc_msgs)} 个文档中获取 {len(doc_nodes)} 个节点")
                 all_nodes.extend(doc_nodes)
+                valid_count += 1  # 含文档节点的消息计为有效消息
         # 去重
         seen = set()
         unique_subs: List[dict] = []
@@ -626,52 +630,32 @@ class TelegramHandler(BaseHandler):
         logger.info(f"[{self.name}] HF TG API {channel_name}: 共 {valid_count} 条有效消息, {len(all_nodes)} 节点, {len(unique_subs)} 订阅链接")
         return {"nodes": all_nodes, "sub_urls": unique_subs, "msg_links": unique_msgs, "valid_count": valid_count}
 
-    async def _download_telegram_docs(self, session, doc_ids: List[dict]) -> List:
-        """通过 Telegram Bot API 下载文档附件并解析节点
+    async def _download_telegram_docs(self, session, doc_msgs: List[dict]) -> List:
+        """通过 HF Space TG Parser API 的 /tg/download 端点下载文档附件并解析节点
 
-        注意: HF API 返回的 file_id 属于抓取 Bot, 我们的 Bot 无法直接下载。
-        因此只尝试下载小文本文件 (.txt/.yaml/.json/.base64), 其他格式跳过。
+        HF Space 用自己的 Telethon 客户端抓取媒体文件, 返回原始文件内容。
+        doc_msgs 为 [{"channel", "msg_id", "filename"}] 列表。
+        不使用自己的 Bot (file_id 属于抓取 Bot, 我们的 Bot 无法下载)。
         """
-        import os
-        bot_token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
-        if not bot_token:
-            logger.debug("TELEGRAM_BOT_TOKEN 未设置, 跳过文档下载")
+        if not HF_TG_PARSER_KEY:
             return []
-        # 只处理文本格式的节点文件
-        text_extensions = (".txt", ".yaml", ".yml", ".json", ".base64", ".conf", ".list")
         all_nodes = []
         seen_ids = set()
-        for doc in doc_ids[:3]:  # 最多尝试3个文档
-            file_id = doc["file_id"]
-            if file_id in seen_ids:
+        for doc in doc_msgs[:3]:  # 最多尝试3个文档
+            msg_key = (doc.get("channel"), doc.get("msg_id"))
+            if msg_key in seen_ids:
                 continue
-            seen_ids.add(file_id)
+            seen_ids.add(msg_key)
+            channel = doc.get("channel", "")
+            msg_id = doc.get("msg_id")
             filename = doc.get("filename", "")
-            # 只下载文本格式文件
-            if not any(filename.lower().endswith(ext) for ext in text_extensions):
-                logger.debug(f"跳过非文本文件: {filename}")
+            if not channel or not msg_id:
                 continue
+            dl_url = f"{HF_TG_PARSER_BASE.replace('/tg/history', '/tg/download')}?channel={channel}&msg_id={msg_id}&key={HF_TG_PARSER_KEY}"
             try:
-                # Step 1: 获取文件路径
-                get_url = f"https://api.telegram.org/bot{bot_token}/getFile?file_id={file_id}"
-                async with session.get(get_url, proxy=self.proxy, timeout=aiohttp.ClientTimeout(total=10)) as resp:
-                    if resp.status != 200:
-                        logger.debug(f"getFile 失败 HTTP {resp.status}: {filename} (file_id 不属于当前 Bot)")
-                        continue
-                    result = await resp.json()
-                    if not result.get("ok"):
-                        logger.debug(f"getFile 返回失败: {result}")
-                        continue
-                    file_path = result["result"]["file_path"]
-                    # 验证 file_path 不含路径穿越
-                    if ".." in file_path or file_path.startswith("/"):
-                        logger.debug(f"file_path 可疑, 跳过: {file_path}")
-                        continue
-                # Step 2: 下载文件内容
-                dl_url = f"https://api.telegram.org/file/bot{bot_token}/{file_path}"
                 async with session.get(dl_url, proxy=self.proxy, timeout=aiohttp.ClientTimeout(total=30)) as resp:
                     if resp.status != 200:
-                        logger.debug(f"文件下载失败 HTTP {resp.status}: {file_path}")
+                        logger.debug(f"HF 文档下载失败 HTTP {resp.status}: {filename}")
                         continue
                     content = await resp.text()
                     if not content or len(content) < 10:
