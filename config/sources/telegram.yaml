@@ -120,10 +120,10 @@ channels:
     username: "@changfengchannel"
     enabled: true
 
-  # jiedian168 — 文件中包含节点 (订阅链接 tgz.heidong.cyou 已失效, 暂时停用)
+  # jiedian168 — 每日更新节点文件 (通过 HF download 端点下载 txt 文档)
   - name: "jiedian168"
     username: "@jiedian168"
-    enabled: false
+    enabled: true
 
   # fq521 — VPN 节点分享
   - name: "fq521"
