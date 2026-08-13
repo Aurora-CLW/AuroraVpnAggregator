@@ -1,8 +1,9 @@
 name: Update & Deploy
 
 on:
-  schedule:
-    - cron: '0 * * * *'
+  # schedule 已临时关闭（避免 run 堆积）；需要恢复时取消下一行注释
+  # schedule:
+  #   - cron: '0 * * * *'
   workflow_dispatch:
   push:
     branches:
@@ -20,7 +21,7 @@ permissions:
 
 concurrency:
   group: "pages"
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   build:
