@@ -26,17 +26,19 @@ class Generator:
             config: 生成配置
         """
         self.config = config or {}
-        self.naming_format = self.config.get("naming", "{country} {type} {latency}ms")
         self.sort_by = self.config.get("sort_by", "latency")
         self.max_nodes = self.config.get("max_nodes", 0)
+        # 输出格式白名单（默认全部生成）；nodes.json 始终生成
+        self.formats = self.config.get("formats", ["clash", "v2ray", "singbox"])
 
-    def generate_all(self, nodes: List[Node], output_dir: str):
+    def generate_all(self, nodes: List[Node], output_dir: str, partition_size: int = 0):
         """
-        生成所有格式的订阅
+        生成所有格式的订阅，支持分片
 
         Args:
             nodes: 节点列表
             output_dir: 输出目录
+            partition_size: 分片大小（每个分片最大节点数，0=不分片）
         """
         output_path = Path(output_dir)
         output_path.mkdir(parents=True, exist_ok=True)
@@ -44,26 +46,55 @@ class Generator:
         # 排序节点
         sorted_nodes = self._sort_nodes(nodes)
 
+        # 统一格式化节点名称 (一次完成, 所有格式共享, 避免跨函数副作用导致的不一致)
+        sorted_nodes = self._format_node_names(sorted_nodes)
+
         # 限制节点数
         if self.max_nodes > 0:
             sorted_nodes = sorted_nodes[:self.max_nodes]
 
-        # 生成各格式
-        clash_content = self.generate_clash(sorted_nodes)
-        (output_path / "clash.yaml").write_text(clash_content, encoding="utf-8")
-        logger.info(f"生成 clash.yaml: {len(sorted_nodes)} 个节点")
+        # 生成全量订阅
+        self._generate_single(sorted_nodes, output_path)
 
-        v2ray_content = self.generate_v2ray(sorted_nodes)
-        (output_path / "v2ray.txt").write_text(v2ray_content, encoding="utf-8")
-        logger.info(f"生成 v2ray.txt: {len(sorted_nodes)} 个节点")
+        # 生成分片订阅
+        if partition_size > 0 and len(sorted_nodes) > partition_size:
+            self._generate_partitions(sorted_nodes, output_path, partition_size)
 
-        singbox_content = self.generate_singbox(sorted_nodes)
-        (output_path / "singbox.json").write_text(singbox_content, encoding="utf-8")
-        logger.info(f"生成 singbox.json: {len(sorted_nodes)} 个节点")
+    def _generate_single(self, nodes: List[Node], output_path: Path):
+        """生成单个订阅文件集（全量）"""
+        if "clash" in self.formats:
+            clash_content = self.generate_clash(nodes)
+            (output_path / "clash.yaml").write_text(clash_content, encoding="utf-8")
+            logger.info(f"生成 clash.yaml: {len(nodes)} 个节点")
+
+        if "v2ray" in self.formats:
+            v2ray_content = self.generate_v2ray(nodes)
+            (output_path / "v2ray.txt").write_text(v2ray_content, encoding="utf-8")
+            logger.info(f"生成 v2ray.txt: {len(nodes)} 个节点")
+
+        if "singbox" in self.formats:
+            singbox_content = self.generate_singbox(nodes)
+            (output_path / "singbox.json").write_text(singbox_content, encoding="utf-8")
+            logger.info(f"生成 singbox.json: {len(nodes)} 个节点")
 
         # 生成节点数据
-        nodes_data = self._generate_nodes_data(sorted_nodes)
+        nodes_data = self._generate_nodes_data(nodes)
         (output_path / "nodes.json").write_text(nodes_data, encoding="utf-8")
+
+    def _generate_partitions(self, nodes: List[Node], output_path: Path, partition_size: int):
+        """生成分片订阅"""
+        total = len(nodes)
+        num_partitions = (total + partition_size - 1) // partition_size
+
+        for i in range(num_partitions):
+            start = i * partition_size
+            end = min(start + partition_size, total)
+            partition_nodes = nodes[start:end]
+            part_dir = output_path / f"part{i + 1}"
+            part_dir.mkdir(parents=True, exist_ok=True)
+
+            self._generate_single(partition_nodes, part_dir)
+            logger.info(f"分片 {i + 1}/{num_partitions}: {len(partition_nodes)} 个节点 → {part_dir}")
 
     def generate_clash(self, nodes: List[Node]) -> str:
         """
@@ -75,12 +106,9 @@ class Generator:
         Returns:
             YAML 字符串
         """
-        # 格式化节点名称
-        formatted_nodes = self._format_node_names(nodes)
-
-        # 生成代理列表
+        # 生成代理列表 (节点名称已在 generate_all 中统一格式化)
         proxies = []
-        for node in formatted_nodes:
+        for node in nodes:
             proxy = node.to_clash()
             proxies.append(proxy)
 
@@ -172,6 +200,17 @@ class Generator:
         outbounds.insert(0, {"type": "direct", "tag": "DIRECT"})
         outbounds.insert(0, {"type": "dns", "tag": "DNS"})
 
+        # 添加 Proxy 选择器组（url-test），供 route.final 引用；
+        # 之前 final 写死 "Proxy" 但 outbounds 中并无该 tag，导致配置无法加载。
+        proxy_tags = [o["tag"] for o in outbounds if o.get("tag") not in ("DNS", "DIRECT")]
+        outbounds.insert(0, {
+            "type": "url-test",
+            "tag": "Proxy",
+            "outbounds": proxy_tags,
+            "url": "http://www.gstatic.com/generate_204",
+            "interval": 300,
+        })
+
         config = {
             "outbounds": outbounds,
             "route": {
@@ -259,4 +298,5 @@ def generate_subscription(nodes: List[Node], output_dir: str, config: dict = Non
         config: 配置
     """
     generator = Generator(config)
-    generator.generate_all(nodes, output_dir)
+    partition_size = (config or {}).get("partition_size", 0)
+    generator.generate_all(nodes, output_dir, partition_size=partition_size)

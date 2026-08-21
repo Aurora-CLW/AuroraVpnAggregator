@@ -59,10 +59,7 @@ class AuroraAggregator:
         self.config = self._load_config(config_path)
         self.setup_logging()
 
-        self.fetcher = Fetcher(
-            timeout=self.config.get("update", {}).get("timeout", 30),
-            retry=self.config.get("update", {}).get("retry", 3)
-        )
+        # 注意：load_sources() 直接使用各 handler 抓取，本实例不使用 Fetcher
         self.parser = Parser()
         self.deduplicator = Deduplicator(
             method=self.config.get("dedup", {}).get("method", "fingerprint"),
@@ -176,6 +173,13 @@ class AuroraAggregator:
 
         except Exception as e:
             logger.warning(f"地理位置识别失败: {e}")
+        finally:
+            if getattr(self, "geoip", None) is not None:
+                try:
+                    self.geoip.close()
+                except Exception:
+                    pass
+                self.geoip = None
 
         return nodes
 
@@ -209,16 +213,25 @@ class AuroraAggregator:
             # 从频道抓取新节点
             new_nodes = await self.load_sources()
 
-            # 合并: 新节点更新旧节点, 旧节点中未出现的保留
-            new_keys = {(n.server, n.port) for n in new_nodes}
-            merged = list(new_nodes)
-            preserved = 0
+            # 合并: 优先保留历史上已验证有效的节点 (累积保留, 仅在测试失败才移除)
+            # 本轮重新抓到的新节点 (is_valid=False) 不应覆盖历史有效节点,
+            # 否则"累积保留"失效: 历史有效节点一旦本轮重现就被重置为未测试, 本轮若探测失败即从池移除。
+            new_map = {(n.server, n.port): n for n in new_nodes}
+            merged = []
+            seen = set()
             for key, old in valid_map.items():
-                if key not in new_keys:
-                    merged.append(old)
-                    preserved += 1
-            if preserved:
-                logger.info(f"有效池合并: 新增 {len(new_keys)} 个, 保留历史 {preserved} 个")
+                new = new_map.get(key)
+                if new is not None and not old.is_valid:
+                    merged.append(new)        # 历史已失效 -> 用本次新节点覆盖
+                else:
+                    merged.append(old)        # 历史有效 (或新节点缺失) -> 保留历史
+                seen.add(key)
+            for key, new in new_map.items():
+                if key not in seen:
+                    merged.append(new)        # 全新节点
+            new_count = sum(1 for k in new_map if k not in valid_map)
+            preserved = sum(1 for k in valid_map if k in new_map)
+            logger.info(f"有效池合并: 新增 {new_count} 个, 保留历史 {preserved} 个")
             nodes = merged
 
         if not nodes:
@@ -272,28 +285,49 @@ class AuroraAggregator:
                 self.channel_results[name]["valid_nodes"] = ch_valid.get(name, 0)
                 self.channel_results[name]["invalid_nodes"] = ch_invalid.get(name, 0)
 
-        # Step 5: 过滤 (仅对有效节点做过滤)
+        # Step 5: 过滤 — 同时作用于全量节点 (主订阅输出 output/) 与有效节点 (docs 副本)
+        # 修复: 之前只过滤 valid_nodes, 导致 filter 配置 (exclude/include_countries, exclude_keywords)
+        # 对真正对外提供的主订阅文件完全无效
         filter_config = self.config.get("filter", {})
-        if filter_config.get("exclude_countries"):
-            valid_nodes = self.deduplicator.filter_by_country(
-                valid_nodes,
-                exclude=filter_config["exclude_countries"]
-            )
-        if filter_config.get("exclude_keywords"):
-            valid_nodes = self.deduplicator.filter_by_keywords(
-                valid_nodes,
-                filter_config["exclude_keywords"]
-            )
+        exclude_countries = filter_config.get("exclude_countries") or []
+        include_countries = filter_config.get("include_countries") or []
+        exclude_keywords = filter_config.get("exclude_keywords") or []
 
-        # Step 6: 限制节点数
+        if include_countries or exclude_countries:
+            tested_nodes = self.deduplicator.filter_by_country(
+                tested_nodes, include=include_countries, exclude=exclude_countries
+            )
+            valid_nodes = self.deduplicator.filter_by_country(
+                valid_nodes, include=include_countries, exclude=exclude_countries
+            )
+        if exclude_keywords:
+            tested_nodes = self.deduplicator.filter_by_keywords(tested_nodes, exclude_keywords)
+            valid_nodes = self.deduplicator.filter_by_keywords(valid_nodes, exclude_keywords)
+
+        # 按延迟/速度阈值过滤（filter.max_latency / filter.min_speed）— 仅作用于有效节点
+        # 注意：跳过测试时（--no-test）latency/speed 未测量，不应用此过滤，避免误删全部节点
+        max_latency = filter_config.get("max_latency")
+        min_speed = filter_config.get("min_speed")
+        if not skip_test and (max_latency is not None or min_speed is not None):
+            def _quality_ok(n: Node) -> bool:
+                if max_latency is not None and (n.latency or 0) > max_latency:
+                    return False
+                if min_speed is not None and (n.speed or 0) < min_speed:
+                    return False
+                return True
+            valid_nodes = [n for n in valid_nodes if _quality_ok(n)]
+
+        # Step 6: 限制节点数 (同样作用于全量节点与有效节点)
         max_nodes = self.config.get("output", {}).get("max_nodes", 500)
         valid_nodes = self.deduplicator.limit_nodes(valid_nodes, max_nodes)
+        tested_nodes = self.deduplicator.limit_nodes(tested_nodes, max_nodes)
 
         logger.info(f"全部节点: {len(tested_nodes)} | 有效节点: {len(valid_nodes)}")
 
         # Step 7: 生成订阅 (全量节点, 不再生成校验通过的 pass/ 子目录)
         output_dir = "output"
-        self.generator.generate_all(tested_nodes, output_dir)
+        partition_size = self.config.get("output", {}).get("partition_size", 0)
+        self.generator.generate_all(tested_nodes, output_dir, partition_size=partition_size)
 
         # 保存频道抓取结果到 output (供 generate_only 模式恢复)
         if self.channel_results:
@@ -373,8 +407,11 @@ class AuroraAggregator:
             "nodes": nodes_data,
         }
 
-        with open(pool_file, "w", encoding="utf-8") as f:
+        # 原子写入：先写临时文件再重命名，避免并发写入损坏
+        tmp_file = pool_file.with_suffix(pool_file.suffix + ".tmp")
+        with open(tmp_file, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
+        os.replace(tmp_file, pool_file)
 
         logger.info(f"保存有效节点池: {len(nodes_data)} 个节点")
 
@@ -400,7 +437,8 @@ class AuroraAggregator:
             if config_token and not config_token.startswith("${"):
                 access_token = config_token
         if not access_token:
-            raise RuntimeError("AURORA_TOKEN 未配置。请设置环境变量 AURORA_TOKEN 或在 settings.yaml 中配置 security.token")
+            logger.warning("AURORA_TOKEN 未配置，跳过 docs 安全副本生成（订阅仍会输出到 output/）")
+            return
 
         # 用 token 的 SHA-256 哈希前 16 位作为目录名, 避免 token 明文暴露在路径中
         token_hash_dir = hashlib.sha256(access_token.encode()).hexdigest()[:16]
@@ -422,8 +460,29 @@ class AuroraAggregator:
             if src.exists():
                 shutil.copy(src, sub_dir / filename)
 
+        # 复制分片订阅 (part1/, part2/, ...)
+        for part_dir in sorted(output_dir.iterdir()):
+            if part_dir.is_dir() and part_dir.name.startswith("part"):
+                dest_part = sub_dir / part_dir.name
+                dest_part.mkdir(parents=True, exist_ok=True)
+                for filename in ["clash.yaml", "v2ray.txt", "singbox.json", "nodes.json"]:
+                    src = part_dir / filename
+                    if src.exists():
+                        shutil.copy(src, dest_part / filename)
+                logger.info(f"复制分片 {part_dir.name}: {len(list(dest_part.iterdir()))} 个文件")
+
         # 生成统计信息
         stats = self._generate_stats(valid_nodes, all_nodes)
+
+        # 添加分片信息
+        partition_size = self.config.get("output", {}).get("partition_size", 0)
+        if partition_size > 0 and len(all_nodes) > partition_size:
+            num_partitions = (len(all_nodes) + partition_size - 1) // partition_size
+            stats["partitions"] = {
+                "partition_size": partition_size,
+                "num_partitions": num_partitions,
+                "total_nodes": len(all_nodes),
+            }
 
         # 嵌入源配置 (供 Web UI 源管理使用, 避免额外请求 GitHub API)
         stats["tg_channels"] = self._load_tg_channel_config()

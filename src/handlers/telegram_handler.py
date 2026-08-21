@@ -11,6 +11,7 @@ Telegram 频道处理器
 """
 
 import asyncio
+import ipaddress
 import json as _json
 import logging
 import os
@@ -124,7 +125,8 @@ class TelegramHandler(BaseHandler):
         seen = set()
         unique_nodes = []
         for node in all_nodes:
-            key = (node.server, node.port) if hasattr(node, 'server') and hasattr(node, 'port') else id(node)
+            # 去重键包含 type + 唯一标识，避免同址不同协议/不同凭据的节点被误并
+            key = (node.type, node.server, node.port, node.uuid or node.password or node.username) if hasattr(node, 'server') and hasattr(node, 'port') else id(node)
             if key not in seen:
                 seen.add(key)
                 unique_nodes.append(node)
@@ -288,7 +290,8 @@ class TelegramHandler(BaseHandler):
                 seen_direct = set()
                 unique_direct = []
                 for node in nodes:
-                    key = (node.server, node.port) if hasattr(node, 'server') and hasattr(node, 'port') else id(node)
+                    # 去重键包含 type + 唯一标识，避免同址不同协议/不同凭据的节点被误并
+                    key = (node.type, node.server, node.port, node.uuid or node.password or node.username) if hasattr(node, 'server') and hasattr(node, 'port') else id(node)
                     if key not in seen_direct:
                         seen_direct.add(key)
                         unique_direct.append(node)
@@ -321,7 +324,8 @@ class TelegramHandler(BaseHandler):
                 seen_ch = set()
                 unique_ch = []
                 for node in nodes:
-                    key = (node.server, node.port) if hasattr(node, 'server') and hasattr(node, 'port') else id(node)
+                    # 去重键包含 type + 唯一标识，避免同址不同协议/不同凭据的节点被误并
+                    key = (node.type, node.server, node.port, node.uuid or node.password or node.username) if hasattr(node, 'server') and hasattr(node, 'port') else id(node)
                     if key not in seen_ch:
                         seen_ch.add(key)
                         unique_ch.append(node)
@@ -810,6 +814,10 @@ class TelegramHandler(BaseHandler):
         return {"nodes": nodes, "sub_urls": unique_sub_urls, "msg_links": unique_msg_links, "valid_count": valid_count}
 
     async def _fetch_page(self, session, url: str, timeout: int = 30) -> Optional[str]:
+        # SSRF 防护：拒绝内网/回环/链路本地等保留地址
+        if not self._is_safe_url(url):
+            logger.debug(f"跳过不安全 URL (SSRF 防护): {url}")
+            return None
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
             "Accept": "text/html,application/xhtml+xml",
@@ -1013,6 +1021,28 @@ class TelegramHandler(BaseHandler):
             urls.append({"url": url, "format_hint": format_hint})
         return urls
 
+    def _is_safe_url(self, url: str) -> bool:
+        """SSRF 防护：拒绝内网 / 回环 / 链路本地 / 保留地址。
+
+        仅放行公开可访问的地址；IP 字面量形式的私有地址一律拒绝，
+        域名形式额外拒绝 localhost。抓取方无法解析时也会被拒绝。
+        """
+        try:
+            host = (urlparse(url).hostname or "").lower()
+        except Exception:
+            return False
+        if not host:
+            return False
+        try:
+            ip = ipaddress.ip_address(host)
+            return not (ip.is_private or ip.is_loopback or ip.is_link_local
+                        or ip.is_reserved or ip.is_multicast or ip.is_unspecified)
+        except ValueError:
+            pass
+        if host == "localhost" or host.endswith(".localhost"):
+            return False
+        return True
+
     def _clean_sub_url(self, raw_url: str) -> Optional[dict]:
         """清理单个 URL 并返回 {"url": str, "format_hint": str} 或 None"""
         url = re.sub(r'[^\x21-\x7E]+.*$', '', raw_url)
@@ -1105,6 +1135,10 @@ class TelegramHandler(BaseHandler):
         async def _fetch_one(item) -> tuple:
             """返回 (nodes, status), status: valid/failed/dead"""
             url = item["url"] if isinstance(item, dict) else item
+            # SSRF 防护：拒绝内网/回环/链路本地等保留地址
+            if not self._is_safe_url(url):
+                logger.debug(f"跳过不安全 URL (SSRF 防护): {url}")
+                return [], "dead"
             # 跳过已知死链接
             if url in self._dead_urls:
                 logger.debug(f"订阅链接在排除列表中, 跳过: {url}")

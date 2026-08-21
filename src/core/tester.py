@@ -36,29 +36,39 @@ class NodeTester:
 
         logger.info(f"开始测试 {len(nodes)} 个节点 (TCP + TLS 严格校验)...")
 
-        # Stage 1: TCP 可达性 + 延迟测量
-        if self.tcp_enabled:
-            tcp_valid = await self._tcp_batch_test(nodes)
-            logger.info(f"TCP 测试完成: {len(tcp_valid)}/{len(nodes)} 可达")
-        else:
-            tcp_valid = nodes
+        # 创建专用线程池, 使 concurrent 配置真正生效
+        # (默认 executor 的 max_workers 受 min(32, cpu+4) 限制, 无法达到配置的并发数)
+        import concurrent.futures
+        executor = concurrent.futures.ThreadPoolExecutor(
+            max_workers=max(1, self.tcp_concurrent, self.tls_concurrent)
+        )
+        try:
+            # Stage 1: TCP 可达性 + 延迟测量
+            if self.tcp_enabled:
+                tcp_valid = await self._tcp_batch_test(nodes, executor)
+                logger.info(f"TCP 测试完成: {len(tcp_valid)}/{len(nodes)} 可达")
+            else:
+                tcp_valid = nodes
 
-        # Stage 2: TLS 握手验证 (仅对需要 TLS 的节点)
-        if self.tls_enabled:
-            tls_valid = await self._tls_batch_test(tcp_valid)
-            logger.info(f"TLS 握手测试完成: {len(tls_valid)}/{len(tcp_valid)} 有效")
-        else:
-            tls_valid = tcp_valid
+            # Stage 2: TLS 握手验证 (仅对需要 TLS 的节点)
+            if self.tls_enabled:
+                tls_valid = await self._tls_batch_test(tcp_valid)
+                logger.info(f"TLS 握手测试完成: {len(tls_valid)}/{len(tcp_valid)} 有效")
+            else:
+                tls_valid = tcp_valid
 
-        # 标记有效/无效节点
-        valid_set = set(id(n) for n in tls_valid)
-        for node in nodes:
-            node.is_valid = id(node) in valid_set
+            # 标记有效/无效节点
+            valid_set = set(id(n) for n in tls_valid)
+            for node in nodes:
+                node.is_valid = id(node) in valid_set
 
-        logger.info(f"测试完成: {len(tls_valid)} 个有效 / {len(nodes)} 个总计")
+            logger.info(f"测试完成: {len(tls_valid)} 个有效 / {len(nodes)} 个总计")
+        finally:
+            executor.shutdown(wait=False)
+
         return nodes
 
-    async def _tcp_batch_test(self, nodes: List[Node]) -> List[Node]:
+    async def _tcp_batch_test(self, nodes: List[Node], executor=None) -> List[Node]:
         """批量 TCP 测试 + 延迟测量 (单次连接同时完成)"""
         semaphore = asyncio.Semaphore(self.tcp_concurrent)
         valid_nodes = []
@@ -66,7 +76,7 @@ class NodeTester:
         async def test_with_semaphore(node: Node):
             async with semaphore:
                 is_valid, latency = await check_tcp_port_and_latency(
-                    node.server, node.port, self.tcp_timeout
+                    node.server, node.port, self.tcp_timeout, executor=executor
                 )
                 node.tcp_valid = is_valid
                 if is_valid:
@@ -214,11 +224,11 @@ class NodeTester:
         return node.tcp_valid and 0 < node.latency < self.max_latency
 
     async def _verify_hysteria2(self, node: Node) -> bool:
-        """Hysteria2 验证: UDP 可达"""
+        """Hysteria2 验证: UDP 可达 (粗粒度, 严格校验见 scripts/test_with_xray.py)"""
         if not node.hysteria2_password:
             return False
         try:
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
             result = await asyncio.wait_for(
                 loop.run_in_executor(None, self._test_udp_port, node.server, node.port),
                 timeout=self.tls_timeout
@@ -227,12 +237,35 @@ class NodeTester:
         except (asyncio.TimeoutError, OSError):
             return False
 
-    def _test_udp_port(self, host: str, port: int) -> bool:
+    def _test_udp_port(self, host: str, port: int, timeout: int = 3) -> bool:
+        """UDP 端口可达性探测。
+
+        通过 connect + recvfrom 检测 ICMP Port Unreachable:
+        - 收到任意回包 -> 端口有服务监听
+        - recvfrom 超时 -> 未收到明确拒绝(可能被防火墙过滤), 视为可达
+        - 收到 ICMP Port Unreachable (ConnectionRefusedError/OSError) -> 端口确为关闭
+        """
+        sock = None
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            sock.settimeout(3)
-            sock.sendto(b"\x00", (host, port))
-            sock.close()
-            return True
+            sock.settimeout(timeout)
+            sock.connect((host, port))
+            try:
+                sock.send(b"\x00\x00\x00\x00")
+            except OSError:
+                return False
+            try:
+                sock.recvfrom(1024)
+                return True
+            except socket.timeout:
+                return True
+            except (ConnectionRefusedError, OSError):
+                return False
         except Exception:
             return False
+        finally:
+            if sock is not None:
+                try:
+                    sock.close()
+                except Exception:
+                    pass

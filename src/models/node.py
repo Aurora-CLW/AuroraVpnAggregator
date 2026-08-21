@@ -8,6 +8,19 @@ from typing import Optional, List, Dict
 from urllib.parse import quote
 import base64
 import hashlib
+import json
+
+
+def _parse_dt(value):
+    """把 ISO 字符串解析回 datetime，解析失败返回 None"""
+    if not value:
+        return None
+    if isinstance(value, datetime):
+        return value
+    try:
+        return datetime.fromisoformat(value)
+    except (ValueError, TypeError):
+        return None
 
 
 @dataclass
@@ -121,6 +134,12 @@ class Node:
             key_parts.append(str(self.uuid))
         elif self.password:
             key_parts.append(str(self.password))
+        elif self.username:
+            # socks 等可能只有用户名而无密码
+            key_parts.append(str(self.username))
+        if self.cipher:
+            # SS/SSR 的 cipher 也是区分特征
+            key_parts.append(str(self.cipher))
 
         # 网络传输特征
         if self.network:
@@ -214,14 +233,21 @@ class Node:
             if self.password:
                 proxy["password"] = self.password
 
-        # TLS 配置
-        if self.security == "tls" or self.type in ["trojan", "vless", "vmess"]:
-            if self.type not in ["ss", "ssr", "tuic"]:  # 这些类型不需要额外 TLS
-                proxy["tls"] = True
-                if self.sni:
-                    proxy["servername"] = self.sni
-                if self.skip_cert_verify:
-                    proxy["skip-cert-verify"] = True
+        # TLS 配置 — 仅对真正使用 TLS 的类型, 且 security 为 tls/reality 时才写 tls: true
+        # (避免给 security=none 的明文 vless/vmess 节点错误地加上 TLS, 导致 Clash 连接失败)
+        if self.security in ("tls", "reality") and self.type in ("vmess", "vless", "trojan", "anytls"):
+            proxy["tls"] = True
+            # Trojan 用 sni 字段（已在上方 trojan 分支设置），其余 TLS 类型用 servername，
+            # 避免同时输出两个冲突字段
+            if self.sni and self.type != "trojan":
+                proxy["servername"] = self.sni
+            if self.skip_cert_verify:
+                proxy["skip-cert-verify"] = True
+        elif self.type == "trojan":
+            # Trojan 协议本身强制 TLS（sni 已在上方 trojan 分支设置）
+            proxy["tls"] = True
+            if self.skip_cert_verify:
+                proxy["skip-cert-verify"] = True
 
         # Reality 配置
         if self.security == "reality":
@@ -287,7 +313,10 @@ class Node:
                 "ps": self.name
             }
             if self.security == "reality":
-                vmess_obj["tls"] = "reality"
+                # 标准 vmess 协议只支持 tls 为空字符串或 "tls"，
+                # reality 在 vmess 上非标准；仍写入 reality 相关字段供客户端识别，
+                # 但 tls 字段保持 "tls" 以符合规范。
+                vmess_obj["tls"] = "tls"
                 if self.fingerprint:
                     vmess_obj["fp"] = self.fingerprint
                 if self.reality_public_key:
@@ -300,7 +329,7 @@ class Node:
                 vmess_obj["host"] = self.ws_headers["Host"]
 
             encoded = base64.b64encode(
-                str(vmess_obj).replace("'", '"').encode()
+                json.dumps(vmess_obj, ensure_ascii=False).encode("utf-8")
             ).decode()
             return f"vmess://{encoded}"
 
@@ -391,14 +420,15 @@ class Node:
 
     def to_singbox(self) -> dict:
         """转换为 Sing-box outbound 格式"""
+        # sing-box 要求 Shadowsocks 的 outbound type 为 "shadowsocks"（不是 "ss"）
         outbound = {
-            "type": self.type,
+            "type": "shadowsocks" if self.type == "ss" else self.type,
             "tag": self.name,
             "server": self.server,
             "server_port": self.port,
         }
 
-        if self.type == "shadowsocks":
+        if self.type == "ss":
             outbound["method"] = self.cipher
             outbound["password"] = self.password
 
@@ -492,13 +522,23 @@ class Node:
         "tuic_congestion_control", "tuic_alpn", "tuic_udp_relay_mode",
         "flow", "alterId",
         "ssr_protocol", "ssr_protocol_param", "ssr_obfs", "ssr_obfs_param",
-        "country", "source", "latency", "speed",
+        "country", "country_name", "city", "region", "isp",
+        "source", "latency", "speed",
+        "alpn", "ss2022_psk",
+        "added_at", "tested_at", "missing_runs",
         "tcp_valid", "is_valid", "node_fingerprint",
     ]
 
     def to_dict(self) -> dict:
         """统一序列化为 dict (不含敏感字段 raw_url)"""
-        return {f: getattr(self, f) for f in self._SERIALIZE_FIELDS}
+        data = {}
+        for field in self._SERIALIZE_FIELDS:
+            if hasattr(self, field):
+                value = getattr(self, field)
+                if isinstance(value, datetime):
+                    value = value.isoformat()
+                data[field] = value
+        return data
 
     @classmethod
     def from_dict(cls, data: dict) -> "Node":
@@ -547,11 +587,20 @@ class Node:
             source=data.get("source"),
             latency=data.get("latency", 0),
             speed=data.get("speed", 0.0),
+            alpn=data.get("alpn"),
+            ss2022_psk=data.get("ss2022_psk"),
+            added_at=_parse_dt(data.get("added_at")),
+            tested_at=_parse_dt(data.get("tested_at")),
+            missing_runs=data.get("missing_runs", 0),
         )
         node.tcp_valid = data.get("tcp_valid", False)
         node.is_valid = data.get("is_valid", False)
         node.node_fingerprint = data.get("node_fingerprint", node.node_fingerprint)
         node.raw_url = data.get("raw_url")
+        node.country_name = data.get("country_name")
+        node.city = data.get("city")
+        node.region = data.get("region")
+        node.isp = data.get("isp")
         return node
 
     def __repr__(self):

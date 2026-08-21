@@ -93,5 +93,6 @@ def get_logger(name: str = "aurora") -> logging.Logger:
     return logging.getLogger(name)
 
 
-# 默认日志器
-logger = setup_logger()
+# 注意: 不在模块导入时调用 setup_logger(), 避免产生全局 logging 副作用
+# (清空 root handlers 会干扰 pytest / 其它已配置日志的上下文)。
+# 请在程序入口 (scripts/run.py 的 setup_logging) 显式调用 setup_logger()。

@@ -278,28 +278,14 @@
                         </div>
                     </div>
 
-                    <!-- 校验通过的节点（推荐） -->
-                    <div style="margin-bottom:20px;">
-                        <h3 style="color:#28a745;margin-bottom:8px;">✅ 校验通过的订阅（推荐）</h3>
-                        <p style="color:#666;font-size:13px;margin-bottom:12px;">仅包含 TCP 校验通过的节点，延迟低、稳定性高</p>
-                        <div class="subscription-links">
-                            <div class="link-card">
-                                <h3>Clash 校验</h3>
-                                <input type="text" id="clash-pass-url" readonly>
-                                <button class="copy-btn" onclick="copyUrl('clash-pass-url')">复制链接</button>
-                            </div>
-                            <div class="link-card">
-                                <h3>V2Ray 校验</h3>
-                                <input type="text" id="v2ray-pass-url" readonly>
-                                <button class="copy-btn" onclick="copyUrl('v2ray-pass-url')">复制链接</button>
-                            </div>
-                            <div class="link-card">
-                                <h3>Sing-box 校验</h3>
-                                <input type="text" id="singbox-pass-url" readonly>
-                                <button class="copy-btn" onclick="copyUrl('singbox-pass-url')">复制链接</button>
-                            </div>
-                        </div>
+                    <!-- 分片订阅（节点过多时自动显示） -->
+                    <div id="partition-section" class="hidden" style="margin-bottom:20px;">
+                        <h3 style="color:#764ba2;margin-bottom:8px;">📦 分片订阅（推荐）</h3>
+                        <p style="color:#666;font-size:13px;margin-bottom:12px;" id="partition-desc"></p>
+                        <div id="partition-links" class="subscription-links"></div>
                     </div>
+
+                    <!-- 校验通过的节点（推荐） -->
                     <div class="section" style="margin-top:20px;">
                         <h2>使用说明</h2>
                         <ol style="line-height: 2; color: #555;">
@@ -406,14 +392,15 @@
         </div>
 
         <div class="footer">
-            <p>每小时自动更新 | GitHub Actions 驱动</p>
+            <p>每2小时自动更新 | GitHub Actions 驱动</p>
         </div>
     </div>
 
     <script>
     (function() {
         const TOKEN_KEY = 'aurora_token';
-        const AUTH_HASH = 'a9dc4b423961031fc1c3527bf69d0430c9c3d27b9010a36aa49a3f9bfd7d75d8';
+        // 占位符由 scripts/run.py 的 _build_secured_index 在部署时替换为真实 token 的 SHA-256
+const AUTH_HASH = '__AUTH_HASH_PLACEHOLDER__';
         const REPO = 'Aurora-CLW/AuroraVpnAggregator';
 
         let currentSources = [];
@@ -480,10 +467,6 @@
             document.getElementById('clash-url').value = baseUrl + subPath + '/clash.yaml';
             document.getElementById('v2ray-url').value = baseUrl + subPath + '/v2ray.txt';
             document.getElementById('singbox-url').value = baseUrl + subPath + '/singbox.json';
-            document.getElementById('clash-pass-url').value = baseUrl + subPath + '/pass/clash.yaml';
-            document.getElementById('v2ray-pass-url').value = baseUrl + subPath + '/pass/v2ray.txt';
-            document.getElementById('singbox-pass-url').value = baseUrl + subPath + '/pass/singbox.json';
-
             let tokenResolve;
             ghTokenReady = new Promise(r => { tokenResolve = r; });
 
@@ -494,7 +477,8 @@
                     if (data.channel_results) channelResults = data.channel_results;
                     if (data.tg_channels) embeddedTgChannels = data.tg_channels;
                     if (data.github_sources) embeddedGithubSources = data.github_sources;
-                    // GitHub Token 不再嵌入 stats.json, 需要用户手动输入
+                    // 渲染分片订阅
+                    if (data.partitions) renderPartitions(baseUrl + subPath, data.partitions);
                     tokenResolve();
                 })
                 .catch(() => {
@@ -511,6 +495,12 @@
             const countries = data.by_country || {};
             const types = data.by_type || {};
             let countryList = Object.entries(countries).sort((a,b) => b[1]-a[1]).slice(0,8).map(([k,v]) => `${k}: ${v}`).join(', ');
+            let partitionInfo = '';
+            if (data.partitions) {
+                const p = data.partitions;
+                partitionInfo = `<div class="stat-item"><div class="stat-value" style="color:#764ba2;">${p.num_partitions}</div><div class="stat-label">分片数</div></div>
+                    <div class="stat-item"><div class="stat-value" style="color:#764ba2;">${p.partition_size}</div><div class="stat-label">每片节点上限</div></div>`;
+            }
             document.getElementById('stats-container').innerHTML = `
                 <div class="stats-grid">
                     <div class="stat-item"><div class="stat-value">${data.total_nodes || 0}</div><div class="stat-label">全部节点</div></div>
@@ -519,9 +509,45 @@
                     <div class="stat-item"><div class="stat-value">${data.avg_latency || 0}ms</div><div class="stat-label">平均延迟</div></div>
                     <div class="stat-item"><div class="stat-value">${Object.keys(countries).length}</div><div class="stat-label">国家/地区</div></div>
                     <div class="stat-item"><div class="stat-value">${Object.keys(types).length}</div><div class="stat-label">协议类型</div></div>
+                    ${partitionInfo}
                 </div>
                 ${countryList ? '<p style="margin-top:12px;color:#666;font-size:13px;">' + esc(countryList) + '</p>' : ''}
                 <p style="margin-top:8px;color:#999;font-size:12px;">更新时间: ${esc(data.updated_at || '未知')}</p>`;
+        }
+
+        function renderPartitions(basePath, partitions) {
+            const section = document.getElementById('partition-section');
+            const desc = document.getElementById('partition-desc');
+            const container = document.getElementById('partition-links');
+            if (!partitions || !partitions.num_partitions) { section.classList.add('hidden'); return; }
+            section.classList.remove('hidden');
+            desc.textContent = `共 ${partitions.total_nodes} 个节点，拆分为 ${partitions.num_partitions} 个分片（每片约 ${partitions.partition_size} 个），推荐使用分片订阅以获得更好的兼容性`;
+            let html = '';
+            for (let i = 1; i <= partitions.num_partitions; i++) {
+                const partPath = basePath + '/part' + i;
+                html += `
+                <div class="link-card" style="border-left-color:#764ba2;">
+                    <h3>分片 ${i}/${partitions.num_partitions}</h3>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        <div style="flex:1;min-width:200px;">
+                            <label style="font-size:12px;color:#888;">Clash</label>
+                            <input type="text" value="${esc(partPath + '/clash.yaml')}" readonly style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-family:monospace;font-size:12px;background:white;">
+                            <button class="copy-btn" onclick="copyText(this)" style="margin-top:4px;padding:4px 10px;font-size:12px;">复制</button>
+                        </div>
+                        <div style="flex:1;min-width:200px;">
+                            <label style="font-size:12px;color:#888;">V2Ray</label>
+                            <input type="text" value="${esc(partPath + '/v2ray.txt')}" readonly style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-family:monospace;font-size:12px;background:white;">
+                            <button class="copy-btn" onclick="copyText(this)" style="margin-top:4px;padding:4px 10px;font-size:12px;">复制</button>
+                        </div>
+                        <div style="flex:1;min-width:200px;">
+                            <label style="font-size:12px;color:#888;">Sing-box</label>
+                            <input type="text" value="${esc(partPath + '/singbox.json')}" readonly style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-family:monospace;font-size:12px;background:white;">
+                            <button class="copy-btn" onclick="copyText(this)" style="margin-top:4px;padding:4px 10px;font-size:12px;">复制</button>
+                        </div>
+                    </div>
+                </div>`;
+            }
+            container.innerHTML = html;
         }
 
         window.switchTab = function(name) {
@@ -1048,6 +1074,16 @@
             const input = document.getElementById(inputId);
             navigator.clipboard.writeText(input.value).then(() => {
                 const btn = input.nextElementSibling;
+                const orig = btn.textContent;
+                btn.textContent = '已复制!'; btn.style.background = '#28a745';
+                setTimeout(() => { btn.textContent = orig; btn.style.background = '#667eea'; }, 2000);
+            });
+        };
+
+        window.copyText = function(btn) {
+            const input = btn.previousElementSibling;
+            if (!input) return;
+            navigator.clipboard.writeText(input.value).then(() => {
                 const orig = btn.textContent;
                 btn.textContent = '已复制!'; btn.style.background = '#28a745';
                 setTimeout(() => { btn.textContent = orig; btn.style.background = '#667eea'; }, 2000);

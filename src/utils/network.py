@@ -5,12 +5,12 @@
 import asyncio
 import socket
 import time
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Any
 from concurrent.futures import ThreadPoolExecutor
 
 
 async def check_tcp_port_and_latency(
-    host: str, port: int, timeout: int = 5
+    host: str, port: int, timeout: int = 5, executor: Optional[Any] = None
 ) -> Tuple[bool, int]:
     """
     单次 TCP 连接同时检测可达性和测量延迟
@@ -35,11 +35,11 @@ async def check_tcp_port_and_latency(
         except Exception:
             return False, 0
 
-    loop = asyncio.get_event_loop()
-    return await loop.run_in_executor(None, _check)
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(executor, _check)
 
 
-async def check_tcp_port(host: str, port: int, timeout: int = 3) -> bool:
+async def check_tcp_port(host: str, port: int, timeout: int = 3, executor: Optional[Any] = None) -> bool:
     """
     检查 TCP 端口是否可达
 
@@ -61,8 +61,8 @@ async def check_tcp_port(host: str, port: int, timeout: int = 3) -> bool:
         except Exception:
             return False
 
-    loop = asyncio.get_event_loop()
-    return await loop.run_in_executor(None, _check)
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(executor, _check)
 
 
 async def check_tcp_ports_batch(
@@ -97,7 +97,8 @@ async def check_tcp_ports_batch(
 async def measure_latency(
     host: str,
     port: int,
-    timeout: int = 5
+    timeout: int = 5,
+    executor: Optional[Any] = None
 ) -> int:
     """
     测量 TCP 连接延迟
@@ -122,8 +123,8 @@ async def measure_latency(
         except Exception:
             return 0
 
-    loop = asyncio.get_event_loop()
-    return await loop.run_in_executor(None, _measure)
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(executor, _measure)
 
 
 async def http_request(

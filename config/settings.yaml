@@ -59,15 +59,14 @@ output:
     - v2ray
     - singbox
 
-  # 节点命名格式
-  # {country} 国家, {ip} IP, {type} 类型, {latency} 延迟
-  naming: "{country} {type} {latency}ms"
-
   # 节点排序: latency (延迟) / speed (速度) / country (国家)
   sort_by: latency
 
   # 最大节点数（0 为不限制）
   max_nodes: 0
+
+  # 分片大小（每个分片订阅包含的最大节点数，0 为不分片）
+  partition_size: 1000
 
 # 日志设置
 logging:

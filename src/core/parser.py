@@ -38,37 +38,61 @@ class Parser:
         logger.info(f"使用格式: {format}")
 
         if format == "clash":
-            return self._parse_clash(content)
+            nodes = self._parse_clash(content)
         elif format == "base64":
-            return self._parse_base64(content)
+            nodes = self._parse_base64(content)
         elif format == "singbox":
-            return self._parse_singbox(content)
+            nodes = self._parse_singbox(content)
         elif format == "urls":
-            return self._parse_urls(content)
+            nodes = self._parse_urls(content)
         else:
             logger.warning(f"未知格式: {format}，尝试 URL 解析")
-            return self._parse_urls(content)
+            nodes = self._parse_urls(content)
+
+        # 基础合法性校验（端口范围等），过滤明显非法的节点
+        valid = [n for n in nodes if self._is_valid_node(n)]
+        if len(valid) != len(nodes):
+            logger.info(f"节点基础校验: {len(nodes)} -> {len(valid)} (过滤 {len(nodes) - len(valid)} 个非法节点)")
+        return valid
 
     def _detect_format(self, content: str) -> str:
         """自动检测内容格式"""
+        # 去掉开头的注释行与空行，避免带注释的 Clash/JSON 被误判为 urls
+        stripped = content.lstrip()
+        while stripped.startswith(("#", "%")):
+            nl = stripped.find("\n")
+            if nl == -1:
+                stripped = ""
+                break
+            stripped = stripped[nl + 1:].lstrip()
+
         # 检测 Clash YAML
-        if content.startswith(("proxies:", "mixed-port:", "port:")):
+        if stripped.startswith(("proxies:", "mixed-port:", "port:")):
             return "clash"
 
         # 检测 JSON
-        if content.startswith("{") or content.startswith("["):
+        if stripped.startswith("{") or stripped.startswith("["):
             try:
-                json.loads(content)
+                json.loads(stripped)
                 return "singbox"
             except json.JSONDecodeError:
                 pass
 
         # 检测 Base64
-        if self._is_base64(content):
+        if self._is_base64(stripped):
             return "base64"
 
         # 默认为 URL 列表
         return "urls"
+
+    def _is_valid_node(self, node: Node) -> bool:
+        """节点基础合法性校验（端口范围、服务器非空等）"""
+        if not node.server:
+            return False
+        if not isinstance(node.port, int) or not (1 <= node.port <= 65535):
+            logger.debug(f"非法端口: {node.port!r} ({node.name})")
+            return False
+        return True
 
     def _is_base64(self, content: str) -> bool:
         """检测是否为 Base64 编码"""
@@ -668,7 +692,16 @@ class Parser:
         obfs = parts[4]
         password_base64 = parts[5]
 
-        password = base64.urlsafe_b64decode(password_base64 + "==").decode("utf-8")
+        # 部分实现使用标准 Base64 (含 + /) 而非 urlsafe;
+        # 先按正确补齐 padding 的方式尝试 urlsafe, 失败再回退标准 Base64
+        def _b64_decode(s: str) -> str:
+            s = s + "=" * (-len(s) % 4)
+            try:
+                return base64.urlsafe_b64decode(s).decode("utf-8")
+            except Exception:
+                return base64.b64decode(s).decode("utf-8")
+
+        password = _b64_decode(password_base64)
 
         # 解析参数获取名称
         name = "SSR Node"
